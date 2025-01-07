@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <h1>Game</h1>
+  <div class="market">
+    <h1>Market</h1>
   </div>
 </template>
 
