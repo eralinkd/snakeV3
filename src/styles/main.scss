@@ -98,14 +98,7 @@ h6 {
 //========================================================================================================================================================
 
 body {
-  background: $bgColor url('@/assets/main-bg.png') no-repeat center bottom;
-  background-size: cover;
   font-size: 12px;
-  &.lock {
-    overflow: hidden;
-    touch-action: none;
-    overscroll-behavior: none;
-  }
 }
 
 #app {
@@ -114,6 +107,13 @@ body {
   overflow-y: auto;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+  background: $bgColor url('@/assets/main-bg.png') no-repeat center bottom;
+  background-size: cover;
+  &.lock {
+    overflow: hidden;
+    touch-action: none;
+    overscroll-behavior: none;
+  }
 }
 
 .wrapper {
