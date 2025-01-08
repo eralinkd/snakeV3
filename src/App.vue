@@ -1,8 +1,10 @@
 <template>
-  <main class="main">
-    <router-view class="router-content" />
-  </main>
-  <Navigation />
+  <div class="wrapper">
+    <main class="main">
+      <router-view class="router-content" />
+    </main>
+    <Navigation />
+  </div>
 </template>
 
 <script>
