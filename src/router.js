@@ -13,7 +13,7 @@ const routes = [
 	{
 		path: '/market',
 		name: 'Market',
-		component: () => import('@/views/Market.vue'),
+		component: () => import('@/views/market/Market.vue'),
 	},
 	{
 		path: '/shop',

@@ -26,7 +26,7 @@ export default {
 }
 .router-content {
   padding-bottom: 134px; // отступ от нижнего края экрана для навигации
-  @media (min-width: $smallBreakpoint) {
+  @media (max-width: $smallBreakpoint) {
     padding-bottom: 96px;
   }
 }

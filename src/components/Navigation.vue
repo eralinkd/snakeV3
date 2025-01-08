@@ -128,6 +128,7 @@
     flex: 1 1 auto;
     display: flex;
     align-items: center;
+    justify-content: space-around;
     gap: 24px;
     padding: 25px 22px 25px 24px;
     &:first-child {
