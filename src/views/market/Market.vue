@@ -4,20 +4,21 @@ import { useMarketStore } from '@/stores/marketStore'
 import MarketWallet from './MarketWallet.vue'
 import MarketSwap from './MarketSwap.vue'
 import MarketHistory from './MarketHistory.vue'
+import { MARKET_TABS } from '@/constants/marketTabs'
 
-const tabs = [
-  { name: 'Кошелёк', component: MarketWallet },
-  { name: 'Обмен', component: MarketSwap },
-  { name: 'История', component: MarketHistory },
-]
+const components = {
+  MarketWallet,
+  MarketSwap,
+  MarketHistory,
+}
 
 const store = useMarketStore()
 const activeTab = computed(() => store.activeTab)
 const setActiveTab = store.setActiveTab
 
 const currentComponent = computed(() => {
-  const tab = tabs.find((t) => t.name === activeTab.value)
-  return tab ? tab.component : null
+  const tab = MARKET_TABS.find((t) => t.name === activeTab.value)
+  return tab ? components[tab.component] : null
 })
 </script>
 
@@ -25,7 +26,7 @@ const currentComponent = computed(() => {
   <div class="market">
     <ul class="market__nav nav-market">
       <li
-        v-for="tab in tabs"
+        v-for="tab in MARKET_TABS"
         :key="tab.name"
         :class="{
           'nav-market__item': true,
@@ -58,9 +59,6 @@ const currentComponent = computed(() => {
     @media (max-width: $smallBreakpoint) {
       margin-bottom: 20px;
     }
-  }
-
-  &__section {
   }
 }
 
