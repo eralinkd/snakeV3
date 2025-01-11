@@ -1,18 +1,33 @@
 <template>
-  <div class="spinner"></div>
+  <div class="loader"></div>
 </template>
 
-<style scoped>
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
+<style lang="scss" scoped>
+@use '@/styles/variables.scss' as *;
+
+.loader {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  display: inline-block;
+  position: relative;
+  border: 2px solid $accent;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+.loader::after {
+  content: '';
+  box-sizing: border-box;
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  border: 2px solid #fff;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
 }
 
-@keyframes spin {
+@keyframes rotation {
   0% {
     transform: rotate(0deg);
   }

@@ -22,41 +22,42 @@ const { data: balancesResponse, isError: isBalancesError } = useQuery({
   queryFn: getUser,
 })
 
-watch(balancesResponse, (newValue) => {
-  if (!isBalancesError.value) {
-    balances.value = newValue?.balances
-  }
-})
+watch(
+  balancesResponse,
+  (newValue) => {
+    if (!isBalancesError.value) {
+      balances.value = newValue?.balances
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
   <div class="wallet">
-    <div class="container">
-      <div v-if="isLoading && !isError" class="spinner-container">
-        <Spinner />
-      </div>
+    <div v-if="isLoading && !isError" class="spinner-container">
+      <Spinner />
+    </div>
 
-      <div v-if="isError" class="container">
-        <p class="error">Failed to fetch data</p>
-      </div>
+    <div v-if="isError" class="container">
+      <p class="error">Failed to fetch data</p>
+    </div>
 
-      <div v-if="cryptos && !isError" class="list">
-        <CurrencyCard
-          v-for="currency in cryptos"
-          :key="currency.fullName"
-          :item="currency"
-          :amount="balances?.[currency.apiName]"
-        />
-      </div>
+    <div v-if="cryptos && !isError" class="list">
+      <CurrencyCard
+        v-for="currency in cryptos"
+        :key="currency.fullName"
+        :item="currency"
+        :amount="balances?.[currency.apiName]"
+      />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+@use '@/styles/variables.scss' as *;
 .wallet {
-  .container {
-    position: relative;
-  }
+  position: relative;
 
   .spinner-container {
     display: flex;
@@ -67,13 +68,15 @@ watch(balancesResponse, (newValue) => {
 
   .list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px;
+    @media (max-width: $smallBreakpoint) {
+      grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+    }
   }
 
   .error {
-    color: red;
+    color: $warning;
     text-align: center;
     padding: 20px;
   }

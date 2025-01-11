@@ -2,6 +2,9 @@
 import { ref, watch, computed } from 'vue'
 import { useMarketStore } from '@/stores/marketStore'
 import { MARKET_TAB_NAMES } from '@/constants/marketTabs'
+import CurrencyInfo from '@/components/CurrencyInfo.vue'
+import { currencyImages } from '@/constants/constants'
+import BaseSelect from '@/components/BaseSelect.vue'
 
 const props = defineProps({
   item: {
@@ -9,173 +12,122 @@ const props = defineProps({
     required: true,
   },
   amount: {
-    type: Number,
-    default: 0,
+    type: [Number, String],
+    default: '0.00',
   },
 })
 
-const showButtons = ref(false)
 const marketStore = useMarketStore()
 
-// const currencyImage = computed(() => currencyImages[props.item.apiName] || currencyImages.default)
+const imageSrc = computed(() => currencyImages[props.item.apiName] || currencyImages.default)
 
-const toggleButtons = () => {
-  showButtons.value = !showButtons.value
-}
+const selectedAction = ref('')
+const actions = [
+  { value: 'deposit', label: 'Пополнить' },
+  { value: 'withdraw', label: 'Вывести' },
+  { value: 'swap', label: 'Обмен' },
+]
 
-watch(showButtons, (newValue) => {
-  if (newValue) {
-    const timer = setTimeout(() => {
-      showButtons.value = false
-    }, 3000)
-
-    return () => clearTimeout(timer)
+const handleAction = (action) => {
+  if (action.value === 'swap') {
+    marketStore.setActiveTab(MARKET_TAB_NAMES.SWAP)
   }
-})
-
-const setActiveTab = (tabName) => {
-  marketStore.setActiveTab(MARKET_TAB_NAMES.SWAP)
 }
 </script>
 
 <template>
-  <article class="currency-card">
-    <div class="content">
-      <div class="currency-info">
-        <!-- <img :src="currencyImage" :alt="item.simpleName" class="currency-icon" /> -->
-        <div class="info-text">
-          <h3>{{ item.simpleName }}</h3>
-          <p>{{ item.type }}</p>
-        </div>
-      </div>
+  <article class="currency-card plateBg">
+    <div class="currency-card__content">
+      <CurrencyInfo :imgSrc="imageSrc" :title="item.simpleName" :text="item.type" />
 
-      <div class="actions" :class="{ hide: showButtons }">
-        <span class="value">
-          <template v-if="amount">
-            {{ parseFloat(amount).toFixed(2) }}
-          </template>
-          <template v-else>
-            <span class="integer">0.</span>
-            <span class="decimal">00</span>
-          </template>
+      <div class="currency-card__actions">
+        <span class="currency-card__value">
+          {{ amount }}
         </span>
-        <button @click="toggleButtons" class="more-actions">|</button>
-      </div>
-
-      <div class="buttons" :class="{ show: showButtons }">
-        <button v-if="item.swap" @click="setActiveTab()" class="action-button">Обмен</button>
-        <button v-if="item.withdraw" class="action-button">Вывести</button>
-        <button v-if="item.replenishment" class="action-button" disabled>Пополнить</button>
+        <BaseSelect
+          v-model="selectedAction"
+          :options="actions"
+          placement="left"
+          @select="handleAction"
+        >
+          <template #trigger="{ isOpen }">
+            <button class="currency-card__more-actions">
+              <svg
+                width="4"
+                height="16"
+                viewBox="0 0 4 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M0.75 8.00006C0.75 8.69042 1.30964 9.25006 2 9.25006H2.00833C2.69869 9.25006 3.25833 8.69042 3.25833 8.00006V7.99173C3.25833 7.30137 2.00833 6.74173 2.00833 6.74173C2.00833 6.74173 2.00325 6.74172 2 6.74173C1.30965 6.74402 0.75 7.30137 0.75 7.99173V8.00006Z"
+                  fill="white"
+                />
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M0.75 13.8334C0.75 14.5237 1.30964 15.0834 2 15.0834H2.00833C2.69869 15.0834 3.25833 14.5237 3.25833 13.8334V13.825C3.25833 13.1347 2.69869 12.575 2.00833 12.575H2C1.30964 12.575 0.75 13.1347 0.75 13.825V13.8334Z"
+                  fill="white"
+                />
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M0.75 2.16669C0.75 2.85704 1.30964 3.41669 2 3.41669H2.00833C2.69869 3.41669 3.25833 2.85704 3.25833 2.16669V2.15835C3.25833 1.468 2.69869 0.908353 2.00833 0.908353H2C1.30964 0.908353 0.75 1.468 0.75 2.15835V2.16669Z"
+                  fill="white"
+                />
+              </svg>
+            </button>
+          </template>
+        </BaseSelect>
       </div>
     </div>
   </article>
 </template>
 
 <style lang="scss" scoped>
+@use '@/styles/variables.scss' as *;
+
 .currency-card {
-  border-radius: 8px;
+  border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-  .content {
-    position: relative;
+  @media (max-width: $smallBreakpoint) {
+    padding: 12px 16px;
+  }
+  &__content {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
   }
 
-  .currency-info {
+  &__info {
+  }
+
+  &__actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
+  }
 
-    .currency-icon {
-      width: 40px;
-      height: 40px;
-    }
-
-    .info-text {
-      h3 {
-        margin: 0;
-        font-size: 18px;
-      }
-
-      p {
-        margin: 5px 0 0;
-        color: #666;
-      }
+  &__value {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+    @media (max-width: $smallBreakpoint) {
+      font-size: 18px;
     }
   }
 
-  .actions {
+  &__more-actions {
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    transition: opacity 0.3s;
-
-    &.hide {
-      opacity: 0;
-      pointer-events: none;
-    }
+    justify-content: center;
   }
-
-  .value {
-    font-size: 18px;
-    font-weight: 500;
-
-    .integer {
-      font-size: 30px;
-    }
-
-    .decimal {
-      font-size: 23px;
-    }
-  }
-
-  .more-actions {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-
-    img {
-      width: 24px;
-      height: 24px;
-    }
-  }
-
-  .buttons {
-    position: absolute;
-    right: 0;
-    display: flex;
-    gap: 8px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-
-    &.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-  }
-
-  .action-button {
-    padding: 8px 16px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: #fff;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.2s;
-
-    &:hover {
-      background-color: #f5f5f5;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-  }
+}
+.info-currency-card {
 }
 </style>

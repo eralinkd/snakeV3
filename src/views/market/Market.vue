@@ -38,11 +38,11 @@ const currentComponent = computed(() => {
       </li>
     </ul>
 
-    <Transition name="fade" mode="out-in">
-      <section :key="activeTab" class="market__section">
-        <component :is="currentComponent" />
-      </section>
-    </Transition>
+    <section class="market__section">
+      <Transition name="fade" mode="out-in" appear>
+        <component :is="currentComponent" :key="activeTab" />
+      </Transition>
+    </section>
   </div>
 </template>
 
@@ -99,24 +99,16 @@ const currentComponent = computed(() => {
 // Transition animations
 .fade-enter-active,
 .fade-leave-active {
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 
-.fade-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
+.fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-  transform: translateY(-20px);
 }
 
 .fade-enter-to,
 .fade-leave-from {
   opacity: 1;
-  transform: translateY(0);
 }
 </style>
