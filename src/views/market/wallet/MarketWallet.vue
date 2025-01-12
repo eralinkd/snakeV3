@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { getUser } from '@/api/userApi'
 import { fetchCryptos } from '@/api/marketApi'
-import CurrencyCard from '@/views/market/CurrencyCard.vue'
+import CurrencyCard from '@/views/market/wallet/CurrencyCard.vue'
 import Spinner from '@/components/Spinner.vue'
 
 const balances = ref(null)

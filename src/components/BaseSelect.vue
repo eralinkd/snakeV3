@@ -14,12 +14,17 @@ const props = defineProps({
     type: String,
     default: 'bottom',
   },
+  className: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'select'])
 
 const isOpen = ref(false)
 const selectRef = ref(null)
+const dropdownRef = ref(null)
 const isMounted = ref(false)
 
 const selectedOption = computed(() => {
@@ -50,22 +55,48 @@ const select = (option) => {
 }
 
 const getDropdownPosition = () => {
-  if (!selectRef.value) return {}
+  if (!selectRef.value || !dropdownRef.value) return {}
 
   const rect = selectRef.value.getBoundingClientRect()
+  const dropdownRect = dropdownRef.value.getBoundingClientRect()
+  const viewportHeight = window.innerHeight
+  const margin = 8
+
+  // Получаем элемент #app и его прокрутку
+  const appElement = document.querySelector('#app')
+  const scrollY = appElement?.scrollTop || 0
+
+  // Получаем элемент .navigation и его размеры
+  const navigationElement = document.querySelector('.navigation')
+  const navigationElementHeight = navigationElement.getBoundingClientRect().height
+
+  // Проверяем, поместится ли дропдаун снизу
+  const spaceBelow = viewportHeight - (rect.bottom + margin + navigationElementHeight)
+  const spaceAbove = rect.top + scrollY
+  const dropdownHeight = dropdownRect.height + margin
+
+  // Определяем, нужно ли открывать вверх
+  const shouldOpenUpward = spaceBelow < dropdownHeight && spaceAbove > dropdownHeight
+
   const positions = {
-    bottom: {
-      top: `${rect.bottom + 8}px`,
-      left: `${rect.left}px`,
-    },
-    top: {
-      bottom: `${window.innerHeight - rect.top + 8}px`,
-      left: `${rect.left}px`,
-    },
-    right: {
-      top: `${rect.top}px`,
-      left: `${rect.right + 8}px`,
-    },
+    bottom: shouldOpenUpward
+      ? {
+          top: `${rect.top + scrollY - dropdownHeight}px`,
+          left: `${rect.left}px`,
+        }
+      : {
+          top: `${rect.bottom + scrollY + margin}px`,
+          left: `${rect.left}px`,
+        },
+    left: shouldOpenUpward
+      ? {
+          top: `${rect.top + scrollY - dropdownHeight}px`,
+          left: `${rect.left - dropdownRect.width + rect.width}px`,
+        }
+      : {
+          top: `${rect.bottom + scrollY + margin}px`,
+          left: `${rect.left - dropdownRect.width + rect.width}px`,
+        },
   }
 
   return positions[props.placement] || positions.bottom
@@ -85,7 +116,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="select" ref="selectRef">
+  <div :class="['select', className]" ref="selectRef">
     <div @click="toggle">
       <slot name="trigger" :isOpen="isOpen" :selected="selectedOption">
         <button class="select__trigger">
@@ -94,13 +125,14 @@ onBeforeUnmount(() => {
       </slot>
     </div>
 
-    <Teleport to="body">
+    <Teleport to="#app">
       <Transition name="fade">
         <ul
           v-if="isOpen"
+          ref="dropdownRef"
           class="select__options"
           :style="{
-            position: 'fixed',
+            position: 'absolute',
             ...getDropdownPosition(),
           }"
         >
@@ -133,48 +165,36 @@ onBeforeUnmount(() => {
   display: inline-block;
 
   &__options {
-    position: fixed;
     z-index: 15;
     min-width: 140px;
-    padding: 8px;
-    border-radius: 12px;
-    background: $mainBg;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
     backdrop-filter: blur(15px);
-
-    &--bottom {
-      top: 100%;
-      left: 0;
-    }
-
-    &--top {
-      bottom: 100%;
-      left: 0;
-    }
-
-    &--right {
-      top: 0;
-      left: 100%;
-      margin-top: 0;
-      margin-left: 8px;
-    }
+    background: rgba(42, 38, 60, 0.75);
+    box-shadow: 0px 15px 30px 0px rgba(0, 0, 0, 0.25);
   }
 
   &__option {
-    padding: 12px;
     cursor: pointer;
-    border-radius: 8px;
+    background: transparent;
     transition: all 0.2s ease;
-    color: rgba(255, 255, 255, 0.6);
-
+    padding: 18px 20px;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+    opacity: 0.4;
     &:hover {
-      background: rgba(174, 139, 255, 0.1);
-      color: #fff;
+      background: $gray;
+      opacity: 1;
+    }
+    &--selected {
+      background: $gray;
+      opacity: 1;
     }
 
-    &--selected {
-      color: #fff;
-      background: $accent;
+    @media (max-width: $smallBreakpoint) {
+      padding: 10px 20px;
+      font-size: 14px;
     }
   }
 }

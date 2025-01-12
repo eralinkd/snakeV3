@@ -111,7 +111,7 @@
 
 .navigation {
   position: fixed;
-  z-index: 10;
+  z-index: 20;
   width: calc(100% - 32px);
   bottom: 20px;
   left: 50%;
@@ -120,6 +120,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  max-width: 768px;
   @media (max-width: $smallBreakpoint) {
     bottom: 18px;
   }

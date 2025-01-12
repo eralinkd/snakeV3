@@ -109,6 +109,7 @@ body {
   -webkit-overflow-scrolling: touch;
   background: $bgColor url('@/assets/main-bg.png') no-repeat center bottom;
   background-size: cover;
+  position: relative;
   &.lock {
     overflow: hidden;
     touch-action: none;
@@ -121,6 +122,8 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  max-width: 768px;
+  margin: 0 auto;
   @supports (overflow: clip) {
     overflow: clip;
   }
