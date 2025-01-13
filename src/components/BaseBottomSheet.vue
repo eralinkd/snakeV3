@@ -9,7 +9,7 @@ const props = defineProps({
   },
   maxHeight: {
     type: String,
-    default: '90vh',
+    default: '100vh',
   },
 })
 
@@ -49,8 +49,9 @@ const handleTouchMove = (e) => {
 const handleTouchEnd = () => {
   isDragging.value = false
   sheet.value.style.transition = 'transform 0.3s ease'
+  const sheetHeight = sheet.value.offsetHeight
 
-  if (currentY.value > 100) {
+  if (currentY.value > sheetHeight * 0.8) {
     close()
   } else {
     sheet.value.style.transform = 'translateY(0)'
