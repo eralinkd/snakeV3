@@ -10,7 +10,7 @@ defineProps({
   },
   size: {
     type: String,
-    default: 'small',
+    default: 'big',
     validator: (value) => ['big', 'small'].includes(value),
   },
   disabled: {

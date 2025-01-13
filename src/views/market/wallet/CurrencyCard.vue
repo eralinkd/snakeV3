@@ -5,6 +5,7 @@ import { MARKET_TAB_NAMES } from '@/constants/marketTabs'
 import CurrencyInfo from '@/components/CurrencyInfo.vue'
 import { currencyImages } from '@/constants/constants'
 import BaseSelect from '@/components/BaseSelect.vue'
+import WithdrawBottomSheet from './WithdrawBottomSheet.vue'
 
 const props = defineProps({
   item: {
@@ -28,9 +29,13 @@ const actions = [
   { value: 'swap', label: 'Обмен' },
 ]
 
+const isWithdrawOpen = ref(false)
+
 const handleAction = (action) => {
   if (action.value === 'swap') {
     marketStore.setActiveTab(MARKET_TAB_NAMES.SWAP)
+  } else if (action.value === 'withdraw') {
+    isWithdrawOpen.value = true
   }
 }
 </script>
@@ -84,6 +89,8 @@ const handleAction = (action) => {
       </div>
     </div>
   </article>
+
+  <WithdrawBottomSheet v-model:is-open="isWithdrawOpen" :currency="item" :balance="amount" />
 </template>
 
 <style lang="scss" scoped>
