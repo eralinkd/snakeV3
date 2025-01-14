@@ -12,12 +12,11 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import Navigation from '@/components/Navigation.vue'
-import { postAddRef } from '@/api/referralApi' // Нужно создать этот API метод
+import { postAddRef } from '@/api/referralApi'
 
 const router = useRouter()
 const userStore = useUserStore()
 
-// Получение параметров из URL Telegram
 const getTelegramQueryParams = () => {
   const urlParams = new URLSearchParams(window.location.search)
   const startParam = urlParams.get('start_param')
@@ -25,23 +24,11 @@ const getTelegramQueryParams = () => {
 }
 
 onMounted(async () => {
-  const queryParams = new URLSearchParams(window.location.search)
-  const initData = queryParams.get('tgWebAppData')
-  if (initData) {
-    console.log('initData', JSON.parse(decodeURIComponent(initData)))
-    return
-  }
-
   try {
-    const queryParams = new URLSearchParams(window.location.search)
-    const initData = queryParams.get('tgWebAppData')
-    if (initData) {
-      console.log('initData', JSON.parse(decodeURIComponent(initData)))
-      return
+    const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
+    if (telegramInitData?.user) {
       const { id, first_name, last_name, username, photo_url } = telegramInitData.user
-      console.log('id, first_name, last_name, username, photo_url', id, first_name, last_name, username, photo_url)
 
-      // Сохраняем данные пользователя
       userStore.setUserData({
         first_name,
         last_name,
@@ -49,18 +36,16 @@ onMounted(async () => {
         photo_url,
       })
 
-      // Сохраняем ID пользователя
       if (id) {
         userStore.setUserId(id)
       }
     }
 
-    // Обработка реферального кода
-    // const queryParams = getTelegramQueryParams()
-    // const refCode = queryParams?.start_param
-    // if (refCode) {
-    //   await postAddRef(refCode)
-    // }
+    const queryParams = getTelegramQueryParams()
+    const refCode = queryParams?.start_param
+    if (refCode) {
+      await postAddRef(refCode)
+    }
   } catch (error) {
     console.error('Error initializing Telegram Web App:', error)
   }
