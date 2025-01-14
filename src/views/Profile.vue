@@ -16,9 +16,9 @@
       </div>
 
       <div class="info">
-        <img :src="user?.photo_url || avatarSrc" alt="avatar" />
+        <img :src="userData?.photo_url || avatarSrc" alt="avatar" />
         <div class="info-text">
-          <p class="username">{{ user?.first_name || 'Username' }}</p>
+          <p class="username">{{ userData?.first_name || 'Username' }}</p>
           <p class="scoin"><img :src="scoinSrc" alt="scoin" />{{ user?.balances?.SCOIN || '0' }}</p>
         </div>
       </div>
@@ -41,7 +41,7 @@
 
       <div class="friend" v-for="item in user?.refs" :key="item.id">
         <div class="friend-info">
-          <img :src="friend.photo_url || avatarSrc" alt="avatar" />
+          <img :src="item.photo_url || avatarSrc" alt="avatar" />
           <div class="friend-info-text">
             <p class="username">{{ item.name }}</p>
             <p class="scoin">{{ item.balance || '0' }} SCOIN</p>
@@ -102,17 +102,17 @@ const handleShare = () => {
 }
 
 const user = ref(null)
+const userData = useUserStore().user
 
-const { data: userData, isError } = useQuery({
+const { data: resp, isError } = useQuery({
   queryKey: ['user'],
   queryFn: getUser,
 })
 
 watch(
-  userData,
+  resp,
   (newValue) => {
     if (!isError.value) {
-      console.log(newValue)
       user.value = newValue
     }
   },
