@@ -102,7 +102,8 @@ const handleShare = () => {
 }
 
 const user = ref(null)
-const userData = useUserStore().user
+const userData = useUserStore()
+console.log(userData)
 
 const { data: resp, isError } = useQuery({
   queryKey: ['user'],

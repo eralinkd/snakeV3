@@ -25,11 +25,21 @@ const getTelegramQueryParams = () => {
 }
 
 onMounted(async () => {
+  const queryParams = new URLSearchParams(window.location.search)
+  const initData = queryParams.get('tgWebAppData')
+  if (initData) {
+    console.log('initData', JSON.parse(decodeURIComponent(initData)))
+    return
+  }
+
   try {
-    // Инициализация данных Telegram
-    const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
-    if (telegramInitData?.user) {
+    const queryParams = new URLSearchParams(window.location.search)
+    const initData = queryParams.get('tgWebAppData')
+    if (initData) {
+      console.log('initData', JSON.parse(decodeURIComponent(initData)))
+      return
       const { id, first_name, last_name, username, photo_url } = telegramInitData.user
+      console.log('id, first_name, last_name, username, photo_url', id, first_name, last_name, username, photo_url)
 
       // Сохраняем данные пользователя
       userStore.setUserData({
@@ -46,11 +56,11 @@ onMounted(async () => {
     }
 
     // Обработка реферального кода
-    const queryParams = getTelegramQueryParams()
-    const refCode = queryParams?.start_param
-    if (refCode) {
-      await postAddRef(refCode)
-    }
+    // const queryParams = getTelegramQueryParams()
+    // const refCode = queryParams?.start_param
+    // if (refCode) {
+    //   await postAddRef(refCode)
+    // }
   } catch (error) {
     console.error('Error initializing Telegram Web App:', error)
   }
