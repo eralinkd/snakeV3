@@ -142,7 +142,7 @@ onBeforeUnmount(() => {
               :key="option.value"
               :class="[
                 'select__option',
-                { 'select__option--selected': option.value === modelValue },
+                // { 'select__option--selected': option.value === modelValue },
               ]"
               @click="select(option)"
             >

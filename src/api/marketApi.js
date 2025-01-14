@@ -12,3 +12,14 @@ export const getHistory = async (filter) => {
 	const { data } = await api.post(`/users/history/`, tmpData);
 	return data;
 };
+
+export const validatePaymentAddress = async (data) => {
+	const response = await api.post(`/payment/validate`, data, { noUID: true });
+	return response.data;
+};
+
+
+export const withdrawBalance = async (data) => {
+	const response = await api.post(`/users/withdrawBalance/`, data);
+	return response.data;
+}
