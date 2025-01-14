@@ -9,7 +9,7 @@ export const getHistory = async (filter) => {
 	const tmpData = {
 		filter
 	}
-	const { data } = await api.post(`/users/history/`, tmpData);
+	const { data } = await api.post(`/users/history`, tmpData);
 	return data;
 };
 
@@ -20,6 +20,6 @@ export const validatePaymentAddress = async (data) => {
 
 
 export const withdrawBalance = async (data) => {
-	const response = await api.post(`/users/withdrawBalance/`, data);
+	const response = await api.post(`/users/withdrawBalance`, data);
 	return response.data;
 }

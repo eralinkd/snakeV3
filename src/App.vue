@@ -26,15 +26,17 @@ const getTelegramQueryParams = () => {
 onMounted(async () => {
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   if (telegramInitData?.user) {
-    const { id, first_name, last_name, username, photo_url, auth_date, hash } = telegramInitData.user
+    const { id, first_name, last_name, username, photo_url } = telegramInitData.user
+    const auth_date = telegramInitData.auth_date
+    const hash = telegramInitData.hash
 
     userStore.setUserData({
-      first_name: first_name,
-      last_name: last_name,
-      username: username,
-      photo_url: photo_url,
-      auth_date: telegramInitData.auth_date,
-      hash: telegramInitData.hash
+      first_name,
+      last_name,
+      username,
+      photo_url,
+      auth_date,
+      hash
     })
 
     if (id) {
