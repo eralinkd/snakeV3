@@ -1,21 +1,15 @@
 <template>
-  <li class="history-card plateBg">
-    <div class="history-card__content">
-      <div class="history-card__info">
-        <span class="history-card__type">{{ getOperationType }}</span>
-        <span class="history-card__date">{{ formatDate }}</span>
-      </div>
-      <div class="history-card__amount">
-        <span :class="['history-card__value', getStatusClass]">
-          {{ getAmountWithSign }}
-        </span>
-        <span class="history-card__currency">{{ item.currency }}</span>
-      </div>
+  <article :class="['history-card', cardClasses]">
+    <CurrencyInfo :imgSrc="imageSrc" :title="item.crypto" :text="getStatusText" />
+    <div class="history-card__info">
+      <span>{{ formatAmount(item.amount, item.paymentType) }}</span>
     </div>
-  </li>
+  </article>
 </template>
 
 <script setup>
+import CurrencyInfo from '@/components/CurrencyInfo.vue'
+import { currencyImages } from '@/constants/constants'
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -25,36 +19,33 @@ const props = defineProps({
   },
 })
 
-const getOperationType = computed(() => {
-  const types = {
-    REPLENISHMENT: 'Пополнение',
-    WITHDRAW: 'Вывод',
-    SWAP: 'Обмен',
+// Получение данных для SWAP операции
+// const [cryptoTo, amountTo] = computed(() => {
+//   if (!props.item.source) return []
+//   return props.item.source.split('|')
+// })
+
+const imageSrc = computed(() => currencyImages[props.item.apiName] || currencyImages.default)
+
+const cardClasses = computed(() => ({
+  'history-card--withdraw': props.item.paymentType === 'WITHDRAW',
+  'history-card--deposit': props.item.paymentType === 'REPLENISHMENT',
+  'history-card--swap': props.item.paymentType === 'SWAP',
+}))
+
+const getStatusText = computed(() => {
+  if (props.item.paymentType === 'WITHDRAW') {
+    if (props.item.confirmed) return 'Успех'
+    if (props.item.canceled) return 'Отклонён'
+    return 'Обработка . . .'
   }
-  return types[props.item.type] || props.item.type
+  return '50 мин назад'
 })
 
-const getStatusClass = computed(() => {
-  const classes = {
-    REPLENISHMENT: 'history-card__value--success',
-    WITHDRAW: 'history-card__value--warning',
-    SWAP: 'history-card__value--pending',
-  }
-  return classes[props.item.type]
-})
-
-const getAmountWithSign = computed(() => {
-  const sign = props.item.type === 'REPLENISHMENT' ? '+' : '-'
-  return `${sign}${props.item.amount}`
-})
-
-const formatDate = computed(() => {
-  return new Date(props.item.date).toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-  })
-})
+const formatAmount = (amount, operationType) => {
+  const sign = operationType === 'WITHDRAW' ? '-' : operationType === 'REPLENISHMENT' ? '+' : ''
+  return `${sign}${amount}`
+}
 </script>
 
 <style lang="scss" scoped>
@@ -63,63 +54,57 @@ const formatDate = computed(() => {
 .history-card {
   border-radius: 16px;
   padding: 20px;
-  @media (max-width: $smallBreakpoint) {
-    padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  backdrop-filter: blur(15px);
+  box-shadow: 0px 7px 30px 0px rgba(0, 0, 0, 0.27);
+  &--withdraw {
+    background: linear-gradient(90deg, rgba(27, 24, 41, 0.75) 0%, rgba(61, 29, 51, 0.75) 100%);
+    & span {
+      color: $warning;
+    }
+    @media (any-hover: hover) {
+      &:hover {
+        background: linear-gradient(90deg, rgba(52, 46, 81, 0.75) 0%, rgba(100, 45, 83, 0.75) 100%);
+      }
+    }
   }
-
-  &__content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  &--deposit {
+    background: linear-gradient(90deg, rgba(27, 24, 41, 0.75) 0%, rgba(24, 45, 48, 0.75) 100%);
+    & span {
+      color: $success;
+    }
+    @media (any-hover: hover) {
+      &:hover {
+        background: linear-gradient(90deg, rgba(52, 46, 81, 0.75) 0%, rgba(36, 71, 75, 0.75) 100%);
+      }
+    }
+  }
+  &--swap {
+    background: linear-gradient(90deg, rgba(27, 24, 41, 0.75) 0%, rgba(45, 37, 74, 0.75) 100%);
+    @media (any-hover: hover) {
+      &:hover {
+        background: linear-gradient(90deg, rgba(76, 64, 120, 0.75) 0%, rgba(52, 46, 81, 0.75) 100%);
+      }
+    }
   }
 
   &__info {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-  }
-
-  &__type {
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.5;
-    @media (max-width: $smallBreakpoint) {
-      font-size: 14px;
+    & > span {
+      letter-spacing: 2px;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.2;
     }
   }
 
-  &__date {
-    font-size: 12px;
-    opacity: 0.6;
-  }
-
-  &__amount {
-    text-align: right;
-  }
-
-  &__value {
-    display: block;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 1.2;
-    @media (max-width: $smallBreakpoint) {
-      font-size: 18px;
-    }
-
-    &--success {
-      color: $success;
-    }
-    &--warning {
-      color: $warning;
-    }
-    &--pending {
-      color: $pending;
-    }
-  }
-
-  &__currency {
-    font-size: 12px;
-    opacity: 0.6;
+  @media (max-width: $smallBreakpoint) {
+    padding: 12px 16px;
   }
 }
 </style>

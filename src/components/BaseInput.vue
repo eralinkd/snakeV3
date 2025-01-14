@@ -10,7 +10,6 @@
         :class="[className, { 'base-input__field--error': hasError }]"
         :placeholder="placeholder"
         :disabled="disabled"
-        :required="required"
         :type="type"
         @input="onInput"
         @blur="onBlur"

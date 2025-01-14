@@ -19,7 +19,7 @@ const props = defineProps({
     required: true,
   },
   balance: {
-    type: Number,
+    type: [Number, String],
     required: true,
   },
 })

@@ -5,7 +5,9 @@
     </div>
     <div class="currency-info__info">
       <p class="currency-info__name">{{ title }}</p>
-      <span v-if="text" class="currency-info__type">{{ text }}</span>
+      <slot name="text">
+        <span v-if="text" class="currency-info__type">{{ text }}</span>
+      </slot>
     </div>
   </div>
 </template>
