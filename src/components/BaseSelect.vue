@@ -18,6 +18,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  optionsClass: {
+    type: String,
+    default: '',
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'select'])
@@ -130,7 +134,7 @@ onBeforeUnmount(() => {
         <ul
           v-if="isOpen"
           ref="dropdownRef"
-          class="select__options"
+          :class="['select__options', optionsClass]"
           :style="{
             position: 'absolute',
             ...getDropdownPosition(),

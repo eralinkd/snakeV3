@@ -8,10 +8,15 @@
       <p class="error">Failed to fetch data</p>
     </div>
 
-    <template v-if="history">
-      <BaseSelect v-model="selectedFilter" :options="filters" class="history__filter">
+    <template v-if="history && !isError">
+      <BaseSelect
+        v-model="selectedFilter"
+        :options="filters"
+        class="history__filter"
+        options-class="history__filter-list"
+      >
         <template #trigger="{ selected, isOpen }">
-          <button class="filter-button plateBg">
+          <button :class="['filter-button plateBg', { 'filter-button--active': isOpen }]">
             <div class="filter-button__img-container">
               <img :src="selected.icon" alt="filter icon" />
             </div>
@@ -38,6 +43,19 @@
               </svg>
             </div>
           </button>
+        </template>
+        <template #options="{ options, select }">
+          <li
+            v-for="option in options.filter((opt) => opt.value !== selectedFilter)"
+            :key="option.value"
+            @click="select(option)"
+            class="history__select-option select-option"
+          >
+            <div class="select-option__img-container">
+              <img :src="option.icon" alt="filter icon" />
+            </div>
+            <span>{{ option.label }}</span>
+          </li>
         </template>
       </BaseSelect>
 
@@ -83,6 +101,17 @@ const {
 })
 </script>
 
+<style lang="scss">
+//костыль для того что бы к списку из BaseSelect можно было применить стили, так как он через Teleport перемещен в #app
+@use '@/styles/variables.scss' as *;
+
+.history__filter-list {
+  width: calc(100% - 36px);
+  background: $plateBg !important;
+  backdrop-filter: blur(15px);
+}
+</style>
+
 <style lang="scss" scoped>
 @use '@/styles/variables.scss' as *;
 
@@ -127,12 +156,21 @@ const {
 }
 
 .filter-button {
+  -webkit-tap-highlight-color: transparent;
   width: 100%;
   padding: 18px 20px;
   border-radius: 16px;
   display: flex;
   align-items: center;
   gap: 16px;
+  transition: all 0.3s ease 0s;
+  &--active {
+    background: linear-gradient(
+      281.12deg,
+      rgba(27, 24, 41, 0.75) -31.08%,
+      rgba(76, 64, 120, 0.75) 169.48%
+    );
+  }
   & > span {
     text-align-last: left;
     flex: 1 1 auto;
@@ -163,6 +201,59 @@ const {
     transition: all 0.3s ease 0s;
     &--rotate {
       transform: rotate(-180deg);
+    }
+  }
+  @media (max-width: $smallBreakpoint) {
+    padding: 10px 20px;
+    & > span {
+      font-size: 14px;
+    }
+  }
+}
+
+.select-option {
+  width: 100%;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-radius: 10px;
+  background: $plateBg;
+  cursor: pointer;
+  @media (any-hover: hover) {
+    &:hover {
+      background: linear-gradient(
+        281.12deg,
+        rgba(27, 24, 41, 0.75) -31.08%,
+        rgba(76, 64, 120, 0.75) 169.48%
+      );
+    }
+  }
+  &:active {
+    background: linear-gradient(
+      281.12deg,
+      rgba(27, 24, 41, 0.75) -31.08%,
+      rgba(76, 64, 120, 0.75) 169.48%
+    );
+  }
+  & > span {
+    text-align-last: left;
+    flex: 1 1 auto;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  &__img-container {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    & > img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
   }
   @media (max-width: $smallBreakpoint) {

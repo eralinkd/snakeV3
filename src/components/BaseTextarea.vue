@@ -13,7 +13,6 @@
         :class="[className, { 'base-textarea__field--error': hasError }]"
         :placeholder="placeholder"
         :disabled="disabled"
-        :required="required"
         @input="onInput"
         @blur="onBlur"
         @focus="onFocus"

@@ -23,11 +23,21 @@ const marketStore = useMarketStore()
 const imageSrc = computed(() => currencyImages[props.item.apiName] || currencyImages.default)
 
 const selectedAction = ref('')
-const actions = [
-  { value: 'deposit', label: 'Пополнить' },
-  { value: 'withdraw', label: 'Вывести' },
-  { value: 'swap', label: 'Обмен' },
-]
+const actions = computed(() => {
+  const availableActions = []
+
+  if (props.item.replenishment) {
+    availableActions.push({ value: 'deposit', label: 'Пополнить' })
+  }
+  if (props.item.withdraw) {
+    availableActions.push({ value: 'withdraw', label: 'Вывести' })
+  }
+  if (props.item.swap) {
+    availableActions.push({ value: 'swap', label: 'Обмен' })
+  }
+
+  return availableActions
+})
 
 const isWithdrawOpen = ref(false)
 
