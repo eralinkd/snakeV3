@@ -36,6 +36,8 @@ onMounted(async () => {
         last_name,
         username,
         photo_url,
+        auth_date,
+        hash
       })
 
       if (id) {
