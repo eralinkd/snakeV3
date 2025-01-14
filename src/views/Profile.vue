@@ -200,6 +200,12 @@ watch(
     box-shadow: 0px 7px 30px 0px #00000045;
     backdrop-filter: blur(15px);
 
+    img {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+    }
+
     .info-text {
       display: flex;
       flex-direction: column;
