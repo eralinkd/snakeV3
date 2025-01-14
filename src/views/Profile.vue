@@ -112,6 +112,7 @@ watch(
   userData,
   (newValue) => {
     if (!isError.value) {
+      console.log(newValue)
       user.value = newValue
     }
   },
