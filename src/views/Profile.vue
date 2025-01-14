@@ -16,7 +16,7 @@
       </div>
 
       <div class="info">
-        <img :src="userData?.photo_url || avatarSrc" alt="avatar" />
+        <img class="avatar" :src="userData?.photo_url || avatarSrc" alt="avatar" />
         <div class="info-text">
           <p class="username">{{ userData?.first_name || 'Username' }}</p>
           <p class="scoin"><img :src="scoinSrc" alt="scoin" />{{ user?.balances?.SCOIN || '0' }}</p>
@@ -200,7 +200,7 @@ watch(
     box-shadow: 0px 7px 30px 0px #00000045;
     backdrop-filter: blur(15px);
 
-    img {
+    .avatar {
       width: 72px;
       height: 72px;
       border-radius: 50%;
