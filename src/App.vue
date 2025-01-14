@@ -42,8 +42,11 @@ onMounted(async () => {
     if (id) {
       userStore.setUserId(id)
     }
-
-    authHeader = `id=${id}&first_name=${first_name}&last_name=${last_name}&auth_date=${auth_date}&hash=${hash}`
+    if (last_name) {
+      authHeader = `id=${id}&first_name=${first_name}&last_name=${last_name}&auth_date=${auth_date}&hash=${hash}`
+    } else {
+      authHeader = `id=${id}&first_name=${first_name}&auth_date=${auth_date}&hash=${hash}`
+    }
   }
 
   const token = await postAuth(authHeader)
