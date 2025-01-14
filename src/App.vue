@@ -29,7 +29,8 @@ onMounted(async () => {
   try {
     const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
     if (telegramInitData?.user) {
-      const { id, first_name, last_name, username, photo_url } = telegramInitData.user
+      const { id, first_name, last_name, username, photo_url, auth_date, hash } = telegramInitData.user
+      console.log(telegramInitData.user)
 
       userStore.setUserData({
         first_name,
