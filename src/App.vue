@@ -13,9 +13,11 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/userStore'
 import Navigation from '@/components/Navigation.vue'
 import { postAddRef } from '@/api/referralApi'
+import { postAuth } from '@/api/auth'
 
 const router = useRouter()
 const userStore = useUserStore()
+let authHeader = `id=${1}`
 
 const getTelegramQueryParams = () => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -39,15 +41,20 @@ onMounted(async () => {
       if (id) {
         userStore.setUserId(id)
       }
+
+      authHeader = `id=${id}&first_name=${first_name}&last_name=${last_name}&auth_date=${auth_date}&hash=${hash}`
     }
+  } catch (error) {
+    console.error('Error initializing Telegram Web App:', error)
+  } finally {
+    const token = await postAuth(authHeader)
+    userStore.setToken(token.token)
 
     const queryParams = getTelegramQueryParams()
     const refCode = queryParams?.start_param
     if (refCode) {
       await postAddRef(refCode)
     }
-  } catch (error) {
-    console.error('Error initializing Telegram Web App:', error)
   }
 })
 </script>
