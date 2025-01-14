@@ -30,15 +30,14 @@ onMounted(async () => {
     const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
     if (telegramInitData?.user) {
       const { id, first_name, last_name, username, photo_url, auth_date, hash } = telegramInitData.user
-      console.log(telegramInitData.user)
 
       userStore.setUserData({
         first_name,
         last_name,
         username,
         photo_url,
-        auth_date,
-        hash
+        auth_date: telegramInitData.auth_date,
+        hash: telegramInitData.hash
       })
 
       if (id) {
