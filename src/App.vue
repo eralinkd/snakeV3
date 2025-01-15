@@ -63,6 +63,7 @@ onMounted(async () => {
   }
 
   authHeader = window.Telegram?.WebApp?.initData
+  console.log(authHeader)
 
   const token = await postAuth(authHeader)
   userStore.setToken(token.token)
