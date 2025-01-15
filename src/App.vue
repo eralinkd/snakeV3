@@ -25,13 +25,24 @@ const getTelegramQueryParams = () => {
 onMounted(async () => {
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   if (telegramInitData) {
-    const userData = {
-      ...telegramInitData.user,
-      ...telegramInitData
-    }
-    delete userData.user
+    const headerParams = []
 
-    const authHeader = `user=${JSON.stringify(userData)}`
+    // if (telegramInitData.user) {
+    //   Object.entries(telegramInitData.user).forEach(([key, value]) => {
+    //     if (value !== undefined && value !== null) {
+    //       headerParams.push(`${key}=${value}`)
+    //     }
+    //   })
+    // }
+
+    // Object.entries(telegramInitData).forEach(([key, value]) => {
+    //   if (key !== 'user' && value !== undefined && value !== null) {
+    //     headerParams.push(`${key}=${value}`)
+    //   }
+    // })
+
+    const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
+    console.log(authHeader)
 
     userStore.setUserData({
       first_name: telegramInitData.user?.first_name,
@@ -44,7 +55,6 @@ onMounted(async () => {
       userStore.setUserId(telegramInitData.user.id)
     }
 
-    console.log(authHeader)
     const token = await postAuth(authHeader)
     userStore.setToken(token.token)
   }
