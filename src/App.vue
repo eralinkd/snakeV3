@@ -25,25 +25,22 @@ const getTelegramQueryParams = () => {
 onMounted(async () => {
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   if (telegramInitData) {
-    const headerParams = []
 
-    // if (telegramInitData.user) {
-    //   Object.entries(telegramInitData.user).forEach(([key, value]) => {
-    //     if (value !== undefined && value !== null) {
-    //       headerParams.push(`${key}=${value}`)
-    //     }
-    //   })
-    // }
-
-    // Object.entries(telegramInitData).forEach(([key, value]) => {
-    //   if (key !== 'user' && value !== undefined && value !== null) {
-    //     headerParams.push(`${key}=${value}`)
-    //   }
-    // })
-
+    // Получение данных из Telegram WebApp initData
     const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
-    console.log(authHeader)
 
+    // Создание строки проверки
+    const dataKeys = Object.keys(authHeader).filter(v => v !== 'hash').sort()
+
+    // Формируем строку вида key=<value>
+    const items = dataKeys.map(key => key + '=' + authHeader[key])
+
+    // Создаем строку для проверки с разделителем новой строки
+    const dataCheckString = items.join('&')
+
+    console.log(dataCheckString)
+
+    // Устанавливаем данные пользователя в хранилище
     userStore.setUserData({
       first_name: telegramInitData.user?.first_name,
       last_name: telegramInitData.user?.last_name,
@@ -55,10 +52,12 @@ onMounted(async () => {
       userStore.setUserId(telegramInitData.user.id)
     }
 
-    const token = await postAuth(authHeader)
+    // Отправляем строку проверки (dataCheckString) на сервер для аутентификации
+    const token = await postAuth(dataCheckString)
     userStore.setToken(token.token)
   }
 
+  // Обработка параметра запроса "start_param" (реферальный код)
   const queryParams = getTelegramQueryParams()
   const refCode = queryParams?.start_param
   if (refCode) {
