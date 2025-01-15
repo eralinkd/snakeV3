@@ -30,7 +30,7 @@ onMounted(async () => {
     const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
 
     // Создание строки проверки
-    const dataKeys = Object.keys(authHeader).filter(v => v !== 'hash').sort()
+    const dataKeys = Object.keys(authHeader).sort()
 
     // Формируем строку вида key=<value>
     const items = dataKeys.map(key => key + '=' + authHeader[key])
