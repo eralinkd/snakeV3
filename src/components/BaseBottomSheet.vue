@@ -51,7 +51,7 @@ const handleTouchEnd = () => {
   sheet.value.style.transition = 'transform 0.3s ease'
   const sheetHeight = sheet.value.offsetHeight
 
-  if (currentY.value > sheetHeight * 0.8) {
+  if (currentY.value > sheetHeight * 0.4) {
     close()
   } else {
     sheet.value.style.transform = 'translateY(0)'
@@ -121,6 +121,7 @@ const handleTouchEnd = () => {
     box-shadow: 0px 7px 30px 0px rgba(0, 0, 0, 0.27);
     backdrop-filter: blur(15px);
     padding: 40px 24px 100px 24px;
+    overflow-y: auto;
   }
 
   &__drag-handle {

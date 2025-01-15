@@ -24,7 +24,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:isOpen'])
+const emit = defineEmits(['update:isOpen', 'success'])
 
 // Form state
 const amount = ref('')
@@ -38,6 +38,7 @@ const imageSrc = computed(() => currencyImages[props.currency.apiName] || curren
 const withdrawMutation = useMutation({
   mutationFn: (data) => withdrawBalance(data),
   onSuccess: () => {
+    emit('success')
     closeModal()
   },
   onError: (error) => {

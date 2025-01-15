@@ -2,7 +2,6 @@
   <div class="wrapper">
     <main class="main">
       <router-view class="router-content" />
-      {{ authHeader }}
     </main>
     <Navigation />
   </div>

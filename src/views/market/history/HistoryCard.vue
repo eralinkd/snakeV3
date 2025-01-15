@@ -1,8 +1,31 @@
 <template>
   <article :class="['history-card', cardClasses]">
-    <CurrencyInfo :imgSrc="imageSrc" :title="item.crypto" :text="getStatusText" />
+    <CurrencyInfo v-if="item.paymentType === 'WITHDRAW'" :imgSrc="imageSrc" :title="item.crypto">
+      <template #text>
+        <div class="history-card__status-wrapper">
+          <div class="history-card__status-image">
+            <img :src="pendingIcon" alt="pending" v-if="!item.confirmed && !item.canceled" />
+            <img :src="errorIcon" alt="error" v-else-if="item.canceled && !item.confirmed" />
+            <img :src="successIcon" alt="success" v-else-if="item.confirmed && !item.canceled" />
+          </div>
+          <span
+            class="history-card__status"
+            :class="{
+              'history-card__status--processing': !item.confirmed && !item.canceled,
+              'history-card__status--error': item.canceled && !item.confirmed,
+              'history-card__status--success': item.confirmed && !item.canceled,
+            }"
+          >
+            {{ getStatusText }}
+          </span>
+        </div>
+      </template>
+    </CurrencyInfo>
+    <CurrencyInfo v-else :imgSrc="imageSrc" :title="item.crypto" text="50 мин назад" />
     <div class="history-card__info">
-      <span>{{ formatAmount(item.amount, item.paymentType) }}</span>
+      <span class="history-card__amount history-card-amount">{{
+        formatAmount(item.amount, item.paymentType)
+      }}</span>
     </div>
   </article>
 </template>
@@ -11,6 +34,9 @@
 import CurrencyInfo from '@/components/CurrencyInfo.vue'
 import { currencyImages } from '@/constants/constants'
 import { computed } from 'vue'
+import pendingIcon from '@/assets/history/pending.svg'
+import successIcon from '@/assets/history/succeed.svg'
+import errorIcon from '@/assets/history/declined.svg'
 
 const props = defineProps({
   item: {
@@ -63,7 +89,7 @@ const formatAmount = (amount, operationType) => {
   box-shadow: 0px 7px 30px 0px rgba(0, 0, 0, 0.27);
   &--withdraw {
     background: linear-gradient(90deg, rgba(27, 24, 41, 0.75) 0%, rgba(61, 29, 51, 0.75) 100%);
-    & span {
+    .history-card-amount {
       color: $warning;
     }
     @media (any-hover: hover) {
@@ -74,7 +100,7 @@ const formatAmount = (amount, operationType) => {
   }
   &--deposit {
     background: linear-gradient(90deg, rgba(27, 24, 41, 0.75) 0%, rgba(24, 45, 48, 0.75) 100%);
-    & span {
+    .history-card-amount {
       color: $success;
     }
     @media (any-hover: hover) {
@@ -105,6 +131,26 @@ const formatAmount = (amount, operationType) => {
 
   @media (max-width: $smallBreakpoint) {
     padding: 12px 16px;
+  }
+}
+
+.history-card__status-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.history-card__status {
+  font-size: 10px;
+  line-height: 1.5;
+  &--success {
+    color: $success;
+  }
+  &--error {
+    color: $warning;
+  }
+  &--processing {
+    color: $pending;
   }
 }
 </style>

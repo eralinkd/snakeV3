@@ -19,7 +19,11 @@ const {
   cacheTime: 30 * 60 * 1000, // 30 minutes
 })
 
-const { data: balancesResponse, isError: isBalancesError } = useQuery({
+const {
+  data: balancesResponse,
+  isError: isBalancesError,
+  refetch: refetchBalances,
+} = useQuery({
   queryKey: ['balances'],
   queryFn: getUser,
 })
@@ -51,6 +55,7 @@ watch(
         :key="currency.fullName"
         :item="currency"
         :amount="balances?.[currency.apiName]"
+        :on-success-withdraw="refetchBalances"
       />
     </div>
   </div>

@@ -23,3 +23,8 @@ export const withdrawBalance = async (data) => {
 	const response = await api.post(`/users/withdrawBalance`, data);
 	return response.data;
 }
+
+export const replenishBalance = async (data) => {
+	const response = await api.post(`/users/replenishBalance`, data);
+	return response.data;
+}
