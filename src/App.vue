@@ -43,9 +43,9 @@ onMounted(async () => {
       userStore.setUserId(id)
     }
     if (last_name) {
-      authHeader = `id=${id}&first_name=${first_name}&last_name=${last_name}&auth_date=${auth_date}&hash=${hash}`
+      authHeader = `id=${id}&first_name=${first_name}&last_name=${last_name}&username=${username}&auth_date=${auth_date}&hash=${hash}`
     } else {
-      authHeader = `id=${id}&first_name=${first_name}&auth_date=${auth_date}&hash=${hash}`
+      authHeader = `id=${id}&first_name=${first_name}&username=${username}&auth_date=${auth_date}&hash=${hash}`
     }
   }
 
