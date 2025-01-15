@@ -1,11 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { fetchProducts } from '@/api/storeApi'
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import BaseTabs from '@/components/BaseTabs.vue'
-import StoreCard from './ShopCard.vue'
-import StoreModal from './StoreModal.vue'
+import ShopCard from './ShopCard.vue'
 import Spinner from '@/components/Spinner.vue'
+import ShopModal from './ShopModal.vue'
 
 const FILTER_TABS = [
   { value: 'NONE', name: 'Все' },
@@ -30,9 +30,23 @@ const {
 } = useQuery({
   queryKey: ['products', selectedTab],
   queryFn: () => fetchProducts(selectedTab.value),
-  staleTime: 30 * 60 * 1000, // Consider data fresh for 30 minutes
-  cacheTime: 35 * 60 * 1000, // Keep in cache for 35 minutes
+  staleTime: 30 * 60 * 1000,
+  cacheTime: 35 * 60 * 1000,
 })
+
+const selectedProduct = ref(null)
+const isModalOpen = ref(false)
+
+const queryClient = useQueryClient()
+
+const handleOpenModal = (product) => {
+  selectedProduct.value = product
+  isModalOpen.value = true
+}
+
+const handleModalClose = () => {
+  queryClient.invalidateQueries({ queryKey: ['products', selectedTab.value] })
+}
 </script>
 
 <template>
@@ -47,11 +61,20 @@ const {
         <Spinner />
       </div>
       <ul v-else-if="products" class="shop__list">
-        <StoreCard v-for="product in products" :key="product.title" :product="product" />
+        <ShopCard
+          v-for="product in products"
+          :key="product.title"
+          :product="product"
+          @click="handleOpenModal(product)"
+        />
       </ul>
     </template>
 
-    <StoreModal />
+    <ShopModal
+      v-model:isOpen="isModalOpen"
+      :product="selectedProduct"
+      @after-close="handleModalClose"
+    />
   </section>
 </template>
 

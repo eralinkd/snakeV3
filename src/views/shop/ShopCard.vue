@@ -10,13 +10,24 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['openModal'])
+const emit = defineEmits(['click'])
+
+const handleClick = () => {
+  if (props.product.available) {
+    emit('click', props.product)
+  }
+}
 </script>
 
 <template>
-  <article :class="{ 'store-card plateBg': true, 'store-card--unavailable': !product.available }">
+  <article
+    :class="{ 'store-card plateBg': true, 'store-card--unavailable': !product.available }"
+    @click="handleClick"
+  >
     <div class="store-card__image">
-      <span v-if="!product.available" class="store-card__unavailable">Распродано</span>
+      <span v-if="!product.available" class="store-card__unavailable">{{
+        product.productType === 'EGG' ? 'Недоступно' : 'Распродано'
+      }}</span>
       <img :src="product?.imgSrc || noImage" :alt="product.name" />
     </div>
 
@@ -42,6 +53,8 @@ const emit = defineEmits(['openModal'])
 
 .store-card {
   border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
   &--unavailable {
     pointer-events: none;
     opacity: 0.8;

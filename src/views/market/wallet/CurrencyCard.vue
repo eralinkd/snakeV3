@@ -6,6 +6,7 @@ import CurrencyInfo from '@/components/CurrencyInfo.vue'
 import { currencyImages } from '@/constants/constants'
 import BaseSelect from '@/components/BaseSelect.vue'
 import WithdrawBottomSheet from './WithdrawBottomSheet.vue'
+import DepositBottomSheet from './DepositBottomSheet.vue'
 
 const props = defineProps({
   item: {
@@ -15,6 +16,10 @@ const props = defineProps({
   amount: {
     type: [Number, String],
     default: '0.00',
+  },
+  onSuccessWithdraw: {
+    type: Function,
+    default: () => {},
   },
 })
 
@@ -40,12 +45,15 @@ const actions = computed(() => {
 })
 
 const isWithdrawOpen = ref(false)
+const isDepositOpen = ref(false)
 
 const handleAction = (action) => {
   if (action.value === 'swap') {
     marketStore.setActiveTab(MARKET_TAB_NAMES.SWAP)
   } else if (action.value === 'withdraw') {
     isWithdrawOpen.value = true
+  } else if (action.value === 'deposit') {
+    isDepositOpen.value = true
   }
 }
 </script>
@@ -100,7 +108,14 @@ const handleAction = (action) => {
     </div>
   </article>
 
-  <WithdrawBottomSheet v-model:is-open="isWithdrawOpen" :currency="item" :balance="amount" />
+  <WithdrawBottomSheet
+    v-model:is-open="isWithdrawOpen"
+    :currency="item"
+    :balance="amount"
+    @success="onSuccessWithdraw"
+  />
+
+  <DepositBottomSheet v-model:is-open="isDepositOpen" :currency="item" :balance="amount" />
 </template>
 
 <style lang="scss" scoped>
