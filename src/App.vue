@@ -15,7 +15,6 @@ import { postAddRef } from '@/api/referralApi'
 import { postAuth } from '@/api/auth'
 
 const userStore = useUserStore()
-let authHeader = `id=${1}`
 
 const getTelegramQueryParams = () => {
   const urlParams = new URLSearchParams(window.location.search)
@@ -24,16 +23,12 @@ const getTelegramQueryParams = () => {
 }
 
 onMounted(async () => {
-  console.log(window)
-  console.log(window.Telegram)
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   if (telegramInitData) {
     const headerParams = []
-    console.log(telegramInitData)
 
     if (telegramInitData.user) {
-      const userData = telegramInitData.user
-      Object.entries(userData).forEach(([key, value]) => {
+      Object.entries(telegramInitData.user).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           headerParams.push(`${key}=${value}`)
         }
@@ -46,27 +41,23 @@ onMounted(async () => {
       }
     })
 
-    authHeader = headerParams.join('&')
+    const authHeader = headerParams.join('&')
 
     userStore.setUserData({
       first_name: telegramInitData.user?.first_name,
       last_name: telegramInitData.user?.last_name,
       username: telegramInitData.user?.username,
       photo_url: telegramInitData.user?.photo_url,
-      auth_date: telegramInitData?.auth_date,
-      hash: telegramInitData?.hash,
     })
 
     if (telegramInitData.user?.id) {
       userStore.setUserId(telegramInitData.user.id)
     }
+
+    console.log(authHeader)
+    const token = await postAuth(authHeader)
+    userStore.setToken(token.token)
   }
-
-  authHeader = window.Telegram?.WebApp?.initData
-  console.log(authHeader)
-
-  const token = await postAuth(authHeader)
-  userStore.setToken(token.token)
 
   const queryParams = getTelegramQueryParams()
   const refCode = queryParams?.start_param
