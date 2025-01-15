@@ -2,6 +2,7 @@
   <div class="wrapper">
     <main class="main">
       <router-view class="router-content" />
+      {{ authHeader }}
     </main>
     <Navigation />
   </div>
@@ -47,6 +48,7 @@ onMounted(async () => {
     } else {
       authHeader = `id=${id}&first_name=${first_name}&username=${username}&auth_date=${auth_date}&hash=${hash}`
     }
+    alert(authHeader)
   }
 
   const token = await postAuth(authHeader)
