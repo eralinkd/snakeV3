@@ -2,7 +2,6 @@
   <div class="wrapper">
     <main class="main">
       <router-view class="router-content" />
-      {{ telegramInitData }}
     </main>
     <Navigation />
   </div>
@@ -26,29 +25,37 @@ const getTelegramQueryParams = () => {
 
 onMounted(async () => {
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
-  if (telegramInitData?.user) {
-    const { id, first_name, last_name, username, photo_url } = telegramInitData.user
-    const auth_date = telegramInitData.auth_date
-    const hash = telegramInitData.hash
+  if (telegramInitData) {
+    const headerParams = []
 
-    console.log(telegramInitData)
+    if (telegramInitData.user) {
+      const userData = telegramInitData.user
+      Object.entries(userData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          headerParams.push(`${key}=${value}`)
+        }
+      })
+    }
 
-    userStore.setUserData({
-      first_name,
-      last_name,
-      username,
-      photo_url,
-      auth_date,
-      hash,
+    Object.entries(telegramInitData).forEach(([key, value]) => {
+      if (key !== 'user' && value !== undefined && value !== null) {
+        headerParams.push(`${key}=${value}`)
+      }
     })
 
-    if (id) {
-      userStore.setUserId(id)
-    }
-    if (last_name) {
-      authHeader = `id=${id}&first_name=${first_name}&last_name=${last_name}&username=${username}&auth_date=${auth_date}&hash=${hash}`
-    } else {
-      authHeader = `id=${id}&first_name=${first_name}&username=${username}&auth_date=${auth_date}&hash=${hash}`
+    authHeader = headerParams.join('&')
+
+    userStore.setUserData({
+      first_name: telegramInitData.user?.first_name,
+      last_name: telegramInitData.user?.last_name,
+      username: telegramInitData.user?.username,
+      photo_url: telegramInitData.user?.photo_url,
+      auth_date: telegramInitData?.auth_date,
+      hash: telegramInitData?.hash,
+    })
+
+    if (telegramInitData.user?.id) {
+      userStore.setUserId(telegramInitData.user.id)
     }
   }
 
