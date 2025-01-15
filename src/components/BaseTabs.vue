@@ -12,7 +12,7 @@ const props = defineProps({
   },
   components: {
     type: Object,
-    required: true,
+    default: {},
   },
   className: {
     type: String,
@@ -28,7 +28,7 @@ const setActiveTab = (tab) => {
 
 const currentComponent = computed(() => {
   const tab = props.tabs.find((t) => t.name === props.activeTab)
-  return tab ? props.components[tab.component] : null
+  return tab ? props.components?.[tab.component] : null
 })
 </script>
 
@@ -48,7 +48,7 @@ const currentComponent = computed(() => {
       </li>
     </ul>
 
-    <section class="tabs__section">
+    <section v-if="currentComponent" class="tabs__section">
       <Transition name="fade" mode="out-in" appear>
         <component :is="currentComponent" :key="activeTab" />
       </Transition>
