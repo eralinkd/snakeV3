@@ -42,6 +42,10 @@ const emit = defineEmits(['openModal'])
 
 .store-card {
   border-radius: 16px;
+  &--unavailable {
+    pointer-events: none;
+    opacity: 0.8;
+  }
   &__image {
     padding-bottom: 80%;
     position: relative;
@@ -59,6 +63,15 @@ const emit = defineEmits(['openModal'])
 
   &__unavailable {
     position: absolute;
+    bottom: 10px;
+    left: 15px;
+    z-index: 2;
+    background: $warning;
+    padding: 6px 12px;
+    border-radius: 18px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 150%;
   }
 
   &__content {
