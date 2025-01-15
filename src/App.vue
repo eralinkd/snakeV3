@@ -37,7 +37,7 @@ onMounted(async () => {
       username,
       photo_url,
       auth_date,
-      hash
+      hash,
     })
 
     if (id) {
@@ -49,6 +49,7 @@ onMounted(async () => {
       authHeader = `id=${id}&first_name=${first_name}&username=${username}&auth_date=${auth_date}&hash=${hash}`
     }
     alert(authHeader)
+    console.log('authHeader', authHeader)
   }
 
   const token = await postAuth(authHeader)
