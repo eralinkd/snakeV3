@@ -24,6 +24,8 @@ const getTelegramQueryParams = () => {
 }
 
 onMounted(async () => {
+  console.log(window)
+  console.log(window.Telegram)
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   if (telegramInitData) {
     const headerParams = []
