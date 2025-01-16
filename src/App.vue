@@ -52,8 +52,9 @@ onMounted(async () => {
       userStore.setUserId(telegramInitData.user.id)
     }
 
-    // Отправляем строку проверки (dataCheckString) на сервер для аутентификации
-    const token = await postAuth(dataCheckString)
+    const testDataCheckString = 'auth_date=1736960774&chat_instance=8610356838351439092&chat_type=private&hash=f11aaab0a3b3deb9f3140fdd216c46086947d4426081f27da0c85f5dbc142e51&signature=9cgzhZs_ncdtZTBRXylP7OXnNl5PveVFlAdYzExgMWYil9Vh38gZeekt5Khcvcjwtzvd1hH--WTF--7unJrtDg&user={"id":1,"first_name":"eralinkd","last_name":"","username":"sb_newest","language_code":"ru","allows_write_to_pm":true,"photo_url":"https:\/\/t.me\/i\/userpic\/320\/t8iGW7XVQ3k-EvpOOkPQ0IawHU5MwdAHEG5QJrYx3Gs.svg"}'
+    // const token = await postAuth(dataCheckString)
+    const token = await postAuth(testDataCheckString)
     userStore.setToken(token.token)
   }
 
