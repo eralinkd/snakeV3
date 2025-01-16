@@ -7,7 +7,6 @@ import { currencyImages } from '@/constants/constants'
 import BaseTextarea from '@/components/BaseTextarea.vue'
 import { replenishBalance } from '@/api/marketApi'
 import Spinner from '@/components/Spinner.vue'
-import QRCodeVue3 from 'qrcode-vue3'
 
 const props = defineProps({
   isOpen: {
