@@ -26,22 +26,23 @@ const getTelegramQueryParams = () => {
 
 onMounted(async () => {
   console.log('=== onMounted start ===')
-  // Проверка на наличие данных в sessionStorage
   const storedToken = sessionStorage.getItem('userToken')
   const storedUserData = JSON.parse(sessionStorage.getItem('userData'))
   console.log('Stored data:', { storedToken, storedUserData })
 
-  // Пытаемся получить данные из Telegram
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   console.log('Telegram init data:', telegramInitData)
-
+  const formattedTelegramInitData = JSON.stringify(telegramInitData)
+  alert(`formattedTelegramInitData=${formattedTelegramInitData}`)
+  
   if (telegramInitData && env === 'prod') {
     console.log('Production mode with Telegram data')
     const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
     const dataKeys = Object.keys(authHeader).sort()
     const items = dataKeys.map((key) => key + '=' + authHeader[key])
-    const dataCheckString = items.join('&')
+    let dataCheckString = items.join('&')
     console.log('Auth data string:', dataCheckString)
+    alert(`dataCheckString before sessionStorage=${dataCheckString}`)
 
     userStore.setUserData({
       first_name: telegramInitData.user?.first_name,
@@ -55,12 +56,17 @@ onMounted(async () => {
       userStore.setUserId(telegramInitData.user.id)
       console.log('Set user ID:', telegramInitData.user.id)
     }
-
+    if (dataCheckString) {
+      sessionStorage.setItem('dataCheckString', dataCheckString)
+    }
+    else {
+      dataCheckString = sessionStorage.getItem('dataCheckString')
+    }
+    alert(`dataCheckString after sessionStorage=${dataCheckString}`)
     token = await postAuth(dataCheckString)
     console.log('Auth response:', token)
     if (token && token.token) {
       userStore.setToken(token.token)
-      // Сохраняем токен и данные в sessionStorage
       sessionStorage.setItem('userToken', token.token)
       sessionStorage.setItem('userData', JSON.stringify({
         first_name: telegramInitData.user?.first_name,
@@ -71,7 +77,6 @@ onMounted(async () => {
       console.log('Token saved to session storage')
     } else {
       console.error("Authorization failed");
-      // Если авторизация через Telegram не удалась, пробуем использовать данные из sessionStorage
       if (storedToken && storedUserData) {
         userStore.setToken(storedToken)
         userStore.setUserData(storedUserData)
@@ -87,12 +92,10 @@ onMounted(async () => {
     console.log('Dev auth response:', token)
     if (token && token.token) {
       userStore.setToken(token.token)
-      // Сохраняем токен и данные в sessionStorage для dev-режима
       sessionStorage.setItem('userToken', token.token)
       console.log('Dev token saved:', token.token)
     } else {
       console.error("Authorization failed for dev mode");
-      // Если авторизация в dev-режиме не удалась, пробуем использовать данные из sessionStorage
       if (storedToken && storedUserData) {
         userStore.setToken(storedToken)
         userStore.setUserData(storedUserData)
@@ -101,7 +104,6 @@ onMounted(async () => {
     }
   } else {
     console.log('env is not prod or dev');
-    // Если среда не определена, пробуем использовать данные из sessionStorage
     if (storedToken && storedUserData) {
       userStore.setToken(storedToken)
       userStore.setUserData(storedUserData)
