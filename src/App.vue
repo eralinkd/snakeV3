@@ -18,13 +18,6 @@ const userStore = useUserStore()
 let token
 const env = import.meta.env.VITE_ENV // prod or dev
 
-const getTelegramQueryParams = () => {
-  const urlParams = new URLSearchParams(window.location.search)
-  const startParam = urlParams.get('start_param')
-  console.log('startParam', startParam)
-  return { start_param: startParam }
-}
-
 onMounted(async () => {
   console.log('=== onMounted start ===')
   const storedToken = sessionStorage.getItem('userToken')
@@ -33,6 +26,7 @@ onMounted(async () => {
 
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   console.log('Telegram init data:', telegramInitData)
+  let startParam = telegramInitData.start_param
 
 
   if (telegramInitData && env === 'prod') {
@@ -109,12 +103,9 @@ onMounted(async () => {
     }
   }
 
-  const queryParams = getTelegramQueryParams()
-  console.log('Telegram query params:', queryParams)
-  const refCode = queryParams?.start_param
-  if (refCode) {
-    console.log('Adding referral code:', refCode)
-    await postAddRef(refCode)
+  if (startParam) {
+    console.log('Adding referral code:', startParam)
+    await postAddRef(startParam)
     console.log('Referral code added successfully')
   }
   console.log('=== onMounted end ===')
