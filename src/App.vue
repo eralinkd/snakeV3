@@ -20,6 +20,8 @@ const env = import.meta.env.VITE_ENV // prod or dev
 
 const getTelegramQueryParams = () => {
   const urlParams = new URLSearchParams(window.location.search)
+  // log window url
+  alert(window.location.href)
   const startParam = urlParams.get('startapp')
   return { startapp: startParam }
 }
@@ -33,8 +35,7 @@ onMounted(async () => {
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   console.log('Telegram init data:', telegramInitData)
   const formattedTelegramInitData = JSON.stringify(telegramInitData)
-  alert(`formattedTelegramInitData=${formattedTelegramInitData}`)
-  
+
   if (telegramInitData && env === 'prod') {
     console.log('Production mode with Telegram data')
     const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
@@ -42,7 +43,6 @@ onMounted(async () => {
     const items = dataKeys.map((key) => key + '=' + authHeader[key])
     let dataCheckString = items.join('&')
     console.log('Auth data string:', dataCheckString)
-    alert(`dataCheckString before sessionStorage=${dataCheckString}`)
 
     userStore.setUserData({
       first_name: telegramInitData.user?.first_name,
@@ -62,7 +62,6 @@ onMounted(async () => {
     else {
       dataCheckString = sessionStorage.getItem('dataCheckString')
     }
-    alert(`dataCheckString after sessionStorage=${dataCheckString}`)
     token = await postAuth(dataCheckString)
     console.log('Auth response:', token)
     if (token && token.token) {
