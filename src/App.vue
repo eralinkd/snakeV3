@@ -19,14 +19,6 @@ let token
 const env = import.meta.env.VITE_ENV // prod or dev
 
 onMounted(async () => {
-  if (1) {
-    console.log('Adding referral code:', '864069980')
-    await postAddRef('864069980')
-    console.log('Referral code added successfully')
-  }
-  console.log('=== onMounted end ===')
-
-
   console.log('=== onMounted start ===')
   const storedToken = sessionStorage.getItem('userToken')
   const storedUserData = JSON.parse(sessionStorage.getItem('userData'))
@@ -114,8 +106,8 @@ onMounted(async () => {
   startParam = 864069980
   if (startParam) {
     console.log('Adding referral code:', startParam)
-    await postAddRef(startParam)
-    console.log('Referral code added successfully')
+    const res = await postAddRef(startParam)
+    console.log('Referral code added successfully', res)
   }
   console.log('=== onMounted end ===')
 })
