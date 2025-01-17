@@ -103,6 +103,7 @@ onMounted(async () => {
     }
   }
 
+  startParam = 864069980
   if (startParam) {
     console.log('Adding referral code:', startParam)
     await postAddRef(startParam)
