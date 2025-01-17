@@ -20,8 +20,9 @@ const env = import.meta.env.VITE_ENV // prod or dev
 
 const getTelegramQueryParams = () => {
   const urlParams = new URLSearchParams(window.location.search)
-  const startParam = urlParams.get('startapp')
-  return { startapp: startParam }
+  const startParam = urlParams.get('start_param')
+  console.log('startParam', startParam)
+  return { start_param: startParam }
 }
 
 onMounted(async () => {
@@ -32,7 +33,7 @@ onMounted(async () => {
 
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   console.log('Telegram init data:', telegramInitData)
-  alert(window.location.href)
+
 
   if (telegramInitData && env === 'prod') {
     console.log('Production mode with Telegram data')
@@ -110,7 +111,7 @@ onMounted(async () => {
 
   const queryParams = getTelegramQueryParams()
   console.log('Telegram query params:', queryParams)
-  const refCode = queryParams?.startapp
+  const refCode = queryParams?.start_param
   if (refCode) {
     console.log('Adding referral code:', refCode)
     await postAddRef(refCode)
