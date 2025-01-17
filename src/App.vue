@@ -20,8 +20,8 @@ const env = import.meta.env.VITE_ENV // prod or dev
 
 const getTelegramQueryParams = () => {
   const urlParams = new URLSearchParams(window.location.search)
-  const startParam = urlParams.get('start_param')
-  return { start_param: startParam }
+  const startParam = urlParams.get('startapp')
+  return { startapp: startParam }
 }
 
 onMounted(async () => {
@@ -54,7 +54,8 @@ onMounted(async () => {
   userStore.setToken(token.token)
 
   const queryParams = getTelegramQueryParams()
-  const refCode = queryParams?.start_param
+  console.log(queryParams)
+  const refCode = queryParams?.startapp
   if (refCode) {
     await postAddRef(refCode)
   }
