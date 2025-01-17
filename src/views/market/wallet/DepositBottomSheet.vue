@@ -1,11 +1,11 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import BaseBottomSheet from '@/components/BaseBottomSheet.vue'
 import CurrencyInfo from '@/components/CurrencyInfo.vue'
 import { currencyImages } from '@/constants/constants'
-import BaseTextarea from '@/components/BaseTextarea.vue'
 import { replenishBalance } from '@/api/marketApi'
+import copyIcon from '../../../assets/copy-icon.svg'
 import Spinner from '@/components/Spinner.vue'
 
 const props = defineProps({
@@ -56,6 +56,15 @@ const closeModal = () => {
   emit('update:isOpen', false)
 }
 
+const copyToClipboard = async () => {
+  try {
+    await navigator.clipboard.writeText(depositAddress.value)
+    // Здесь можно добавить уведомление об успешном копировании
+  } catch (err) {
+    console.error('Failed to copy text: ', err)
+  }
+}
+
 // const qrOptions = {
 //   width: 300,
 //   color: {
@@ -83,36 +92,26 @@ const closeModal = () => {
         </div>
 
         <div v-else-if="depositAddress" class="deposit__qr">
-          <!-- <QRCodeVue3
-            :value="depositAddress"
-            :dots-options="{
-              type: 'dots',
-              color: '#836DCE',
-            }"
-            :corners-square-options="{
-              type: 'extra-rounded',
-              color: '#836DCE',
-            }"
-            :corners-dot-options="{
-              type: 'dot',
-              color: '#836DCE',
-            }"
-            render-as="svg"
-            :size="280"
-            level="L"
-            background="transparent"
-            foreground="#836DCE"
-            class="deposit__qr-code"
-          /> -->
           <img :src="qrCode" alt="QR код для пополнения" />
         </div>
 
-        <BaseTextarea
-          :model-value="depositAddress"
-          readonly
-          label="Адрес для пополнения"
-          placeholder="Адрес загружается..."
-        />
+        <div class="address-field plateBg">
+          <div class="address-field__content">
+            <div class="address-field__text-wrapper">
+              <span class="address-field__label">Адрес пополнения</span>
+              <div class="address-field__text">
+                {{ depositAddress || 'Адрес загружается...' }}
+              </div>
+            </div>
+            <button
+              class="address-field__copy-btn"
+              @click="copyToClipboard"
+              :disabled="!depositAddress"
+            >
+              <img :src="copyIcon" alt="Копировать" />
+            </button>
+          </div>
+        </div>
 
         <div class="deposit__info">
           <p>
@@ -199,6 +198,74 @@ const closeModal = () => {
     height: 200px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 12px;
+  }
+}
+
+.address-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 17px 20px;
+  border-radius: 16px;
+  position: relative;
+  margin-bottom: 10px;
+
+  &__label {
+    font-size: 10px;
+    line-height: 150%;
+    opacity: 0.8;
+    line-height: 1.5;
+  }
+
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__text-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+  }
+
+  &__text {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.5;
+    word-break: break-all;
+    @media (max-width: $smallBreakpoint) {
+      font-size: 14px;
+    }
+  }
+
+  &__copy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      opacity: 0.8;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    & > img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  @media (max-width: $smallBreakpoint) {
+    padding: 10px 14px 10px 10px;
   }
 }
 </style>

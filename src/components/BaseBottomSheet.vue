@@ -9,7 +9,7 @@ const props = defineProps({
   },
   maxHeight: {
     type: String,
-    default: '100vh',
+    default: '90vh',
   },
 })
 

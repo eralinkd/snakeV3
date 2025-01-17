@@ -114,7 +114,6 @@ const handleWithdraw = async () => {
             <span>Баланс</span>
           </div>
         </div>
-
         <BaseInput
           v-model="amount"
           type="number"
