@@ -25,35 +25,63 @@ const getTelegramQueryParams = () => {
 }
 
 onMounted(async () => {
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  // Проверка на наличие данных в sessionStorage
+  const storedToken = sessionStorage.getItem('userToken')
+  const storedUserData = JSON.parse(sessionStorage.getItem('userData'))
 
-  const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
-  if (telegramInitData && env === 'prod') {
-    const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
-    const dataKeys = Object.keys(authHeader).sort()
-    const items = dataKeys.map((key) => key + '=' + authHeader[key])
-    const dataCheckString = items.join('&')
-
-    userStore.setUserData({
-      first_name: telegramInitData.user?.first_name,
-      last_name: telegramInitData.user?.last_name,
-      username: telegramInitData.user?.username,
-      photo_url: telegramInitData.user?.photo_url,
-    })
-
-    if (telegramInitData.user?.id) {
-      userStore.setUserId(telegramInitData.user.id)
-    }
-
-    token = await postAuth(dataCheckString)
-  } else if (env === 'dev') {
-    const testDataCheckString =
-      'auth_date=1736960774&chat_instance=8610356838351439092&chat_type=private&hash=f11aaab0a3b3deb9f3140fdd216c46086947d4426081f27da0c85f5dbc142e51&signature=9cgzhZs_ncdtZTBRXylP7OXnNl5PveVFlAdYzExgMWYil9Vh38gZeekt5Khcvcjwtzvd1hH--WTF--7unJrtDg&user={"id":1,"first_name":"eralinkd","last_name":"","username":"sb_newest","language_code":"ru","allows_write_to_pm":true,"photo_url":"https:\/\/t.me\/i\/userpic\/320\/t8iGW7XVQ3k-EvpOOkPQ0IawHU5MwdAHEG5QJrYx3Gs.svg"}'
-    token = await postAuth(testDataCheckString)
+  if (storedToken && storedUserData) {
+    // Если данные есть в sessionStorage, загружаем их в хранилище пользователя
+    userStore.setToken(storedToken)
+    userStore.setUserData(storedUserData)
   } else {
-    console.log('env is not prod or dev')
+    // Если данных нет, инициализируем их через Telegram
+    const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
+    if (telegramInitData && env === 'prod') {
+      const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
+      const dataKeys = Object.keys(authHeader).sort()
+      const items = dataKeys.map((key) => key + '=' + authHeader[key])
+      const dataCheckString = items.join('&')
+
+      userStore.setUserData({
+        first_name: telegramInitData.user?.first_name,
+        last_name: telegramInitData.user?.last_name,
+        username: telegramInitData.user?.username,
+        photo_url: telegramInitData.user?.photo_url,
+      })
+
+      if (telegramInitData.user?.id) {
+        userStore.setUserId(telegramInitData.user.id)
+      }
+
+      token = await postAuth(dataCheckString)
+      if (token && token.token) {
+        userStore.setToken(token.token)
+        // Сохраняем токен и данные в sessionStorage
+        sessionStorage.setItem('userToken', token.token)
+        sessionStorage.setItem('userData', JSON.stringify({
+          first_name: telegramInitData.user?.first_name,
+          last_name: telegramInitData.user?.last_name,
+          username: telegramInitData.user?.username,
+          photo_url: telegramInitData.user?.photo_url,
+        }))
+      } else {
+        console.error("Authorization failed");
+      }
+    } else if (env === 'dev') {
+      const testDataCheckString =
+        'auth_date=1736960774&chat_instance=8610356838351439092&chat_type=private&hash=f11aaab0a3b3deb9f3140fdd216c46086947d4426081f27da0c85f5dbc142e51&signature=9cgzhZs_ncdtZTBRXylP7OXnNl5PveVFlAdYzExgMWYil9Vh38gZeekt5Khcvcjwtzvd1hH--WTF--7unJrtDg&user={"id":1,"first_name":"eralinkd","last_name":"","username":"sb_newest","language_code":"ru","allows_write_to_pm":true,"photo_url":"https:\/\/t.me\/i\/userpic\/320\/t8iGW7XVQ3k-EvpOOkPQ0IawHU5MwdAHEG5QJrYx3Gs.svg"}';
+      token = await postAuth(testDataCheckString)
+      if (token && token.token) {
+        userStore.setToken(token.token)
+        // Сохраняем токен и данные в sessionStorage для dev-режима
+        sessionStorage.setItem('userToken', token.token)
+      } else {
+        console.error("Authorization failed for dev mode");
+      }
+    } else {
+      console.log('env is not prod or dev');
+    }
   }
-  userStore.setToken(token.token)
 
   const queryParams = getTelegramQueryParams()
   console.log(queryParams)
