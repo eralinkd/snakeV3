@@ -25,6 +25,8 @@ const getTelegramQueryParams = () => {
 }
 
 onMounted(async () => {
+  await new Promise(resolve => setTimeout(resolve, 1000))
+
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   if (telegramInitData && env === 'prod') {
     const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
