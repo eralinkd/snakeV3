@@ -7,10 +7,13 @@ export default class SnakeScene extends Phaser.Scene {
     this.currentLane = 1
     this.lanePositions = [117, 350, 583]
     this.coins = []
+    this.obstacles = []
     this.coinSpawnTimer = null
+    this.obstacleSpawnTimer = null
     this.isGameActive = false
     this.touchStartX = 0
-    this.swipeThreshold = 50 // Минимальное расстояние для свайпа
+    this.swipeThreshold = 50
+    this.flashRect = null
   }
 
   preload() {
@@ -21,6 +24,22 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   create() {
+    // Создаем белый прямоугольник для вспышки на весь экран
+    this.flashRect = this.add.rectangle(350, 600, 700, 1200, 0xFFFFFF)
+    this.flashRect.setAlpha(0)
+
+    this.createSnake()
+    this.setupControls()
+
+    // Добавляем обработчик клика для перезапуска
+    this.input.on('pointerdown', () => {
+      if (!this.isGameActive && this.snake.y === 600) {
+        this.restartGame()
+      }
+    })
+  }
+
+  createSnake() {
     this.snake = this.add.sprite(350, 2000, 'snake')
     this.snake.setScale(0.33)
 
@@ -33,32 +52,24 @@ export default class SnakeScene extends Phaser.Scene {
       frameRate: 30,
       repeat: -1
     })
+  }
 
-    // Клавиатура
+  setupControls() {
     this.input.keyboard.on('keydown-LEFT', () => this.moveLane('left'))
     this.input.keyboard.on('keydown-RIGHT', () => this.moveLane('right'))
 
-    // Свайпы
     this.input.on('pointerdown', (pointer) => {
       this.touchStartX = pointer.x
     })
 
     this.input.on('pointerup', (pointer) => {
       const swipeDistance = pointer.x - this.touchStartX
-      
       if (Math.abs(swipeDistance) >= this.swipeThreshold) {
         if (swipeDistance > 0) {
           this.moveLane('right')
         } else {
           this.moveLane('left')
         }
-      }
-    })
-
-    // Отключаем стандартный скролл страницы при свайпах
-    this.input.on('pointermove', (pointer) => {
-      if (pointer.isDown) {
-        pointer.event.preventDefault()
       }
     })
   }
@@ -74,6 +85,7 @@ export default class SnakeScene extends Phaser.Scene {
         onComplete: () => {
           this.isGameActive = true
           this.startCoinSpawning()
+          this.startObstacleSpawning()
         }
       })
     })
@@ -137,9 +149,105 @@ export default class SnakeScene extends Phaser.Scene {
     this.removeCoin(coin)
   }
 
+  startObstacleSpawning() {
+    this.obstacleSpawnTimer = this.time.addEvent({
+      delay: 2000, // раз в 2 секунды
+      callback: this.spawnObstacle,
+      callbackScope: this,
+      loop: true
+    })
+  }
+
+  spawnObstacle() {
+    if (!this.isGameActive) return
+
+    const lane = Phaser.Math.Between(0, 2)
+    const x = this.lanePositions[lane]
+
+    const obstacle = this.add.rectangle(x, 0, 60, 60, 0x000000)
+    this.obstacles.push(obstacle)
+
+    this.tweens.add({
+      targets: obstacle,
+      y: 1300,
+      duration: 3000,
+      ease: 'Linear',
+      onComplete: () => {
+        this.removeObstacle(obstacle)
+      }
+    })
+  }
+
+  removeObstacle(obstacle) {
+    const index = this.obstacles.indexOf(obstacle)
+    if (index > -1) {
+      this.obstacles.splice(index, 1)
+      obstacle.destroy()
+    }
+  }
+
+  checkObstacleCollision() {
+    const snakeBounds = this.snake.getBounds()
+    
+    this.obstacles.forEach(obstacle => {
+      const obstacleBounds = obstacle.getBounds()
+      if (Phaser.Geom.Intersects.RectangleToRectangle(snakeBounds, obstacleBounds)) {
+        this.hitObstacle()
+      }
+    })
+  }
+
+  hitObstacle() {
+    this.isGameActive = false
+    
+    // Останавливаем таймеры
+    if (this.coinSpawnTimer) this.coinSpawnTimer.remove()
+    if (this.obstacleSpawnTimer) this.obstacleSpawnTimer.remove()
+
+    // Останавливаем анимацию змеи
+    this.snake.stop()
+    
+    // Останавливаем все текущие движения объектов
+    this.tweens.killAll()
+    
+    // Останавливаем все монетки и препятствия
+    this.coins.forEach(coin => {
+      this.tweens.killTweensOf(coin)
+    })
+    this.obstacles.forEach(obstacle => {
+      this.tweens.killTweensOf(obstacle)
+    })
+
+    // Создаем вспышку
+    this.flashRect.setAlpha(1)
+    this.tweens.add({
+      targets: this.flashRect,
+      alpha: 0,
+      duration: 200,
+      ease: 'Linear'
+    })
+  }
+
+  restartGame() {
+    // Очищаем все монетки и препятствия
+    this.coins.forEach(coin => coin.destroy())
+    this.obstacles.forEach(obstacle => obstacle.destroy())
+    this.coins = []
+    this.obstacles = []
+
+    // Возвращаем змею в начальное положение
+    this.snake.y = 2000
+    this.currentLane = 1
+    this.snake.x = this.lanePositions[this.currentLane]
+
+    // Запускаем игру заново
+    this.startGame()
+  }
+
   update() {
     if (this.isGameActive) {
       this.checkCoinCollision()
+      this.checkObstacleCollision()
     }
   }
 
