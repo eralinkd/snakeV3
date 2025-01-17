@@ -25,70 +25,99 @@ const getTelegramQueryParams = () => {
 }
 
 onMounted(async () => {
+  console.log('=== onMounted start ===')
   // Проверка на наличие данных в sessionStorage
   const storedToken = sessionStorage.getItem('userToken')
   const storedUserData = JSON.parse(sessionStorage.getItem('userData'))
+  console.log('Stored data:', { storedToken, storedUserData })
 
-  if (storedToken && storedUserData) {
-    // Если данные есть в sessionStorage, загружаем их в хранилище пользователя
-    userStore.setToken(storedToken)
-    userStore.setUserData(storedUserData)
-  } else {
-    // Если данных нет, инициализируем их через Telegram
-    const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
-    if (telegramInitData && env === 'prod') {
-      const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
-      const dataKeys = Object.keys(authHeader).sort()
-      const items = dataKeys.map((key) => key + '=' + authHeader[key])
-      const dataCheckString = items.join('&')
+  // Пытаемся получить данные из Telegram
+  const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
+  console.log('Telegram init data:', telegramInitData)
 
-      userStore.setUserData({
+  if (telegramInitData && env === 'prod') {
+    console.log('Production mode with Telegram data')
+    const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
+    const dataKeys = Object.keys(authHeader).sort()
+    const items = dataKeys.map((key) => key + '=' + authHeader[key])
+    const dataCheckString = items.join('&')
+    console.log('Auth data string:', dataCheckString)
+
+    userStore.setUserData({
+      first_name: telegramInitData.user?.first_name,
+      last_name: telegramInitData.user?.last_name,
+      username: telegramInitData.user?.username,
+      photo_url: telegramInitData.user?.photo_url,
+    })
+    console.log('Set user data:', telegramInitData.user)
+
+    if (telegramInitData.user?.id) {
+      userStore.setUserId(telegramInitData.user.id)
+      console.log('Set user ID:', telegramInitData.user.id)
+    }
+
+    token = await postAuth(dataCheckString)
+    console.log('Auth response:', token)
+    if (token && token.token) {
+      userStore.setToken(token.token)
+      // Сохраняем токен и данные в sessionStorage
+      sessionStorage.setItem('userToken', token.token)
+      sessionStorage.setItem('userData', JSON.stringify({
         first_name: telegramInitData.user?.first_name,
         last_name: telegramInitData.user?.last_name,
         username: telegramInitData.user?.username,
         photo_url: telegramInitData.user?.photo_url,
-      })
-
-      if (telegramInitData.user?.id) {
-        userStore.setUserId(telegramInitData.user.id)
-      }
-
-      token = await postAuth(dataCheckString)
-      if (token && token.token) {
-        userStore.setToken(token.token)
-        // Сохраняем токен и данные в sessionStorage
-        sessionStorage.setItem('userToken', token.token)
-        sessionStorage.setItem('userData', JSON.stringify({
-          first_name: telegramInitData.user?.first_name,
-          last_name: telegramInitData.user?.last_name,
-          username: telegramInitData.user?.username,
-          photo_url: telegramInitData.user?.photo_url,
-        }))
-      } else {
-        console.error("Authorization failed");
-      }
-    } else if (env === 'dev') {
-      const testDataCheckString =
-        'auth_date=1736960774&chat_instance=8610356838351439092&chat_type=private&hash=f11aaab0a3b3deb9f3140fdd216c46086947d4426081f27da0c85f5dbc142e51&signature=9cgzhZs_ncdtZTBRXylP7OXnNl5PveVFlAdYzExgMWYil9Vh38gZeekt5Khcvcjwtzvd1hH--WTF--7unJrtDg&user={"id":1,"first_name":"eralinkd","last_name":"","username":"sb_newest","language_code":"ru","allows_write_to_pm":true,"photo_url":"https:\/\/t.me\/i\/userpic\/320\/t8iGW7XVQ3k-EvpOOkPQ0IawHU5MwdAHEG5QJrYx3Gs.svg"}';
-      token = await postAuth(testDataCheckString)
-      if (token && token.token) {
-        userStore.setToken(token.token)
-        // Сохраняем токен и данные в sessionStorage для dev-режима
-        sessionStorage.setItem('userToken', token.token)
-      } else {
-        console.error("Authorization failed for dev mode");
-      }
+      }))
+      console.log('Token saved to session storage')
     } else {
-      console.log('env is not prod or dev');
+      console.error("Authorization failed");
+      // Если авторизация через Telegram не удалась, пробуем использовать данные из sessionStorage
+      if (storedToken && storedUserData) {
+        userStore.setToken(storedToken)
+        userStore.setUserData(storedUserData)
+        console.log('Using stored data after auth failure:', { storedToken, storedUserData })
+      }
+    }
+  } else if (env === 'dev') {
+    console.log('Development mode')
+    const testDataCheckString =
+      'auth_date=1736960774&chat_instance=8610356838351439092&chat_type=private&hash=f11aaab0a3b3deb9f3140fdd216c46086947d4426081f27da0c85f5dbc142e51&signature=9cgzhZs_ncdtZTBRXylP7OXnNl5PveVFlAdYzExgMWYil9Vh38gZeekt5Khcvcjwtzvd1hH--WTF--7unJrtDg&user={"id":1,"first_name":"eralinkd","last_name":"","username":"sb_newest","language_code":"ru","allows_write_to_pm":true,"photo_url":"https:\/\/t.me\/i\/userpic\/320\/t8iGW7XVQ3k-EvpOOkPQ0IawHU5MwdAHEG5QJrYx3Gs.svg"}';
+    console.log('Test auth string:', testDataCheckString)
+    token = await postAuth(testDataCheckString)
+    console.log('Dev auth response:', token)
+    if (token && token.token) {
+      userStore.setToken(token.token)
+      // Сохраняем токен и данные в sessionStorage для dev-режима
+      sessionStorage.setItem('userToken', token.token)
+      console.log('Dev token saved:', token.token)
+    } else {
+      console.error("Authorization failed for dev mode");
+      // Если авторизация в dev-режиме не удалась, пробуем использовать данные из sessionStorage
+      if (storedToken && storedUserData) {
+        userStore.setToken(storedToken)
+        userStore.setUserData(storedUserData)
+        console.log('Using stored data in dev mode:', { storedToken, storedUserData })
+      }
+    }
+  } else {
+    console.log('env is not prod or dev');
+    // Если среда не определена, пробуем использовать данные из sessionStorage
+    if (storedToken && storedUserData) {
+      userStore.setToken(storedToken)
+      userStore.setUserData(storedUserData)
+      console.log('Using stored data in undefined env:', { storedToken, storedUserData })
     }
   }
 
   const queryParams = getTelegramQueryParams()
-  console.log(queryParams)
+  console.log('Telegram query params:', queryParams)
   const refCode = queryParams?.startapp
   if (refCode) {
+    console.log('Adding referral code:', refCode)
     await postAddRef(refCode)
+    console.log('Referral code added successfully')
   }
+  console.log('=== onMounted end ===')
 })
 </script>
 
