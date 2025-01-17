@@ -20,8 +20,6 @@ const env = import.meta.env.VITE_ENV // prod or dev
 
 const getTelegramQueryParams = () => {
   const urlParams = new URLSearchParams(window.location.search)
-  // log window url
-  alert(window.location.href)
   const startParam = urlParams.get('startapp')
   return { startapp: startParam }
 }
@@ -34,7 +32,7 @@ onMounted(async () => {
 
   const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
   console.log('Telegram init data:', telegramInitData)
-  const formattedTelegramInitData = JSON.stringify(telegramInitData)
+  alert(window.location.href)
 
   if (telegramInitData && env === 'prod') {
     console.log('Production mode with Telegram data')
