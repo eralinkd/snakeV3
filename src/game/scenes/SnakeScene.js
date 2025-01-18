@@ -18,11 +18,14 @@ export default class SnakeScene extends Phaser.Scene {
     this.swipeThreshold = 50
     this.flashRect = null
     this.background = null
-    this.objectSpeed = 3000 // Время движения объектов в миллисекундах
-    // Упрощенная формула для скорости фона:
-    // Делим общее расстояние на время в секундах и дополнительно замедляем
-    this.scrollSpeed = ((window.innerHeight + 100) / (this.objectSpeed / 1000)) / 90
-    this.isBackgroundMoving = false // Добавляем флаг для контроля движения фона
+    this.objectSpeed = 3000
+    this.scrollSpeed = 1.2
+    this.isBackgroundMoving = false
+    this.frameCount = 0
+    this.objectPool = {
+      coins: [],
+      obstacles: []
+    }
   }
 
   preload() {
@@ -36,7 +39,6 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   create() {
-    // Заменяем обычное изображение на tileSprite для возможности скроллинга
     this.background = this.add.tileSprite(
       window.innerWidth/2,
       window.innerHeight/2,
@@ -46,7 +48,6 @@ export default class SnakeScene extends Phaser.Scene {
     )
     this.background.setDisplaySize(window.innerWidth, window.innerHeight)
 
-    // Создаем белый прямоугольник для вспышки на весь экран
     this.flashRect = this.add.rectangle(
       window.innerWidth/2,
       window.innerHeight/2,
@@ -56,22 +57,31 @@ export default class SnakeScene extends Phaser.Scene {
     )
     this.flashRect.setAlpha(0)
 
-    // Обновляем позиции дорожек для полноэкранного режима
     const width = window.innerWidth
     this.lanePositions = [width * 0.167, width * 0.5, width * 0.833]
 
     this.createSnake()
     this.setupControls()
 
-    // Добавляем обработчик клика для перезапуска
     this.input.on('pointerdown', () => {
       if (!this.isGameActive && this.snake.y === window.innerHeight/2) {
         this.restartGame()
       }
     })
 
-    // Добавляем обработчик изменения размера окна
     window.addEventListener('resize', () => this.handleResize())
+
+    for (let i = 0; i < 5; i++) {
+      const coin = this.add.image(0, 0, 'coin')
+      coin.setActive(false)
+      coin.setVisible(false)
+      this.objectPool.coins.push(coin)
+
+      const obstacle = this.add.image(0, 0, 'rock')
+      obstacle.setActive(false)
+      obstacle.setVisible(false)
+      this.objectPool.obstacles.push(obstacle)
+    }
   }
 
   createSnake() {
@@ -128,7 +138,7 @@ export default class SnakeScene extends Phaser.Scene {
         ease: 'Cubic.easeOut',
         onComplete: () => {
           this.isGameActive = true
-          this.isBackgroundMoving = true // Активируем движение фона только после анимации змеи
+          this.isBackgroundMoving = true
           this.startCoinSpawning()
           this.startObstacleSpawning()
         }
@@ -137,9 +147,8 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   startCoinSpawning() {
-    // Запускаем таймер создания монеток
     this.coinSpawnTimer = this.time.addEvent({
-      delay: 1000, // раз в секунду
+      delay: 1000,
       callback: this.spawnCoin,
       callbackScope: this,
       loop: true
@@ -149,25 +158,49 @@ export default class SnakeScene extends Phaser.Scene {
   spawnCoin() {
     if (!this.isGameActive) return
 
-    const lane = Phaser.Math.Between(0, 2)
+    let availableLanes = [0, 1, 2]
+    this.obstacles.forEach(obstacle => {
+      const laneIndex = this.lanePositions.findIndex(x => x === obstacle.x)
+      if (laneIndex !== -1 && obstacle.y < 200) {
+        const index = availableLanes.indexOf(laneIndex)
+        if (index > -1) {
+          availableLanes.splice(index, 1)
+        }
+      }
+    })
+
+    if (availableLanes.length === 0) return
+
+    const randomIndex = Phaser.Math.Between(0, availableLanes.length - 1)
+    const lane = availableLanes[randomIndex]
     const x = this.lanePositions[lane]
 
-    const coin = this.add.image(x, 0, 'coin')
-    
-    const baseCoinSize = 100
-    const targetCoinSize = window.innerHeight * 0.05
-    const coinScale = targetCoinSize / baseCoinSize
-    
+    let coin = this.objectPool.coins.find(c => !c.active)
+    if (!coin) {
+      coin = this.add.image(0, 0, 'coin')
+      this.objectPool.coins.push(coin)
+    }
+
+    const coinScale = (window.innerHeight * 0.05) / 100
     coin.setScale(coinScale)
+    coin.setPosition(x, 0)
+    coin.setActive(true)
+    coin.setVisible(true)
+    coin.setAlpha(1)
     this.coins.push(coin)
 
     this.tweens.add({
       targets: coin,
-      y: window.innerHeight + 100, // Немного ниже экрана
+      y: window.innerHeight + 100,
       duration: this.objectSpeed,
       ease: 'Linear',
       onComplete: () => {
-        this.removeCoin(coin)
+        coin.setActive(false)
+        coin.setVisible(false)
+        const index = this.coins.indexOf(coin)
+        if (index > -1) {
+          this.coins.splice(index, 1)
+        }
       }
     })
   }
@@ -181,24 +214,61 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   checkCoinCollision() {
-    const snakeBounds = this.snake.getBounds()
+    const snakeHead = {
+      x: this.snake.x - 25,
+      y: this.snake.y - 100,
+      width: 50,
+      height: 50
+    }
     
-    this.coins.forEach(coin => {
-      const coinBounds = coin.getBounds()
-      if (Phaser.Geom.Intersects.RectangleToRectangle(snakeBounds, coinBounds)) {
+    for (let i = this.coins.length - 1; i >= 0; i--) {
+      const coin = this.coins[i]
+      const coinBounds = {
+        x: coin.x - 20,
+        y: coin.y - 20,
+        width: 40,
+        height: 40
+      }
+
+      if (this.checkOverlap(snakeHead, coinBounds)) {
         this.collectCoin(coin)
+        break
+      }
+    }
+  }
+
+  checkOverlap(rect1, rect2) {
+    return (
+      rect1.x < rect2.x + rect2.width &&
+      rect1.x + rect1.width > rect2.x &&
+      rect1.y < rect2.y + rect2.height &&
+      rect1.y + rect1.height > rect2.y
+    )
+  }
+
+  collectCoin(coin) {
+    const index = this.coins.indexOf(coin)
+    if (index > -1) {
+      this.coins.splice(index, 1)
+    }
+
+    this.tweens.killTweensOf(coin)
+
+    this.tweens.add({
+      targets: coin,
+      scale: coin.scale * 1.3,
+      alpha: 0,
+      duration: 100,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        coin.destroy()
       }
     })
   }
 
-  collectCoin(coin) {
-    // Здесь можно добавить эффекты сбора монетки, очки и т.д.
-    this.removeCoin(coin)
-  }
-
   startObstacleSpawning() {
     this.obstacleSpawnTimer = this.time.addEvent({
-      delay: 2000, // раз в 2 секунды
+      delay: 2000,
       callback: this.spawnObstacle,
       callbackScope: this,
       loop: true
@@ -211,13 +281,17 @@ export default class SnakeScene extends Phaser.Scene {
     const lane = Phaser.Math.Between(0, 2)
     const x = this.lanePositions[lane]
 
-    const obstacle = this.add.image(x, 0, 'rock')
-    
-    const baseRockSize = 100
-    const targetRockSize = window.innerHeight * 0.04
-    const rockScale = targetRockSize / baseRockSize
-    
+    let obstacle = this.objectPool.obstacles.find(o => !o.active)
+    if (!obstacle) {
+      obstacle = this.add.image(0, 0, 'rock')
+      this.objectPool.obstacles.push(obstacle)
+    }
+
+    const rockScale = (window.innerHeight * 0.04) / 100
     obstacle.setScale(rockScale)
+    obstacle.setPosition(x, 0)
+    obstacle.setActive(true)
+    obstacle.setVisible(true)
     this.obstacles.push(obstacle)
 
     this.tweens.add({
@@ -226,7 +300,12 @@ export default class SnakeScene extends Phaser.Scene {
       duration: this.objectSpeed,
       ease: 'Linear',
       onComplete: () => {
-        this.removeObstacle(obstacle)
+        obstacle.setActive(false)
+        obstacle.setVisible(false)
+        const index = this.obstacles.indexOf(obstacle)
+        if (index > -1) {
+          this.obstacles.splice(index, 1)
+        }
       }
     })
   }
@@ -252,19 +331,15 @@ export default class SnakeScene extends Phaser.Scene {
 
   hitObstacle() {
     this.isGameActive = false
-    this.isBackgroundMoving = false // Останавливаем движение фона при столкновении
+    this.isBackgroundMoving = false
     
-    // Останавливаем таймеры
     if (this.coinSpawnTimer) this.coinSpawnTimer.remove()
     if (this.obstacleSpawnTimer) this.obstacleSpawnTimer.remove()
 
-    // Останавливаем анимацию змеи
     this.snake.stop()
     
-    // Останавливаем все текущие движения объектов
     this.tweens.killAll()
     
-    // Останавливаем все монетки и препятствия
     this.coins.forEach(coin => {
       this.tweens.killTweensOf(coin)
     })
@@ -272,7 +347,6 @@ export default class SnakeScene extends Phaser.Scene {
       this.tweens.killTweensOf(obstacle)
     })
 
-    // Создаем вспышку
     this.flashRect.setAlpha(1)
     this.tweens.add({
       targets: this.flashRect,
@@ -283,26 +357,34 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   restartGame() {
-    // Очищаем все монетки и препятствия
-    this.coins.forEach(coin => coin.destroy())
-    this.obstacles.forEach(obstacle => obstacle.destroy())
+    this.coins.forEach(coin => {
+      coin.setActive(false)
+      coin.setVisible(false)
+    })
+    this.obstacles.forEach(obstacle => {
+      obstacle.setActive(false)
+      obstacle.setVisible(false)
+    })
     this.coins = []
     this.obstacles = []
 
-    // Возвращаем змею в начальное положение
     this.snake.y = 2000
     this.currentLane = 1
     this.snake.x = this.lanePositions[this.currentLane]
 
-    // Запускаем игру заново
     this.startGame()
   }
 
   update() {
-    if (this.isGameActive && this.isBackgroundMoving) { // Проверяем оба флага
+    if (this.isGameActive && this.isBackgroundMoving) {
       this.background.tilePositionY -= this.scrollSpeed
-      this.checkCoinCollision()
-      this.checkObstacleCollision()
+
+      this.frameCount++
+      if (this.frameCount % 3 === 0) {
+        this.checkCoinCollision()
+        this.checkObstacleCollision()
+        this.frameCount = 0
+      }
     }
   }
 
@@ -324,11 +406,9 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   handleResize() {
-    // Обновляем позиции дорожек
     const width = window.innerWidth
     this.lanePositions = [width * 0.167, width * 0.5, width * 0.833]
     
-    // Обновляем размер змеи
     const baseHeight = 1200
     const targetHeight = window.innerHeight * 0.25
     const scale = targetHeight / baseHeight
@@ -341,7 +421,6 @@ export default class SnakeScene extends Phaser.Scene {
       }
     }
 
-    // Обновляем размер фона как tileSprite
     this.background.setSize(window.innerWidth, window.innerHeight)
     this.background.setPosition(window.innerWidth/2, window.innerHeight/2)
     this.background.setDisplaySize(window.innerWidth, window.innerHeight)
@@ -349,7 +428,6 @@ export default class SnakeScene extends Phaser.Scene {
     this.flashRect.setPosition(window.innerWidth/2, window.innerHeight/2)
     this.flashRect.setSize(window.innerWidth, window.innerHeight)
 
-    // Обновляем размер существующих монеток
     const baseCoinSize = 100
     const targetCoinSize = window.innerHeight * 0.05
     const coinScale = targetCoinSize / baseCoinSize
@@ -358,7 +436,6 @@ export default class SnakeScene extends Phaser.Scene {
       coin.setScale(coinScale)
     })
     
-    // Обновляем размер существующих препятствий
     const baseRockSize = 100
     const targetRockSize = window.innerHeight * 0.04
     const rockScale = targetRockSize / baseRockSize
@@ -366,8 +443,5 @@ export default class SnakeScene extends Phaser.Scene {
     this.obstacles.forEach(obstacle => {
       obstacle.setScale(rockScale)
     })
-
-    // Обновляем скорость скролла при изменении размера экрана
-    this.scrollSpeed = ((window.innerHeight + 100) / (this.objectSpeed / 1000)) / 20
   }
 } 
