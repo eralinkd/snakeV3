@@ -57,7 +57,7 @@
       <span class="history-card__amount history-card-amount">
         {{
           item.paymentType === 'SWAP'
-            ? formatAmount(Number(sourceData[1]).toFixed(4), item.paymentType)
+            ? formatAmount(Number(sourceData[1]).toFixed(2), item.paymentType)
             : formatAmount(item.amount, item.paymentType)
         }}
       </span>
@@ -158,6 +158,7 @@ const formatTime = (milliseconds) => {
   border: 1px solid rgba(255, 255, 255, 0.13);
   backdrop-filter: blur(15px);
   box-shadow: 0px 7px 30px 0px rgba(0, 0, 0, 0.27);
+  flex-wrap: wrap;
   &--withdraw {
     background: linear-gradient(90deg, rgba(27, 24, 41, 0.75) 0%, rgba(61, 29, 51, 0.75) 100%);
     .history-card-amount {
