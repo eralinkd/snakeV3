@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { getUser } from '@/api/userApi'
 import BaseTabs from '@/components/BaseTabs.vue'
@@ -39,9 +39,14 @@ const {
   data: userData,
   isLoading,
   isError,
+  refetch,
 } = useQuery({
-  queryKey: ['user'],
+  queryKey: ['inventory-user'],
   queryFn: getUser,
+})
+
+watch(activeTab, () => {
+  refetch()
 })
 </script>
 
