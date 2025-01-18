@@ -1,7 +1,7 @@
 <template>
   <div class="egg-card">
     <h2 class="egg-card__title">{{ egg.name }}</h2>
-    <div class="egg-card__bottom-plate-container">
+    <div class="egg-card__bottom-plate-container" @click="handleClick">
       <img class="egg-card__image" :src="defaultEgg" alt="egg" />
       <div class="egg-card__bottom-plate"></div>
     </div>
@@ -9,7 +9,9 @@
 </template>
 
 <script setup>
+import { ref, computed, watch } from 'vue'
 import defaultEgg from '@/assets/inventory/egg.png'
+import { useTimerStore } from '@/stores/timerStore'
 
 const props = defineProps({
   egg: {
@@ -18,7 +20,15 @@ const props = defineProps({
   },
 })
 
-defineEmits(['break', 'take'])
+const emit = defineEmits(['break', 'take'])
+
+const handleClick = () => {
+  if (props.egg.status === 'NONE') {
+    emit('break', props.egg)
+  } else if (props.egg.status === 'FINISHED') {
+    emit('take', props.egg)
+  }
+}
 </script>
 
 <style lang="scss" scoped>
