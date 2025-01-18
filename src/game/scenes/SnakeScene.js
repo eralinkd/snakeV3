@@ -1,7 +1,7 @@
 import snakeSprite from '@/assets/sprites/snake.png'
 import snakeBg from '@/assets/games/snake/bg.png'
-import coin from '@/assets/games/snake/coin.svg'
-import rock from '@/assets/games/snake/rock.svg'
+import coin from '@/assets/games/snake/coin.png'
+import rock from '@/assets/games/snake/rock.png'
 
 export default class SnakeScene extends Phaser.Scene {
   constructor() {
@@ -26,6 +26,7 @@ export default class SnakeScene extends Phaser.Scene {
       coins: [],
       obstacles: []
     }
+    this.lastObstacleLane = null
   }
 
   preload() {
@@ -139,17 +140,27 @@ export default class SnakeScene extends Phaser.Scene {
         onComplete: () => {
           this.isGameActive = true
           this.isBackgroundMoving = true
-          this.startCoinSpawning()
-          this.startObstacleSpawning()
+          this.startGameLoop()
         }
       })
     })
   }
 
-  startCoinSpawning() {
+  startGameLoop() {
+    this.obstacleSpawnTimer = this.time.addEvent({
+      delay: 1500,
+      callback: this.spawnObstacle,
+      callbackScope: this,
+      loop: true
+    })
+
     this.coinSpawnTimer = this.time.addEvent({
-      delay: 1000,
-      callback: this.spawnCoin,
+      delay: 800,
+      callback: () => {
+        this.time.delayedCall(100, () => {
+          this.spawnCoin()
+        })
+      },
       callbackScope: this,
       loop: true
     })
@@ -159,20 +170,11 @@ export default class SnakeScene extends Phaser.Scene {
     if (!this.isGameActive) return
 
     let availableLanes = [0, 1, 2]
-    this.obstacles.forEach(obstacle => {
-      const laneIndex = this.lanePositions.findIndex(x => x === obstacle.x)
-      if (laneIndex !== -1 && obstacle.y < 200) {
-        const index = availableLanes.indexOf(laneIndex)
-        if (index > -1) {
-          availableLanes.splice(index, 1)
-        }
-      }
-    })
+    if (this.lastObstacleLane !== null) {
+      availableLanes = availableLanes.filter(lane => lane !== this.lastObstacleLane)
+    }
 
-    if (availableLanes.length === 0) return
-
-    const randomIndex = Phaser.Math.Between(0, availableLanes.length - 1)
-    const lane = availableLanes[randomIndex]
+    const lane = Phaser.Math.RND.pick(availableLanes)
     const x = this.lanePositions[lane]
 
     let coin = this.objectPool.coins.find(c => !c.active)
@@ -294,6 +296,8 @@ export default class SnakeScene extends Phaser.Scene {
     obstacle.setVisible(true)
     this.obstacles.push(obstacle)
 
+    this.lastObstacleLane = lane
+
     this.tweens.add({
       targets: obstacle,
       y: window.innerHeight + 100,
@@ -319,11 +323,22 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   checkObstacleCollision() {
-    const snakeBounds = this.snake.getBounds()
+    const snakeHitbox = {
+      x: this.snake.x - 15,
+      y: this.snake.y - 60,
+      width: 30,
+      height: 80
+    }
     
     this.obstacles.forEach(obstacle => {
-      const obstacleBounds = obstacle.getBounds()
-      if (Phaser.Geom.Intersects.RectangleToRectangle(snakeBounds, obstacleBounds)) {
+      const obstacleHitbox = {
+        x: obstacle.x - 15,
+        y: obstacle.y - 15,
+        width: 30,
+        height: 30
+      }
+
+      if (this.checkOverlap(snakeHitbox, obstacleHitbox)) {
         this.hitObstacle()
       }
     })
@@ -357,6 +372,13 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   restartGame() {
+    if (this.obstacleSpawnTimer) {
+      this.obstacleSpawnTimer.remove()
+    }
+    if (this.coinSpawnTimer) {
+      this.coinSpawnTimer.remove()
+    }
+    
     this.coins.forEach(coin => {
       coin.setActive(false)
       coin.setVisible(false)
