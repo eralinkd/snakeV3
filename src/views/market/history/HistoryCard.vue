@@ -21,11 +21,46 @@
         </div>
       </template>
     </CurrencyInfo>
-    <CurrencyInfo v-else :imgSrc="imageSrc" :title="item.crypto" text="50 мин назад" />
+    <CurrencyInfo
+      v-else-if="item.paymentType === 'REPLENISHMENT'"
+      :imgSrc="imageSrc"
+      :title="item.crypto"
+      :text="formatTime(item.timePassed)"
+    />
+    <CurrencyInfo
+      v-else-if="item.paymentType === 'SWAP'"
+      :imgSrc="imageSrc"
+      :title="item.crypto"
+      :text="formatTime(item.timePassed)"
+    >
+      <template #image>
+        <div class="history-card__swap-image">
+          <img class="history-card__swap-image--from" :src="imageSrc" alt="crypto from" />
+          <img
+            class="history-card__swap-image--to"
+            :src="currencyImages[sourceData[0]]"
+            alt="crypto to"
+          />
+        </div>
+      </template>
+      <template #title>
+        <div class="history-card__swap-title">
+          <span>{{ item.crypto }}</span>
+          <div class="history-card__swap-arrow">
+            <img :src="swapArrow" alt="swap arrow" />
+          </div>
+          <span>{{ sourceData[0] }}</span>
+        </div>
+      </template>
+    </CurrencyInfo>
     <div class="history-card__info">
-      <span class="history-card__amount history-card-amount">{{
-        formatAmount(item.amount, item.paymentType)
-      }}</span>
+      <span class="history-card__amount history-card-amount">
+        {{
+          item.paymentType === 'SWAP'
+            ? formatAmount(Number(sourceData[1]).toFixed(4), item.paymentType)
+            : formatAmount(item.amount, item.paymentType)
+        }}
+      </span>
     </div>
   </article>
 </template>
@@ -37,6 +72,7 @@ import { computed } from 'vue'
 import pendingIcon from '@/assets/history/pending.svg'
 import successIcon from '@/assets/history/succeed.svg'
 import errorIcon from '@/assets/history/declined.svg'
+import swapArrow from '@/assets/history/filter-swap.svg'
 
 const props = defineProps({
   item: {
@@ -46,12 +82,12 @@ const props = defineProps({
 })
 
 // Получение данных для SWAP операции
-// const [cryptoTo, amountTo] = computed(() => {
-//   if (!props.item.source) return []
-//   return props.item.source.split('|')
-// })
+const sourceData = computed(() => {
+  if (!props.item.source) return ''
+  return props.item.source.split('|')
+})
 
-const imageSrc = computed(() => currencyImages[props.item.apiName] || currencyImages.default)
+const imageSrc = computed(() => currencyImages[props.item.crypto] || currencyImages.default)
 
 const cardClasses = computed(() => ({
   'history-card--withdraw': props.item.paymentType === 'WITHDRAW',
@@ -71,6 +107,41 @@ const getStatusText = computed(() => {
 const formatAmount = (amount, operationType) => {
   const sign = operationType === 'WITHDRAW' ? '-' : operationType === 'REPLENISHMENT' ? '+' : ''
   return `${sign}${amount}`
+}
+
+const formatTime = (milliseconds) => {
+  if (milliseconds < 60) {
+    return 'Только что'
+  }
+
+  const seconds = Math.floor(milliseconds / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  const weeks = Math.floor(days / 7)
+  const months = Math.floor(days / 30)
+
+  const getPlural = (number, singular, few, many) => {
+    if (number % 10 === 1 && number % 100 !== 11) {
+      return singular
+    } else if ([2, 3, 4].includes(number % 10) && ![12, 13, 14].includes(number % 100)) {
+      return few
+    } else {
+      return many
+    }
+  }
+
+  if (minutes < 60) {
+    return `${minutes} ${getPlural(minutes, 'минута', 'минуты', 'минут')}`
+  } else if (hours < 24) {
+    return `${hours} ${getPlural(hours, 'час', 'часа', 'часов')}`
+  } else if (days < 7) {
+    return `${days} ${getPlural(days, 'день', 'дня', 'дней')}`
+  } else if (days < 30) {
+    return `${weeks} ${getPlural(weeks, 'неделя', 'недели', 'недель')}`
+  } else {
+    return `${months} ${getPlural(months, 'месяц', 'месяца', 'месяцев')}`
+  }
 }
 </script>
 
@@ -126,6 +197,61 @@ const formatAmount = (amount, operationType) => {
       font-size: 20px;
       font-weight: 700;
       line-height: 1.2;
+    }
+  }
+
+  &__swap-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    & > span {
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.5;
+      @media (max-width: $smallBreakpoint) {
+        font-size: 14px;
+      }
+    }
+  }
+
+  &__swap-arrow {
+    width: 20px;
+    height: 20px;
+    & > img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  &__swap-image {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    & > img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    &--from {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    &--to {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+    }
+    @media (max-width: $smallBreakpoint) {
+      width: 36px;
+      height: 36px;
+      & > img {
+        width: 24px;
+        height: 24px;
+      }
     }
   }
 
