@@ -193,7 +193,7 @@ const formatTime = (milliseconds) => {
   &__info {
     display: flex;
     flex-direction: column;
-    align-self: flex-end;
+    margin-left: auto;
     & > span {
       letter-spacing: 2px;
       font-size: 20px;
