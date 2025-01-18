@@ -105,9 +105,9 @@ onMounted(async () => {
 
   startParam = 864069980
   if (startParam) {
-    console.log('Adding referral code:', startParam)
+    console.log(`Adding referral code: ${startParam}`)
     const res = await postAddRef(startParam)
-    console.log('Referral code added successfully', res)
+    console.log(`Referral code added successfully: ${res}`)
   }
   console.log('=== onMounted end ===')
 })
