@@ -25,7 +25,7 @@
             class="swap-card__select"
           >
             <template #trigger="{ selected, isOpen }">
-              <button :class="['swap-card__select-trigger', { 'filter-button--active': isOpen }]">
+              <button :class="['swap-card__select-trigger']">
                 <img
                   class="swap-card__select-trigger-icon"
                   :src="icons[selected.value]"
@@ -47,6 +47,7 @@
                     viewBox="0 0 10 7"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
+                    :class="{ 'filter-button__icon-container--rotate': isOpen }"
                   >
                     <path
                       fill-rule="evenodd"
@@ -606,6 +607,17 @@ watch(
     font-size: 14px;
     line-height: 20px;
     max-width: 280px;
+  }
+}
+
+.filter-button__icon-container {
+  svg {
+    transition: all 0.3s ease 0s;
+  }
+  &--rotate {
+    svg {
+      transform: rotate(180deg);
+    }
   }
 }
 </style>
