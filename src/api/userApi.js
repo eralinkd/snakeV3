@@ -24,3 +24,8 @@ export const removeArmor = async (payload) => {
 	const { data } = await api.post(`/users/removeArmor`, payload)
 	return data;
 }
+
+export const postUserSwap = async (payload) => {
+	const { data } = await api.post(`/users/swap`, payload)
+	return data;
+}

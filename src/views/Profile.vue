@@ -122,7 +122,7 @@ watch(
 
 <style scoped lang="scss">
 .profile {
-  padding: 11px 16px;
+  padding: 11px 16px 134px 16px;
   display: flex;
   flex-direction: column;
   gap: 24px;

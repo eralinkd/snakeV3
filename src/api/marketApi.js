@@ -28,3 +28,8 @@ export const replenishBalance = async (data) => {
 	const response = await api.post(`/users/replenishBalance`, data);
 	return response.data;
 }
+
+export const getSwapInfo = async (from, to, amount) => {
+	const response = await api.get(`/payment/swapInfo/${from}/${to}/${amount}`);
+	return response.data;
+}
