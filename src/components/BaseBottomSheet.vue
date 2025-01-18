@@ -59,6 +59,42 @@ const handleTouchEnd = () => {
 
   currentY.value = 0
 }
+
+// for mouse
+const handleMouseDown = (e) => {
+  startY.value = e.clientY
+  isDragging.value = true
+  sheet.value.style.transition = 'none'
+}
+
+const handleMouseMove = (e) => {
+  if (!isDragging.value) return
+
+  e.preventDefault()
+  currentY.value = e.clientY - startY.value
+
+  if (currentY.value < 0) {
+    currentY.value = 0
+  }
+
+  sheet.value.style.transform = `translateY(${currentY.value}px)`
+}
+
+const handleMouseUp = () => {
+  if (!isDragging.value) return
+
+  isDragging.value = false
+  sheet.value.style.transition = 'transform 0.3s ease'
+  const sheetHeight = sheet.value.offsetHeight
+
+  if (currentY.value > sheetHeight * 0.3) {
+    close()
+  } else {
+    sheet.value.style.transform = 'translateY(0)'
+  }
+
+  currentY.value = 0
+}
 </script>
 
 <template>
@@ -75,6 +111,10 @@ const handleTouchEnd = () => {
             @touchstart="handleTouchStart"
             @touchmove="handleTouchMove"
             @touchend="handleTouchEnd"
+            @mousedown="handleMouseDown"
+            @mousemove="handleMouseMove"
+            @mouseup="handleMouseUp"
+            @mouseleave="handleMouseUp"
           >
             <div class="bottom-sheet__drag-handle" />
             <div class="bottom-sheet__inner">
