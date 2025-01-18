@@ -33,3 +33,8 @@ export const getSwapInfo = async (from, to, amount) => {
 	const response = await api.get(`/payment/swapInfo/${from}/${to}/${amount}`);
 	return response.data;
 }
+
+export const getExchangeRate = async (from, to) => {
+	const response = await api.get(`/payment/swapInfo/${from}/${to}`);
+	return response.data;
+}

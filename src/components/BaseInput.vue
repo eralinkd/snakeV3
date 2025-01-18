@@ -1,5 +1,5 @@
 <template>
-  <div class="base-input plateBg" :class="containerClasses">
+  <div class="base-input plateBg" :class="[containerClasses, { 'without-plate': withoutPlate }]">
     <div class="base-input__wrapper">
       <input
         :id="id"
@@ -63,6 +63,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  withoutPlate: {
+    type: Boolean,
+    default: false,
+  },
   id: {
     type: String,
     default: () => `input-${Math.random().toString(36).slice(2, 11)}`,
@@ -114,6 +118,13 @@ defineExpose({ focus })
   border-radius: 16px;
   position: relative;
   margin-bottom: 10px;
+
+  &.without-plate {
+    padding: 0;
+    background: transparent;
+    border: none;
+    margin-bottom: 0;
+  }
 
   &__label {
     font-size: 16px;
@@ -182,6 +193,13 @@ defineExpose({ focus })
 
   @media (max-width: $smallBreakpoint) {
     padding: 10px 14px 10px 10px;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    display: none;
+    -webkit-appearance: none;
+    margin: 0;
   }
 }
 </style>
