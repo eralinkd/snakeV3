@@ -6,6 +6,7 @@ import Eth from '@/assets/currency-images/eth.png'
 export const currencyImages = {
 	SCOIN: SCoin,
 	USDT: Usdt,
+	USDT_TRC20: Usdt,
 	BTC: Btc,
 	ETH: Eth,
 	default: SCoin,

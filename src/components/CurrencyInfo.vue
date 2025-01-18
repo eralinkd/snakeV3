@@ -1,10 +1,14 @@
 <template>
   <div :class="['currency-info', className]">
-    <div class="currency-info__img-container">
-      <img :src="imgSrc" :alt="title" />
-    </div>
+    <slot name="image">
+      <div class="currency-info__img-container">
+        <img :src="imgSrc" :alt="title" />
+      </div>
+    </slot>
     <div class="currency-info__info">
-      <p class="currency-info__name">{{ title }}</p>
+      <slot name="title">
+        <p class="currency-info__name">{{ title }}</p>
+      </slot>
       <slot name="text">
         <span v-if="text" class="currency-info__type">{{ text }}</span>
       </slot>

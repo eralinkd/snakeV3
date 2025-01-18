@@ -119,50 +119,45 @@
         <div class="swap__exchange_rate" v-if="exchangeRate">
           {{ exchangeRate }}
         </div>
-        <BaseButton 
-          class="swap__submit" 
-          :disabled="!amountFrom || !amountTo || isSwapping" 
+        <BaseButton
+          class="swap__submit"
+          :disabled="!amountFrom || !amountTo || isSwapping"
           @click="handleSubmit"
         >
           Обменять
         </BaseButton>
       </div>
     </template>
+    <BaseModal :isOpen="isModalOpen" @update:isOpen="handleModalClose" className="store-modal">
+      <div class="store-modal__content">
+        <BaseModalClose @click="handleModalClose" className="store-modal__close" />
+
+        <template v-if="swapResponse">
+          <div v-if="swapResponse.success" class="store-modal__frame store-modal__frame--success">
+            <div class="store-modal__image">
+              <img :src="success" alt="Успех" />
+            </div>
+            <h2 class="store-modal__title">Успех!</h2>
+            <p class="store-modal__description">Обмен успешно выполнен!</p>
+            <BaseButton @click="handleModalClose" type="button" size="small"
+              >Окей, спасибо</BaseButton
+            >
+          </div>
+
+          <div v-else class="store-modal__frame store-modal__frame--fail">
+            <div class="store-modal__image">
+              <img :src="fail" alt="ошибка" />
+            </div>
+            <h2 class="store-modal__title">Недостаточно средств</h2>
+            <p class="store-modal__description">Для выполнения обмена требуется больше средств.</p>
+            <BaseButton @click="handleModalClose" type="button" size="small"
+              >Окей, спасибо</BaseButton
+            >
+          </div>
+        </template>
+      </div>
+    </BaseModal>
   </div>
-
-  <BaseModal :isOpen="isModalOpen" @update:isOpen="handleModalClose" className="store-modal">
-    <div class="store-modal__content">
-      <BaseModalClose @click="handleModalClose" className="store-modal__close" />
-
-      <template v-if="swapResponse">
-        <div
-          v-if="swapResponse.success"
-          class="store-modal__frame store-modal__frame--success"
-        >
-          <div class="store-modal__image">
-            <img :src="success" alt="Успех" />
-          </div>
-          <h2 class="store-modal__title">Успех!</h2>
-          <p class="store-modal__description">Обмен успешно выполнен!</p>
-          <BaseButton @click="handleModalClose" type="button" size="small">Окей, спасибо</BaseButton>
-        </div>
-
-        <div
-          v-else
-          class="store-modal__frame store-modal__frame--fail"
-        >
-          <div class="store-modal__image">
-            <img :src="fail" alt="ошибка" />
-          </div>
-          <h2 class="store-modal__title">Недостаточно средств</h2>
-          <p class="store-modal__description">
-            Для выполнения обмена требуется больше средств.
-          </p>
-          <BaseButton @click="handleModalClose" type="button" size="small">Окей, спасибо</BaseButton>
-        </div>
-      </template>
-    </div>
-  </BaseModal>
 </template>
 
 <script setup>
@@ -575,13 +570,13 @@ watch(
     align-items: center;
     gap: 16px;
     text-align: center;
-    
+
     &--success {
       .store-modal__title {
         color: $success;
       }
     }
-    
+
     &--fail {
       .store-modal__title {
         color: $warning;
@@ -592,7 +587,7 @@ watch(
   &__image {
     width: 80px;
     height: 80px;
-    
+
     img {
       width: 100%;
       height: 100%;
