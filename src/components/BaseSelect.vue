@@ -64,6 +64,7 @@ const getDropdownPosition = () => {
   const rect = selectRef.value.getBoundingClientRect()
   const dropdownRect = dropdownRef.value.getBoundingClientRect()
   const viewportHeight = window.innerHeight
+  const viewportWidth = window.innerWidth
   const margin = 8
 
   // Получаем элемент #app и его прокрутку
@@ -79,18 +80,22 @@ const getDropdownPosition = () => {
   const spaceAbove = rect.top + scrollY
   const dropdownHeight = dropdownRect.height + margin
 
+  // Проверяем поместится ли дропдаун в ширину экрана
+  const spaceRight = viewportWidth - rect.left - dropdownRect.width - margin
+
   // Определяем, нужно ли открывать вверх
   const shouldOpenUpward = spaceBelow < dropdownHeight && spaceAbove > dropdownHeight
+  const shouldOpenLeft = spaceRight < 0
 
   const positions = {
     bottom: shouldOpenUpward
       ? {
           top: `${rect.top + scrollY - dropdownHeight}px`,
-          left: `${rect.left}px`,
+          left: `${shouldOpenLeft ? rect.left - spaceRight : rect.left}px`,
         }
       : {
           top: `${rect.bottom + scrollY + margin}px`,
-          left: `${rect.left}px`,
+          left: `${shouldOpenLeft ? rect.left + spaceRight : rect.left}px`,
         },
     left: shouldOpenUpward
       ? {
