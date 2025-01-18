@@ -51,7 +51,7 @@ const handleTouchEnd = () => {
   sheet.value.style.transition = 'transform 0.3s ease'
   const sheetHeight = sheet.value.offsetHeight
 
-  if (currentY.value > sheetHeight * 0.4) {
+  if (currentY.value > sheetHeight * 0.3) {
     close()
   } else {
     sheet.value.style.transform = 'translateY(0)'

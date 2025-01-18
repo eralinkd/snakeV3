@@ -4,8 +4,7 @@ export function useBodyLock(locked) {
 	const appElement = document.getElementById('app')
 
 	const addBodyLock = () => {
-		// hardcode for telegram web app
-		const scrollBarWidth = 10
+		const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth
 		appElement.style.paddingRight = `${scrollBarWidth}px`
 		appElement.classList.add('lock')
 	}

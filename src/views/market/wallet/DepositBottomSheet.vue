@@ -59,7 +59,6 @@ const closeModal = () => {
 const copyToClipboard = async () => {
   try {
     await navigator.clipboard.writeText(depositAddress.value)
-    // Здесь можно добавить уведомление об успешном копировании
   } catch (err) {
     console.error('Failed to copy text: ', err)
   }

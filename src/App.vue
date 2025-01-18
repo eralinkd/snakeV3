@@ -116,10 +116,15 @@ onMounted(async () => {
 @use './styles/variables.scss' as *;
 
 .main {
-  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
 }
 
 .router-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
   padding-bottom: 134px;
   @media (max-width: $smallBreakpoint) {
     padding-bottom: 96px;
