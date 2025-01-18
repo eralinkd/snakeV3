@@ -66,6 +66,8 @@ const currentComponent = computed(() => {
   background: $plateBg;
   border: 1px solid rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(15px);
+  position: relative;
+  z-index: 5;
   &__item {
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     opacity: 0.4;
