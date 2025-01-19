@@ -5,6 +5,14 @@
       "description": "Invite friends and get {percent}% of their profit",
       "button": "Invite",
       "copied": "Copied!"
+    },
+    "stats": {
+      "health": "Health",
+      "energy": "Energy"
+    },
+    "balance": {
+      "title": "Balance",
+      "scoin": "SCOIN"
     }
   },
   "quests": {
@@ -18,6 +26,8 @@
     "swap": {
       "empty": "Exchange is not available yet...",
       "sold": "Sold",
+      "received": "Received",
+      "exchange": "Exchange",
       "insufficient": "Insufficient funds",
       "error": {
         "title": "Insufficient funds",
@@ -45,26 +55,109 @@
         "day": "day | days",
         "week": "week | weeks",
         "month": "month | months"
+      },
+      "filter": {
+        "all": "All",
+        "deposit": "Deposits",
+        "withdraw": "Withdrawals"
       }
     }
   },
   "game": {
     "stage": {
-      "title": "League"
+      "title": "League",
+      "progress": "Progress"
     },
     "modal": {
       "gameOver": {
         "title": "Game Over",
+        "description": "Your reward",
+        "equipment": "Your surviving equipment",
         "button": "Ok"
+      },
+      "noResources": {
+        "title": "Insufficient Resources",
+        "description": "Lives and energy are required to start the game.",
+        "button": "Ok, thanks"
       }
+    },
+    "info": {
+      "title": "How to Play?",
+      "subtitle": "Quick Guide",
+      "description": "A lot of interesting text about how to play Snake. Remember Nokia Snake? Well, this is not the same. But remember Subway Surf 2014? That's closer to what you'll be doing here.\n\nThere's even a picture"
+    },
+    "boosts": {
+      "energy": "Energy",
+      "income": "Income"
+    },
+    "inventory": {
+      "title": "Inventory"
     }
+  },
+  "shop": {
+    "tabs": {
+      "eggs": "Eggs",
+      "boosts": "Boosters"
+    },
+    "eggs": {
+      "take": "Take",
+      "break": "Break",
+      "modal": {
+        "success": {
+          "title": "Success!",
+          "description": "Egg received successfully"
+        },
+        "error": {
+          "title": "Error",
+          "description": "Insufficient funds"
+        }
+      }
+    },
+    "boosts": {
+      "energy": {
+        "title": "Energy",
+        "description": "Increases energy by {value}%"
+      },
+      "income": {
+        "title": "Income",
+        "description": "Increases income by {value}%"
+      },
+      "buy": "Buy"
+    }
+  },
+  "inventory": {
+    "empty": "Inventory is empty",
+    "equipment": {
+      "helmet": "Helmet",
+      "armor": "Armor",
+      "shield": "Shield",
+      "sword": "Sword"
+    },
+    "actions": {
+      "activate": "Activate",
+      "deactivate": "Deactivate"
+    }
+  },
+  "navigation": {
+    "profile": "Profile",
+    "game": "Game",
+    "market": "Market",
+    "shop": "Shop",
+    "inventory": "Inventory"
   },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
     "currency": {
       "scoin": "SCOIN",
-      "usdt": "USDT"
+      "usdt": "USDT",
+      "btc": "BTC",
+      "eth": "ETH"
+    },
+    "buttons": {
+      "close": "Close",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
     }
   }
 } 

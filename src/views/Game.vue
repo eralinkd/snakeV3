@@ -113,26 +113,20 @@
           <div class="store-modal__image">
             <img :src="fail" alt="ошибка" />
           </div>
-          <h2 class="store-modal__title">Недостаточно ресурсов</h2>
-          <p class="store-modal__description">Для начала игры необходимы жизни и энергия.</p>
-          <BaseButton @click="handleModalClose" type="button" size="small"
-            >Окей, спасибо</BaseButton
-          >
+          <h2 class="store-modal__title">{{ $t('game.modal.noResources.title') }}</h2>
+          <p class="store-modal__description">{{ $t('game.modal.noResources.description') }}</p>
+          <BaseButton @click="handleModalClose" type="button" size="small">
+            {{ $t('game.modal.noResources.button') }}
+          </BaseButton>
         </div>
       </div>
     </BaseModal>
     <BaseBottomSheet :is-open="showInfo" @update:is-open="showInfo = false">
       <div class="info-sheet">
-        <h3 class="info-sheet__title">Как играть?</h3>
-        <p class="info-sheet__text">Краткое руководство</p>
+        <h3 class="info-sheet__title">{{ $t('game.info.title') }}</h3>
+        <p class="info-sheet__text">{{ $t('game.info.subtitle') }}</p>
+        <p class="info-sheet__text">{{ $t('game.info.description') }}</p>
         <div class="info-sheet__content">
-          <p class="info-sheet__text">
-            Куча интересного и не очень текста о том, как играть в змейку. Помните такую на змейку
-            на Nokia? Так вот, это не одно и тоже. А вот помните Subway Surf 2014? Вот это уже ближе
-            к тому, что вы будете здесь делать.
-            <br /><br />Вот даже картинка есть
-          </p>
-
           <img :src="snake" alt="snake" class="info-sheet__image" />
         </div>
       </div>
@@ -159,13 +153,15 @@
       <div class="store-modal__content">
         <BaseModalClose @click="handleGameEndModalClose" className="store-modal__close" />
         <div class="store-modal__frame store-modal__frame--success">
-          <h2 class="store-modal__title">Игра окончена!</h2>
-          <p class="store-modal__description">Ваша награда</p>
+          <h2 class="store-modal__title">{{ $t('game.modal.gameOver.title') }}</h2>
+          <p class="store-modal__description">{{ $t('game.modal.gameOver.description') }}</p>
           <div class="store-modal__reward">
             <p>+{{ sessionCoins }}</p>
             <img :src="scoinGame" alt="coins" />
           </div>
-          <p v-if="hasActiveArmor" class="store-modal__description">Ваша уцелевшая броня</p>
+          <p v-if="hasActiveArmor" class="store-modal__description">
+            {{ $t('game.modal.gameOver.equipment') }}
+          </p>
           <div v-if="hasActiveArmor" class="store-modal__equipment">
             <div
               v-if="gamedata.inventory?.armor.HELMET.activated"

@@ -93,7 +93,7 @@
                 />
                 <div class="swap-card__select-trigger-text">
                   <p>{{ selected.label }}</p>
-                  <span>Получено</span>
+                  <span>{{ $t('market.swap.received') }}</span>
                 </div>
                 <div
                   :class="[
@@ -129,7 +129,7 @@
           :disabled="!amountFrom || !amountTo || isSwapping"
           @click="handleSubmit"
         >
-          Обменять
+          {{ $t('market.swap.exchange') }}
         </BaseButton>
       </div>
     </template>

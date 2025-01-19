@@ -5,6 +5,14 @@
       "description": "Приглашай друзей и получи {percent}% с их прибыли",
       "button": "Пригласить",
       "copied": "Скопировано!"
+    },
+    "stats": {
+      "health": "Здоровье",
+      "energy": "Энергия"
+    },
+    "balance": {
+      "title": "Баланс",
+      "scoin": "SCOIN"
     }
   },
   "quests": {
@@ -18,6 +26,8 @@
     "swap": {
       "empty": "Обмен пока недоступен...",
       "sold": "Продано",
+      "received": "Получено",
+      "exchange": "Обменять",
       "insufficient": "Недостаточно средств",
       "error": {
         "title": "Недостаточно средств",
@@ -45,26 +55,109 @@
         "day": "день | дня | дней",
         "week": "неделя | недели | недель",
         "month": "месяц | месяца | месяцев"
+      },
+      "filter": {
+        "all": "Все",
+        "deposit": "Пополнения",
+        "withdraw": "Выводы"
       }
     }
   },
   "game": {
     "stage": {
-      "title": "Лига"
+      "title": "Лига",
+      "progress": "Прогресс"
     },
     "modal": {
       "gameOver": {
         "title": "Игра окончена",
+        "description": "Ваша награда",
+        "equipment": "Ваша уцелевшая броня",
         "button": "Окей"
+      },
+      "noResources": {
+        "title": "Недостаточно ресурсов",
+        "description": "Для начала игры необходимы жизни и энергия.",
+        "button": "Окей, спасибо"
       }
+    },
+    "info": {
+      "title": "Как играть?",
+      "subtitle": "Краткое руководство",
+      "description": "Куча интересного и не очень текста о том, как играть в змейку. Помните такую на змейку на Nokia? Так вот, это не одно и тоже. А вот помните Subway Surf 2014? Вот это уже ближе к тому, что вы будете здесь делать.\n\nВот даже картинка есть"
+    },
+    "boosts": {
+      "energy": "Энергия",
+      "income": "Доход"
+    },
+    "inventory": {
+      "title": "Инвентарь"
     }
+  },
+  "shop": {
+    "tabs": {
+      "eggs": "Яйца",
+      "boosts": "Бустеры"
+    },
+    "eggs": {
+      "take": "Взять",
+      "break": "Разбить",
+      "modal": {
+        "success": {
+          "title": "Успешно!",
+          "description": "Яйцо успешно получено"
+        },
+        "error": {
+          "title": "Ошибка",
+          "description": "Недостаточно средств"
+        }
+      }
+    },
+    "boosts": {
+      "energy": {
+        "title": "Энергия",
+        "description": "Увеличивает энергию на {value}%"
+      },
+      "income": {
+        "title": "Доход",
+        "description": "Увеличивает доход на {value}%"
+      },
+      "buy": "Купить"
+    }
+  },
+  "inventory": {
+    "empty": "Инвентарь пуст",
+    "equipment": {
+      "helmet": "Шлем",
+      "armor": "Броня",
+      "shield": "Щит",
+      "sword": "Меч"
+    },
+    "actions": {
+      "activate": "Активировать",
+      "deactivate": "Деактивировать"
+    }
+  },
+  "navigation": {
+    "profile": "Профиль",
+    "game": "Игра",
+    "market": "Маркет",
+    "shop": "Магазин",
+    "inventory": "Инвентарь"
   },
   "common": {
     "loading": "Загрузка...",
     "error": "Произошла ошибка",
     "currency": {
       "scoin": "SCOIN",
-      "usdt": "USDT"
+      "usdt": "USDT",
+      "btc": "BTC",
+      "eth": "ETH"
+    },
+    "buttons": {
+      "close": "Закрыть",
+      "confirm": "Подтвердить",
+      "cancel": "Отмена"
     }
   }
 } 
