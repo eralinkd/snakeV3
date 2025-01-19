@@ -32,28 +32,22 @@
           <img :src="energy" alt="energy" />
           <p>{{ gamedata.energy }}</p>
         </div>
-        <div 
-          v-if="gamedata.inventory?.armor.HELMET.activated" 
+        <div
+          v-if="gamedata.inventory?.armor.HELMET.activated"
           class="game__main-left-equipment first"
         >
           <img class="helmet" :src="helmet" alt="helmet" />
         </div>
-        <div 
-          v-if="gamedata.inventory?.armor.CHESTPLATE.activated" 
+        <div
+          v-if="gamedata.inventory?.armor.CHESTPLATE.activated"
           class="game__main-left-equipment"
         >
           <img class="armor" :src="armor" alt="armor" />
         </div>
-        <div 
-          v-if="gamedata.inventory?.armor.SHIELD.activated" 
-          class="game__main-left-equipment"
-        >
+        <div v-if="gamedata.inventory?.armor.SHIELD.activated" class="game__main-left-equipment">
           <img class="shield" :src="shield" alt="shield" />
         </div>
-        <div 
-          v-if="gamedata.inventory?.armor.SWORD.activated" 
-          class="game__main-left-equipment"
-        >
+        <div v-if="gamedata.inventory?.armor.SWORD.activated" class="game__main-left-equipment">
           <img class="sword" :src="sword" alt="sword" />
         </div>
       </div>
@@ -76,6 +70,18 @@
         <div class="game__main-right__inventory" @click="router.push('/inventory')">
           <img :src="inventory" alt="inventory" />
         </div>
+      </div>
+    </div>
+
+    <div class="game__main-bottom">
+      <h2>{{ stageName }}</h2>
+      <div class="game__main-bottom-progress">
+        <div 
+          class="game__main-bottom-progress-bar" 
+          :style="{ width: `${progressPercent}%` }"
+        ></div>
+        <p class="game__main-bottom-progress-left">{{ formattedProgress }}</p>
+        <p class="game__main-bottom-progress-right">{{ formattedNeedProgress }}</p>
       </div>
     </div>
     <div class="game__top-stats" v-if="isGameStarted">
@@ -132,28 +138,16 @@
       </div>
     </BaseBottomSheet>
     <div class="game__armor" v-if="isGameStarted && hasActiveArmor">
-      <div 
-        v-if="gamedata.inventory?.armor.HELMET.activated" 
-        class="game__armor-item"
-      >
+      <div v-if="gamedata.inventory?.armor.HELMET.activated" class="game__armor-item">
         <img class="helmet" :src="helmet" alt="helmet" />
       </div>
-      <div 
-        v-if="gamedata.inventory?.armor.CHESTPLATE.activated" 
-        class="game__armor-item"
-      >
+      <div v-if="gamedata.inventory?.armor.CHESTPLATE.activated" class="game__armor-item">
         <img class="armor" :src="armor" alt="armor" />
       </div>
-      <div 
-        v-if="gamedata.inventory?.armor.SHIELD.activated" 
-        class="game__armor-item"
-      >
+      <div v-if="gamedata.inventory?.armor.SHIELD.activated" class="game__armor-item">
         <img class="shield" :src="shield" alt="shield" />
       </div>
-      <div 
-        v-if="gamedata.inventory?.armor.SWORD.activated" 
-        class="game__armor-item"
-      >
+      <div v-if="gamedata.inventory?.armor.SWORD.activated" class="game__armor-item">
         <img class="sword" :src="sword" alt="sword" />
       </div>
     </div>
@@ -173,26 +167,26 @@
           </div>
           <p v-if="hasActiveArmor" class="store-modal__description">Ваша уцелевшая броня</p>
           <div v-if="hasActiveArmor" class="store-modal__equipment">
-            <div 
-              v-if="gamedata.inventory?.armor.HELMET.activated" 
+            <div
+              v-if="gamedata.inventory?.armor.HELMET.activated"
               class="store-modal__equipment-item"
             >
               <img class="helmet" :src="helmet" alt="helmet" />
             </div>
-            <div 
-              v-if="gamedata.inventory?.armor.CHESTPLATE.activated" 
+            <div
+              v-if="gamedata.inventory?.armor.CHESTPLATE.activated"
               class="store-modal__equipment-item"
             >
               <img class="armor" :src="armor" alt="armor" />
             </div>
-            <div 
-              v-if="gamedata.inventory?.armor.SHIELD.activated" 
+            <div
+              v-if="gamedata.inventory?.armor.SHIELD.activated"
               class="store-modal__equipment-item"
             >
               <img class="shield" :src="shield" alt="shield" />
             </div>
-            <div 
-              v-if="gamedata.inventory?.armor.SWORD.activated" 
+            <div
+              v-if="gamedata.inventory?.armor.SWORD.activated"
               class="store-modal__equipment-item"
             >
               <img class="sword" :src="sword" alt="sword" />
@@ -334,31 +328,31 @@ const handleObstacleHit = async () => {
     if (response.energy) {
       currentEnergy.value = response.energy
     }
-    
+
     if (response.content === 'game_end') {
       snakeScene.forceGameEnd()
     } else {
       // Обновляем данные игры и брони
       const updatedArmor = { ...gamedata.value.inventory.armor }
       // Сначала деактивируем всю броню
-      Object.keys(updatedArmor).forEach(key => {
+      Object.keys(updatedArmor).forEach((key) => {
         updatedArmor[key] = { ...updatedArmor[key], activated: false }
       })
       // Затем активируем только те элементы, которые пришли в ответе
-      response.activatedArmor.forEach(item => {
+      response.activatedArmor.forEach((item) => {
         if (updatedArmor[item]) {
           updatedArmor[item] = { ...updatedArmor[item], activated: true }
         }
       })
-      
+
       gamedata.value = {
         ...gamedata.value,
         inventory: {
           ...gamedata.value.inventory,
-          armor: updatedArmor
-        }
+          armor: updatedArmor,
+        },
       }
-      
+
       // Проверяем, что сцена существует и метод доступен
       if (snakeScene && typeof snakeScene.handleCollision === 'function') {
         snakeScene.handleCollision()
@@ -408,13 +402,36 @@ const handleGameEndModalClose = () => {
 
 // Добавим вычисляемое свойство для проверки наличия активной брони
 const hasActiveArmor = computed(() => {
-  return gamedata.value?.inventory?.armor &&
-    Object.values(gamedata.value.inventory.armor).some(item => item.activated)
+  return (
+    gamedata.value?.inventory?.armor &&
+    Object.values(gamedata.value.inventory.armor).some((item) => item.activated)
+  )
 })
 
 // Добавим наблюдатель за состоянием игры для управления навигацией
 watch(isGameStarted, (playing) => {
   document.documentElement.setAttribute('data-playing', playing.toString())
+})
+
+// В script setup добавим вычисляемые свойства
+const stageName = computed(() => {
+  return gamedata.value?.stage?.name || 'Лига'
+})
+
+const progressPercent = computed(() => {
+  const progress = gamedata.value?.stageProgress || 0
+  const needProgress = gamedata.value?.stage?.needProgress || 100
+  return Math.min((progress / needProgress) * 100, 100)
+})
+
+const formattedProgress = computed(() => {
+  const progress = gamedata.value?.stageProgress || 0
+  return progress >= 1000 ? `${(progress / 1000).toFixed(1)}к` : progress
+})
+
+const formattedNeedProgress = computed(() => {
+  const needProgress = gamedata.value?.stage?.needProgress || 0
+  return needProgress >= 1000 ? `${(needProgress / 1000).toFixed(1)}к` : needProgress
 })
 
 onMounted(async () => {
@@ -453,24 +470,6 @@ onMounted(async () => {
     snakeScene.setCollectCallback(handleCoinCollect)
     snakeScene.setObstacleCallback(handleObstacleHit)
   })
-
-  // gamedata.value = {
-  //   balance: '120к',
-  //   exchangeFrom: '1',
-  //   exchangeTo: '20к',
-  //   energy: 100,
-  //   health: 100,
-  //   boosts: {
-  //     energyBoost: 0,
-  //     incomeBoost: 0,
-  //   },
-  //   equipment: {
-  //     helmet: false,
-  //     armor: false,
-  //     shield: false,
-  //     sword: false,
-  //   },
-  // }
 })
 
 onUnmounted(() => {
@@ -880,17 +879,17 @@ onUnmounted(() => {
       width: 34px;
     }
 
-      .armor {
-        width: 54px;
-      }
+    .armor {
+      width: 54px;
+    }
 
-      .shield {
-        width: 57px;
-      }
+    .shield {
+      width: 57px;
+    }
 
-      .sword {
-        width: 57px;
-      }
+    .sword {
+      width: 57px;
+    }
   }
 }
 
@@ -958,10 +957,76 @@ onUnmounted(() => {
 
 // Обновим стили для App.vue через глобальный класс
 :root {
-  &[data-playing="true"] {
+  &[data-playing='true'] {
     :deep(.navigation),
     :deep(.bottom-navigation) {
       display: none !important; // Добавим !important для гарантированного скрытия
+    }
+  }
+}
+
+.game__main-bottom {
+  position: fixed;
+  bottom: 150px;
+  left: 0;
+  width: 100%;
+  padding: 0 20px;
+  z-index: 100;
+  pointer-events: none;
+
+  h2 {
+    font-family: Montserrat;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 36px;
+    text-align: center;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    margin-bottom: 12px;
+  }
+
+  &-progress {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    // overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0px 7px 30px 0px rgba(0, 0, 0, 0.27);
+    backdrop-filter: blur(30px);
+    background: rgba(27, 24, 41, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    &-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 30%;
+      background: #ae8bff;
+      border-radius: 7.5px;
+      transition: width 0.3s ease;
+    }
+
+    &-left,
+    &-right {
+      position: absolute;
+      bottom: -30px;
+      font-family: Montserrat;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 24px;
+      text-align: left;
+      text-underline-position: from-font;
+      text-decoration-skip-ink: none;
+    }
+
+    &-left {
+      left: 0;
+    }
+
+    &-right {
+      right: 0;
     }
   }
 }
