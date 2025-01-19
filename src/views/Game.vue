@@ -73,7 +73,7 @@
       </div>
     </div>
 
-    <div class="game__main-bottom">
+    <div class="game__main-bottom" v-if="!isGameStarted">
       <h2>{{ stageName }}</h2>
       <div class="game__main-bottom-progress">
         <div 
