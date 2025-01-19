@@ -320,6 +320,7 @@ function handlePlay() {
     multipliers.value.push(multipliers.value[multipliers.value.length - 1])
     multipliers.value.push(multipliers.value[multipliers.value.length - 1])
     currentMultiplierIndex.value = 0
+    currentWin.value = 0
     field.value = generateField(minesAmount.value)
   })
 }

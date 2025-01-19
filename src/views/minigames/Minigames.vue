@@ -9,14 +9,17 @@
       <div class="minigames__item">
         <img :src="crash" alt="Сапёр" />
         <h2>Crash</h2>
+        <p class="minigames__item-soon">Скоро...</p>
       </div>
       <div class="minigames__item">
         <img :src="coinflip" alt="Сапёр" />
         <h2>Coinflip</h2>
+        <p class="minigames__item-soon">Скоро...</p>
       </div>
       <div class="minigames__item">
         <img :src="roulette" alt="Сапёр" />
         <h2>Рулетка</h2>
+        <p class="minigames__item-soon">Скоро...</p>
       </div>
     </div>
   </div>
@@ -59,6 +62,7 @@ const router = useRouter()
 
   .minigames__item {
     // width: 100%;
+    position: relative;
     height: 100%;
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0px 7px 30px 0px rgba(0, 0, 0, 0.27);
@@ -88,6 +92,26 @@ const router = useRouter()
 
     img {
       width: 100%;
+    }
+
+    .minigames__item-soon {
+      position: absolute;
+      bottom: 72px;
+      left: 17px;
+      width: 74px;
+      height: 30px;
+      border-radius: 18px;
+      background: rgb(255, 185, 88);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: rgb(255, 255, 255);
+      font-family: Montserrat;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 150%;
+      letter-spacing: 0px;
+      text-align: left;
     }
   }
 }
