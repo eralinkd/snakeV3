@@ -31,6 +31,7 @@ export default class SnakeScene extends Phaser.Scene {
     this.collectCallback = null
     this.obstacleCallback = null
     this.isProcessingRequest = false
+    this.isCollisionProcessing = false
   }
 
   preload() {
@@ -365,32 +366,14 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   hitObstacle() {
-    if (this.isProcessingRequest) return
+    if (this.isProcessingRequest || this.isCollisionProcessing) return
     this.isProcessingRequest = true
-
-    this.isGameActive = false
-    this.isBackgroundMoving = false
-    this.snake.stop()
-    this.tweens.killAll()
-
-    if (this.coinSpawnTimer) this.coinSpawnTimer.remove()
-    if (this.obstacleSpawnTimer) this.obstacleSpawnTimer.remove()
+    this.isCollisionProcessing = true
 
     if (this.obstacleCallback) {
       this.obstacleCallback().finally(() => {
-        this.flashRect.setAlpha(1)
-        this.tweens.add({
-          targets: this.flashRect,
-          alpha: 0,
-          duration: 200,
-          ease: 'Linear',
-          onComplete: () => {
-            if (this.finishCallback) {
-              this.finishCallback()
-            }
-            this.resetScene()
-          }
-        })
+        this.isProcessingRequest = false
+        this.isCollisionProcessing = false
       })
     }
   }
@@ -429,7 +412,7 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   update() {
-    if (this.isGameActive && this.isBackgroundMoving) {
+    if (this.isGameActive && this.isBackgroundMoving && !this.isCollisionProcessing) {
       this.background.tilePositionY -= this.scrollSpeed
       
       if (!this.isProcessingRequest) {
@@ -517,5 +500,69 @@ export default class SnakeScene extends Phaser.Scene {
       this.finishCallback()
     }
     this.resetScene()
+  }
+
+  handleCollision() {
+    if (this.coinSpawnTimer) this.coinSpawnTimer.remove()
+    if (this.obstacleSpawnTimer) this.obstacleSpawnTimer.remove()
+
+    this.isGameActive = false
+    this.isBackgroundMoving = false
+
+    const flash = this.add.rectangle(0, 0, this.game.config.width, this.game.config.height, 0xffffff)
+    flash.setOrigin(0)
+    flash.setAlpha(0.5)
+
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 100,
+      ease: 'Power1',
+      onComplete: () => {
+        flash.destroy()
+        this.clearGameObjects()
+        
+        this.isGameActive = true
+        this.isBackgroundMoving = true
+        
+        this.setupObjectGeneration()
+        this.isCollisionProcessing = false
+      }
+    })
+  }
+
+  clearGameObjects() {
+    this.obstacles.forEach(obstacle => {
+      obstacle.setActive(false)
+      obstacle.setVisible(false)
+      this.tweens.killTweensOf(obstacle)
+    })
+    this.coins.forEach(coin => {
+      coin.setActive(false)
+      coin.setVisible(false)
+      this.tweens.killTweensOf(coin)
+    })
+    this.obstacles = []
+    this.coins = []
+  }
+
+  setupObjectGeneration() {
+    this.obstacleSpawnTimer = this.time.addEvent({
+      delay: 1500,
+      callback: this.spawnObstacle,
+      callbackScope: this,
+      loop: true
+    })
+
+    this.coinSpawnTimer = this.time.addEvent({
+      delay: 800,
+      callback: () => {
+        this.time.delayedCall(100, () => {
+          this.spawnCoin()
+        })
+      },
+      callbackScope: this,
+      loop: true
+    })
   }
 } 

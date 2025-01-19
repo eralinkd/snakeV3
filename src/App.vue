@@ -113,8 +113,19 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 @use './styles/variables.scss' as *;
+/* The following style is NOT scoped, so it applies globally. 
+   We check for data-playing="true" on the html tag, and hide .navigation and .bottom-navigation. */
+
+:root[data-playing="true"] {
+  .navigation,
+  .bottom-navigation {
+    display: none !important;
+  }
+}
+
+
 
 .main {
   display: flex;

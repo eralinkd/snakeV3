@@ -1,7 +1,8 @@
 import api from './config'
 
-export const getGameData = () => {
-    return api.get('/games/data')
+export const getGameData = async () => {
+    const response = await api.get('/users/gameInfo')
+    return response.data
 }
 
 export const postGameSnakeCreate = async () => {

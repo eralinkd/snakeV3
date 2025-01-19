@@ -1,15 +1,21 @@
 <template>
-  <div class="game">
+  <div class="game" :class="{ 'game--playing': isGameStarted }">
     <div class="game__top-bar" v-if="!isGameStarted">
       <div class="game__top-bar-balance">
         <img :src="Scoin" alt="balance" />
-        <p>{{ gamedata.balance }}</p>
+        <p>{{ gamedata.scoins }}</p>
       </div>
       <div class="game__top-bar-right">
         <div class="game__top-bar-exchange-rate">
-          <div><img :src="usdt" alt="balance" />{{ gamedata.exchangeFrom }}</div>
+          <div>
+            <img :src="usdt" alt="balance" />
+            {{ gamedata.snakeCoinInfo?.needFor1USDT == 0 ? 0 : 1 }}
+          </div>
           <div>=</div>
-          <div><img :src="Scoin" alt="balance" />{{ gamedata.exchangeTo }}</div>
+          <div>
+            <img :src="Scoin" alt="balance" />
+            {{ gamedata.snakeCoinInfo?.needFor1USDT }}
+          </div>
         </div>
         <div class="game__top-bar-info" @click="showInfo = true">
           <img :src="info" alt="info" />
@@ -26,46 +32,46 @@
           <img :src="energy" alt="energy" />
           <p>{{ gamedata.energy }}</p>
         </div>
-        <!-- <div class="game__main-left-equipment first" @click="router.push('/inventory')">
-          <img
-            :class="{ helmet: true, active: gamedata.equipment?.helmet }"
-            :src="helmet"
-            alt="helmet"
-          />
+        <div 
+          v-if="gamedata.inventory?.armor.HELMET.activated" 
+          class="game__main-left-equipment first"
+        >
+          <img class="helmet" :src="helmet" alt="helmet" />
         </div>
-        <div class="game__main-left-equipment" @click="router.push('/inventory')">
-          <img
-            :class="{ armor: true, active: gamedata.equipment?.armor }"
-            :src="armor"
-            alt="armor"
-          />
+        <div 
+          v-if="gamedata.inventory?.armor.CHESTPLATE.activated" 
+          class="game__main-left-equipment"
+        >
+          <img class="armor" :src="armor" alt="armor" />
         </div>
-        <div class="game__main-left-equipment" @click="router.push('/inventory')">
-          <img
-            :class="{ shield: true, active: gamedata.equipment?.shield }"
-            :src="shield"
-            alt="shield"
-          />
+        <div 
+          v-if="gamedata.inventory?.armor.SHIELD.activated" 
+          class="game__main-left-equipment"
+        >
+          <img class="shield" :src="shield" alt="shield" />
         </div>
-        <div class="game__main-left-equipment" @click="router.push('/inventory')">
-          <img
-            :class="{ sword: true, active: gamedata.equipment?.sword }"
-            :src="sword"
-            alt="sword"
-          />
-        </div> -->
+        <div 
+          v-if="gamedata.inventory?.armor.SWORD.activated" 
+          class="game__main-left-equipment"
+        >
+          <img class="sword" :src="sword" alt="sword" />
+        </div>
       </div>
       <div class="game__main-snake" @click="startGame">
         <img :src="snake" alt="snake" />
       </div>
       <div class="game__main-right">
-        <div>
+        <div @click="router.push('/shop')">
           <img :src="energyBoost" alt="energyBoost" />
-          <p>{{ gamedata.boosts?.energyBoost || '+' }}</p>
+          <p v-if="energyBoostTimeLeft > 0">{{ formatBoostTime(energyBoostTimeLeft) }}</p>
+          <p v-else><img :src="boosterPlus" alt="plus" /></p>
         </div>
-  <div>
+        <div @click="router.push('/shop')">
           <img :src="incomeBoost" alt="incomeBoost" />
-          <p>{{ gamedata.boosts?.incomeBoost || '+' }}</p>
+          <p v-if="gamedata.moneyBoostTimeLeft > 0">
+            {{ formatBoostTime(gamedata.moneyBoostTimeLeft) }}
+          </p>
+          <p v-else><img :src="boosterPlus" alt="plus" /></p>
         </div>
         <div class="game__main-right__inventory" @click="router.push('/inventory')">
           <img :src="inventory" alt="inventory" />
@@ -125,11 +131,84 @@
         </div>
       </div>
     </BaseBottomSheet>
+    <div class="game__armor" v-if="isGameStarted && hasActiveArmor">
+      <div 
+        v-if="gamedata.inventory?.armor.HELMET.activated" 
+        class="game__armor-item"
+      >
+        <img class="helmet" :src="helmet" alt="helmet" />
+      </div>
+      <div 
+        v-if="gamedata.inventory?.armor.CHESTPLATE.activated" 
+        class="game__armor-item"
+      >
+        <img class="armor" :src="armor" alt="armor" />
+      </div>
+      <div 
+        v-if="gamedata.inventory?.armor.SHIELD.activated" 
+        class="game__armor-item"
+      >
+        <img class="shield" :src="shield" alt="shield" />
+      </div>
+      <div 
+        v-if="gamedata.inventory?.armor.SWORD.activated" 
+        class="game__armor-item"
+      >
+        <img class="sword" :src="sword" alt="sword" />
+      </div>
+    </div>
+    <BaseModal
+      :isOpen="showGameEndModal"
+      @update:isOpen="handleGameEndModalClose"
+      className="store-modal"
+    >
+      <div class="store-modal__content">
+        <BaseModalClose @click="handleGameEndModalClose" className="store-modal__close" />
+        <div class="store-modal__frame store-modal__frame--success">
+          <h2 class="store-modal__title">Игра окончена!</h2>
+          <p class="store-modal__description">Ваша награда</p>
+          <div class="store-modal__reward">
+            <p>+{{ sessionCoins }}</p>
+            <img :src="scoinGame" alt="coins" />
+          </div>
+          <p v-if="hasActiveArmor" class="store-modal__description">Ваша уцелевшая броня</p>
+          <div v-if="hasActiveArmor" class="store-modal__equipment">
+            <div 
+              v-if="gamedata.inventory?.armor.HELMET.activated" 
+              class="store-modal__equipment-item"
+            >
+              <img class="helmet" :src="helmet" alt="helmet" />
+            </div>
+            <div 
+              v-if="gamedata.inventory?.armor.CHESTPLATE.activated" 
+              class="store-modal__equipment-item"
+            >
+              <img class="armor" :src="armor" alt="armor" />
+            </div>
+            <div 
+              v-if="gamedata.inventory?.armor.SHIELD.activated" 
+              class="store-modal__equipment-item"
+            >
+              <img class="shield" :src="shield" alt="shield" />
+            </div>
+            <div 
+              v-if="gamedata.inventory?.armor.SWORD.activated" 
+              class="store-modal__equipment-item"
+            >
+              <img class="sword" :src="sword" alt="sword" />
+            </div>
+          </div>
+          <BaseButton @click="handleGameEndModalClose" type="button" size="small"
+            >Окей, спасибо</BaseButton
+          >
+        </div>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Phaser from 'phaser'
 import SnakeScene from '@/game/scenes/SnakeScene'
@@ -146,7 +225,14 @@ import armor from '@/assets/game/armor.png'
 import shield from '@/assets/game/shield.png'
 import sword from '@/assets/game/sword.png'
 import snake from '@/assets/game/snake.png'
-import { getGameData, postGameGameEnd, postGameSnakeCreate, postGameCurrentContent } from '@/api/gameApi'
+import scoinGame from '@/assets/game/scoin-game.png'
+import boosterPlus from '@/assets/game/booster-plus.png'
+import {
+  getGameData,
+  postGameGameEnd,
+  postGameSnakeCreate,
+  postGameCurrentContent,
+} from '@/api/gameApi'
 import BaseModal from '@/components/BaseModal.vue'
 import BaseModalClose from '@/components/BaseModalClose.vue'
 import BaseButton from '@/components/BaseButton.vue'
@@ -164,18 +250,20 @@ const showInfo = ref(false)
 const currentEnergy = ref(100)
 const currentCoins = ref(0)
 const sessionCoins = ref(0)
+const energyBoostTimeLeft = ref(0)
+const showGameEndModal = ref(false)
 
 const handleModalClose = () => {
   showNoResourcesModal.value = false
 }
 
 const startGame = async () => {
-  if (isGameStarted.value) return
-
-  if (gamedata.value.energy <= 0 || gamedata.value.health <= 0) {
+  if (gamedata.value.energy <= 0) {
     showNoResourcesModal.value = true
     return
   }
+  isGameStarted.value = true
+  document.documentElement.setAttribute('data-playing', 'true')
 
   try {
     const response = await postGameSnakeCreate()
@@ -183,13 +271,12 @@ const startGame = async () => {
       showNoResourcesModal.value = true
       return
     }
-    
+
     gameId.value = response.id
     currentCoins.value = 0
     sessionCoins.value = 0
     currentEnergy.value = gamedata.value.energy
-    
-    isGameStarted.value = true
+
     setTimeout(() => {
       if (snakeScene) {
         snakeScene.startGame()
@@ -203,7 +290,9 @@ const startGame = async () => {
 
 const finishGame = async () => {
   isGameStarted.value = false
-  
+  document.documentElement.setAttribute('data-playing', 'false')
+  showGameEndModal.value = true
+
   if (!gameId.value) {
     console.error('No gameId available')
     return
@@ -239,21 +328,102 @@ const handleCoinCollect = async () => {
 const handleObstacleHit = async () => {
   try {
     const response = await postGameCurrentContent(gameId.value, { content: 'obstacle' })
-    if (response.amount) {
+    if (response.amount !== undefined) {
       currentCoins.value = response.amount
     }
     if (response.energy) {
       currentEnergy.value = response.energy
     }
+    
     if (response.content === 'game_end') {
       snakeScene.forceGameEnd()
+    } else {
+      // Обновляем данные игры и брони
+      const updatedArmor = { ...gamedata.value.inventory.armor }
+      // Сначала деактивируем всю броню
+      Object.keys(updatedArmor).forEach(key => {
+        updatedArmor[key] = { ...updatedArmor[key], activated: false }
+      })
+      // Затем активируем только те элементы, которые пришли в ответе
+      response.activatedArmor.forEach(item => {
+        if (updatedArmor[item]) {
+          updatedArmor[item] = { ...updatedArmor[item], activated: true }
+        }
+      })
+      
+      gamedata.value = {
+        ...gamedata.value,
+        inventory: {
+          ...gamedata.value.inventory,
+          armor: updatedArmor
+        }
+      }
+      
+      // Проверяем, что сцена существует и метод доступен
+      if (snakeScene && typeof snakeScene.handleCollision === 'function') {
+        snakeScene.handleCollision()
+      }
     }
   } catch (error) {
     console.error('Error getting current content:', error)
   }
 }
 
-onMounted(() => {
+// Добавляем функцию форматирования времени
+const formatBoostTime = (seconds) => {
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+}
+
+// Добавляем функцию для запуска таймеров
+const startBoostTimers = () => {
+  const energyTimer = setInterval(() => {
+    if (energyBoostTimeLeft.value > 0) {
+      energyBoostTimeLeft.value--
+    } else {
+      clearInterval(energyTimer)
+    }
+  }, 1000)
+
+  const moneyTimer = setInterval(() => {
+    if (gamedata.value.moneyBoostTimeLeft > 0) {
+      gamedata.value.moneyBoostTimeLeft--
+    } else {
+      clearInterval(moneyTimer)
+    }
+  }, 1000)
+
+  // Очистка таймеров при размонтировании компонента
+  onUnmounted(() => {
+    clearInterval(energyTimer)
+    clearInterval(moneyTimer)
+  })
+}
+
+const handleGameEndModalClose = () => {
+  showGameEndModal.value = false
+  router.push('/')
+}
+
+// Добавим вычисляемое свойство для проверки наличия активной брони
+const hasActiveArmor = computed(() => {
+  return gamedata.value?.inventory?.armor &&
+    Object.values(gamedata.value.inventory.armor).some(item => item.activated)
+})
+
+// Добавим наблюдатель за состоянием игры для управления навигацией
+watch(isGameStarted, (playing) => {
+  document.documentElement.setAttribute('data-playing', playing.toString())
+})
+
+onMounted(async () => {
+  // Загрузка данных игры
+  gamedata.value = await getGameData()
+  energyBoostTimeLeft.value = gamedata.value.energyBoostTimeLeft
+  // Запускаем оба таймера
+  startBoostTimers()
+
   const config = {
     type: Phaser.CANVAS,
     parent: 'game-container',
@@ -284,35 +454,30 @@ onMounted(() => {
     snakeScene.setObstacleCallback(handleObstacleHit)
   })
 
-  // Загрузка данных игры
-  // Раскомментируйте для использования реального API
-  // getGameData().then((data) => {
-  //   gamedata.value = data
-  // })
-
-  gamedata.value = {
-    balance: '120к',
-    exchangeFrom: '1',
-    exchangeTo: '20к',
-    energy: 100,
-    health: 100,
-    boosts: {
-      energyBoost: 0,
-      incomeBoost: 0,
-    },
-    equipment: {
-      helmet: false,
-      armor: false,
-      shield: false,
-      sword: false,
-    },
-  }
+  // gamedata.value = {
+  //   balance: '120к',
+  //   exchangeFrom: '1',
+  //   exchangeTo: '20к',
+  //   energy: 100,
+  //   health: 100,
+  //   boosts: {
+  //     energyBoost: 0,
+  //     incomeBoost: 0,
+  //   },
+  //   equipment: {
+  //     helmet: false,
+  //     armor: false,
+  //     shield: false,
+  //     sword: false,
+  //   },
+  // }
 })
 
 onUnmounted(() => {
   if (game) {
     game.destroy(true)
   }
+  document.documentElement.removeAttribute('data-playing')
 })
 </script>
 
@@ -324,6 +489,12 @@ onUnmounted(() => {
   touch-action: none;
   overflow: hidden;
   padding-top: 24px;
+
+  &--playing {
+    .game__armor {
+      bottom: 0; // Перемещаем броню в самый низ при игре
+    }
+  }
 }
 
 #game-container {
@@ -447,10 +618,15 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 12px;
 
+    .game__main-left-heart,
+    .game__main-left-energy {
+      width: 69px;
+    }
+
     div {
       padding: 0 12px;
       gap: 10px;
-      min-width: 69px;
+      width: 100px;
       height: 40px;
       display: flex;
       align-items: center;
@@ -561,6 +737,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
+    animation: bounce 0.5s ease;
 
     img {
       width: 100%;
@@ -582,6 +759,23 @@ onUnmounted(() => {
     font-weight: 400;
     line-height: 150%;
     max-width: 240px;
+  }
+}
+
+@keyframes bounce {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
@@ -662,6 +856,112 @@ onUnmounted(() => {
       font-size: 16px;
       font-weight: 500;
       text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+  }
+}
+
+.store-modal__equipment {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+
+  .store-modal__equipment-item {
+    width: 67px;
+    height: 67px;
+    background: #12101b;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+
+    .helmet {
+      width: 34px;
+    }
+
+      .armor {
+        width: 54px;
+      }
+
+      .shield {
+        width: 57px;
+      }
+
+      .sword {
+        width: 57px;
+      }
+  }
+}
+
+.store-modal__reward {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #12101b;
+  font-family: Montserrat;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  text-underline-position: from-font;
+  text-decoration-skip-ink: none;
+  width: 223px;
+  height: 80px;
+  margin-top: 12px;
+}
+
+.game__armor {
+  position: fixed;
+  bottom: 30px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 20px;
+  z-index: 100;
+  pointer-events: none;
+
+  &-item {
+    width: 67px;
+    height: 67px;
+    background: rgba(27, 24, 41, 0.9);
+    backdrop-filter: blur(15px);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+
+    .helmet {
+      width: 34px;
+    }
+
+    .armor {
+      width: 54px;
+    }
+
+    .shield {
+      width: 57px;
+    }
+
+    .sword {
+      width: 57px;
+    }
+  }
+}
+
+// Обновим стили для App.vue через глобальный класс
+:root {
+  &[data-playing="true"] {
+    :deep(.navigation),
+    :deep(.bottom-navigation) {
+      display: none !important; // Добавим !important для гарантированного скрытия
     }
   }
 }
