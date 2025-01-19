@@ -93,7 +93,7 @@ export default class SnakeScene extends Phaser.Scene {
     )
     
     const baseHeight = 1200
-    const targetHeight = window.innerHeight * 0.25
+    const targetHeight = window.innerHeight * 0.3
     const scale = targetHeight / baseHeight
 
     this.snake.setScale(scale)
