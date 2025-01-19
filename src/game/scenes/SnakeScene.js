@@ -289,7 +289,7 @@ export default class SnakeScene extends Phaser.Scene {
       this.objectPool.obstacles.push(obstacle)
     }
 
-    const rockScale = (window.innerHeight * 0.04) / 100
+    const rockScale = (window.innerHeight * 0.04) / 75
     obstacle.setScale(rockScale)
     obstacle.setPosition(x, 0)
     obstacle.setActive(true)
