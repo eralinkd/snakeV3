@@ -13,10 +13,18 @@
     </div>
 
     <div class="coefficients">
-      <div class="active"><span>x1.234</span></div>
-      <div class="next"><span>x1.234</span></div>
-      <div><span>x1.234</span></div>
+      <div :class="{ active: currentMultiplierIndex >= 0 }">
+        <span>x{{ multipliers[currentMultiplierIndex] || '0.00' }}</span>
+      </div>
+      <div :class="{ next: true }">
+        <span>x{{ multipliers[currentMultiplierIndex + 1] || '0.00' }}</span>
+      </div>
+      <div>
+        <span>x{{ multipliers[currentMultiplierIndex + 2] || '0.00' }}</span>
+      </div>
     </div>
+
+    <!-- Добавляем после блока с коэффициентами и перед игровым полем -->
 
     <!-- Основное игровое поле 5×5 -->
     <div class="gameField">
@@ -48,47 +56,61 @@
     <!-- Выбор параметров игры и кнопки "Начать игру" / "Забрать ... " -->
     <div class="optionsField">
       <!-- Выбор валюты (USDT или scoin) -->
-      <div class="currencySelector">
-        <div
-          :class="[
-            'option',
-            selectedCurrency === 'USDT_TRC20' ? 'selected' : '',
-            gameStarted ? 'disabled' : '',
-          ]"
-          @click="setSelectedCurrency('USDT_TRC20')"
-        >
-          <img :src="usdtImg" alt="USDT_TRC20" />
-        </div>
-        <div
-          :class="[
-            'option',
-            selectedCurrency === 'scoin' ? 'selected' : '',
-            gameStarted ? 'disabled' : '',
-          ]"
-          @click="setSelectedCurrency('scoin')"
-        >
-          <img :src="scoinImg" alt="scoin" />
-        </div>
-      </div>
+      <div class="swap-card">
+        <BaseInput
+          v-model="formattedAmountFrom"
+          type="number"
+          placeholder="0.00"
+          class="swap-card__input"
+          without-plate
+          :readonly="gameStarted"
+          :disabled="gameStarted"
+        />
 
-      <!-- Выбор ставки -->
-      <div class="betAmountContainer">
-        <div class="betSelector">
-          <div
-            v-for="option in selectedCurrency === 'USDT_TRC20'
-              ? usdtBetAmountOptions
-              : scoinBetAmountOptions"
-            :key="option"
-            @click="handleBetOptionClick(option)"
-            :class="[
-              'option',
-              isBetOptionSelected(option) ? 'selected' : '',
-              gameStarted ? 'disabled' : '',
-            ]"
-          >
-            {{ option }}
-          </div>
-        </div>
+        <BaseSelect
+          v-model="selectedFrom"
+          :options="swappableOptions"
+          placement="left"
+          @select="handleAction"
+          class="swap-card__select"
+          :readonly="gameStarted"
+          :disabled="gameStarted"
+        >
+          <template #trigger="{ selected, isOpen }">
+            <button :class="['swap-card__select-trigger']">
+              <img
+                class="swap-card__select-trigger-icon"
+                :src="icons[selected.value]"
+                alt="filter icon"
+              />
+              <div class="swap-card__select-trigger-text">
+                <p>{{ selected.label }}</p>
+                <span>Ставка</span>
+              </div>
+              <div
+                :class="[
+                  'filter-button__icon-container',
+                  { 'filter-button__icon-container--rotate': isOpen },
+                ]"
+              >
+                <svg
+                  width="10"
+                  height="7"
+                  viewBox="0 0 10 7"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M5.58925 6.25594C5.26383 6.58135 4.73617 6.58135 4.41075 6.25594L0.244075 2.08928C-0.0813583 1.76384 -0.0813583 1.2362 0.244075 0.910762C0.569517 0.585329 1.09715 0.585329 1.42259 0.910762L5 4.48819L8.57742 0.910762C8.90283 0.585329 9.4305 0.585329 9.75592 0.910762C10.0813 1.2362 10.0813 1.76384 9.75592 2.08928L5.58925 6.25594Z"
+                    fill="white"
+                  />
+                </svg>
+              </div>
+            </button>
+          </template>
+        </BaseSelect>
       </div>
 
       <!-- Количество мин -->
@@ -113,7 +135,7 @@
       <BaseButton :disabled="gameStarted" @click="handlePlay" v-if="!gameStarted"
         >Начать игру</BaseButton
       >
-      <BaseButton :disabled="!gameStarted" @click="handleWin" v-else
+      <BaseButton :disabled="!gameStarted || !currentWin" @click="handleWin" v-else
         >Забрать {{ currentWin }}</BaseButton
       >
     </div>
@@ -139,10 +161,12 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { postCreateMinerGame, postGameCurrentContent } from '@/api/gameApi'
 import BaseBottomSheet from '@/components/BaseBottomSheet.vue'
 import BaseButton from '@/components/BaseButton.vue'
+import BaseInput from '@/components/BaseInput.vue'
+import BaseSelect from '@/components/BaseSelect.vue'
 
 // Импорт картинок
 import scoinImg from '@/assets/games/minigames/miner/scoin.png'
@@ -150,6 +174,8 @@ import bombImg from '@/assets/games/minigames/miner/bomb.png'
 import usdtImg from '@/assets/currency-images/usdt.png'
 import infoImg from '@/assets/games/minigames/miner/info.png'
 import snake from '@/assets/game/snake.png'
+import bitcoinIcon from '@/assets/currency-images/bitcoin.png'
+import ethIcon from '@/assets/currency-images/eth.png'
 
 // Константы для игры
 const minesAmountOptions = [3, 5, 10, 15]
@@ -158,6 +184,7 @@ const scoinBetAmountOptions = [100, 300, 500, 1000, 2000]
 
 // Состояния (ref) вместо useState
 const field = ref(generateField(minesAmountOptions[0]))
+const multipliers = ref([])
 const openedCells = ref([])
 const gameStarted = ref(false)
 const coinssLeft = ref(25 - minesAmountOptions[0])
@@ -168,9 +195,45 @@ const minesAmount = ref(minesAmountOptions[0])
 const betAmount = ref(usdtBetAmountOptions[0])
 const scoinAmount = ref(scoinBetAmountOptions[0])
 const selectedCurrency = ref('USDT_TRC20')
+const currentMultiplierIndex = ref(-1)
 
 // Добавляем состояние для шторки
 const showInfo = ref(false)
+
+// Добавляем новые computed и refs
+const icons = computed(() => ({
+  SCOIN: scoinImg,
+  BTC: bitcoinIcon,
+  ETH: ethIcon,
+  USDT_TRC20: usdtImg,
+}))
+
+const swappableOptions = computed(() => [
+  { value: 'USDT_TRC20', label: 'USDT' },
+  { value: 'SCOIN', label: 'SCOIN' },
+])
+
+const selectedFrom = ref('USDT_TRC20')
+const formattedAmountFrom = computed({
+  get: () => betAmount.value,
+  set: (value) => {
+    if (value.includes('.')) {
+      const [integer, decimal] = value.split('.')
+      if (decimal && decimal.length > 2) {
+        return
+      }
+    }
+    betAmount.value = value
+  },
+})
+
+const handleAction = () => {
+  if (selectedFrom.value === 'USDT_TRC20') {
+    betAmount.value = usdtBetAmountOptions[0]
+  } else {
+    betAmount.value = scoinBetAmountOptions[0]
+  }
+}
 
 // Аналог generateField() из React
 function generateField(mines) {
@@ -219,27 +282,20 @@ function isBomb(rowIndex, colIndex) {
 // Обработка клика по ячейке (открыть)
 function openCell(rowIndex, colIndex) {
   if (!gameStarted.value) return
+  if (isOpened(rowIndex, colIndex)) return
 
-  // Уже открыта?
-  if (isOpened(rowIndex, colIndex)) {
-    return
-  }
-
-  const content = `${rowIndex} ${colIndex}`
+  const content = { content: `${rowIndex},${colIndex}` }
   postGameCurrentContent(gameID.value, content).then((data) => {
     const { symbol, status, canWin } = data
     currentWin.value = canWin
-
-    // Записываем, что эта ячейка открыта с symbol
     openedCells.value.push({ row: rowIndex, col: colIndex, symbol })
 
-    if (status === 'LOSE') {
-      gameStarted.value = false
-      // Можно показать модалку с проигрышем
+    if (symbol === 'diamond' && status !== 'LOSE') {
+      currentMultiplierIndex.value += 1
     }
-    if (status === 'WIN') {
+
+    if (status === 'LOSE' || status === 'WIN') {
       gameStarted.value = false
-      // Можно показать модалку с выигрышем
     }
   })
 }
@@ -254,21 +310,23 @@ function handlePlay() {
   }
   postCreateMinerGame(gameData).then((data) => {
     if (!data.success) {
-      // Вывести ошибку о нехватке баланса
       return
     }
     gameID.value = data.id
     gameStarted.value = true
     openedCells.value = []
-
-    // Генерируем новое поле
+    multipliers.value = data.multipliers || []
+    multipliers.value.push(multipliers.value[multipliers.value.length - 1])
+    multipliers.value.push(multipliers.value[multipliers.value.length - 1])
+    multipliers.value.push(multipliers.value[multipliers.value.length - 1])
+    currentMultiplierIndex.value = 0
     field.value = generateField(minesAmount.value)
   })
 }
 
 // Нажатие на кнопку "Забрать currentWin"
 function handleWin() {
-  // Здесь же можно вызвать закрытие игры, получение выигрыша и т.д.
+  postGameCurrentContent(gameID.value, { content: 'finish' })
   gameStarted.value = false
 }
 
@@ -576,6 +634,88 @@ label {
   &__image {
     width: 100%;
     object-fit: contain;
+  }
+}
+
+.swap-card {
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 12px 20px 12px 12px;
+  border-radius: 16px;
+  box-shadow: 0px 7px 30px 0px rgba(0, 0, 0, 0.27);
+  backdrop-filter: blur(30px);
+  background: rgba(27, 24, 41, 0.75);
+
+  &__input {
+    :deep(input) {
+      width: 100%;
+    }
+  }
+
+  &__select {
+    max-width: 200px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__select-trigger {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    &-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      @media (max-width: $smallBreakpoint) {
+        width: 36px;
+        height: 36px;
+      }
+    }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      p {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 22px;
+        letter-spacing: 0px;
+        width: 72px;
+        margin-right: 5px;
+        text-align: left;
+        @media (max-width: $smallBreakpoint) {
+          width: 50px;
+        }
+      }
+
+      span {
+        color: #808080;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 16px;
+        letter-spacing: 0px;
+        text-align: left;
+      }
+    }
+  }
+}
+
+.filter-button__icon-container {
+  svg {
+    transition: all 0.3s ease 0s;
+  }
+  &--rotate {
+    svg {
+      transform: rotate(180deg);
+    }
   }
 }
 </style>
