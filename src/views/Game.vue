@@ -3,15 +3,15 @@
     <div class="game__top-bar" v-if="!isGameStarted">
       <div class="game__top-bar-balance">
         <img :src="Scoin" alt="balance" />
-        <p>120к</p>
+        <p>{{ gamedata.balance }}</p>
       </div>
       <div class="game__top-bar-right">
         <div class="game__top-bar-exchange-rate">
-          <div><img :src="usdt" alt="balance" />1</div>
+          <div><img :src="usdt" alt="balance" />{{ gamedata.exchangeFrom }}</div>
           <div>=</div>
-          <div><img :src="Scoin" alt="balance" />20к</div>
+          <div><img :src="Scoin" alt="balance" />{{ gamedata.exchangeTo }}</div>
         </div>
-        <div class="game__top-bar-info">
+        <div class="game__top-bar-info" @click="showInfo = true">
           <img :src="info" alt="info" />
         </div>
       </div>
@@ -20,24 +20,40 @@
       <div class="game__main-left">
         <div class="game__main-left-heart">
           <img :src="heart" alt="heart" />
-          <p>5</p>
+          <p>{{ gamedata.health }}</p>
         </div>
         <div class="game__main-left-energy">
           <img :src="energy" alt="energy" />
-          <p>100</p>
+          <p>{{ gamedata.energy }}</p>
         </div>
-        <div class="game__main-left-equipment first" @click="router.push('/inventory')">
-          <img :src="helmet" alt="helmet" />
+        <!-- <div class="game__main-left-equipment first" @click="router.push('/inventory')">
+          <img
+            :class="{ helmet: true, active: gamedata.equipment?.helmet }"
+            :src="helmet"
+            alt="helmet"
+          />
         </div>
         <div class="game__main-left-equipment" @click="router.push('/inventory')">
-          <img :src="armor" alt="armor" />
+          <img
+            :class="{ armor: true, active: gamedata.equipment?.armor }"
+            :src="armor"
+            alt="armor"
+          />
         </div>
         <div class="game__main-left-equipment" @click="router.push('/inventory')">
-          <img :src="shield" alt="shield" />
+          <img
+            :class="{ shield: true, active: gamedata.equipment?.shield }"
+            :src="shield"
+            alt="shield"
+          />
         </div>
-        <div class="game__main-left-equipment" @click="router.push('/equipment')">
-          <img :src="sword" alt="sword" />
-        </div>
+        <div class="game__main-left-equipment" @click="router.push('/inventory')">
+          <img
+            :class="{ sword: true, active: gamedata.equipment?.sword }"
+            :src="sword"
+            alt="sword"
+          />
+        </div> -->
       </div>
       <div class="game__main-snake" @click="startGame">
         <img :src="snake" alt="snake" />
@@ -45,11 +61,11 @@
       <div class="game__main-right">
         <div>
           <img :src="energyBoost" alt="energyBoost" />
-          <p>4:59</p>
+          <p>{{ gamedata.boosts?.energyBoost || '+' }}</p>
         </div>
         <div>
           <img :src="incomeBoost" alt="incomeBoost" />
-          <p>4:59</p>
+          <p>{{ gamedata.boosts?.incomeBoost || '+' }}</p>
         </div>
         <div class="game__main-right__inventory" @click="router.push('/inventory')">
           <img :src="inventory" alt="inventory" />
@@ -57,25 +73,52 @@
       </div>
     </div>
     <div class="game__bottom-bar" v-if="isGameStarted"></div>
-    <div 
-      id="game-container" 
+    <div
+      id="game-container"
       @touchmove.prevent
       @touchstart.prevent
-      :class="{ 'visible': isGameStarted }"
+      :class="{ visible: isGameStarted }"
     ></div>
-    <!-- <BaseButton 
-      class="start-button" 
-      :class="{ hidden: isGameStarted }"
-      @click="startGame"
+    <BaseModal
+      :isOpen="showNoResourcesModal"
+      @update:isOpen="handleModalClose"
+      className="store-modal"
     >
-      Начать игру
-    </BaseButton> -->
+      <div class="store-modal__content">
+        <BaseModalClose @click="handleModalClose" className="store-modal__close" />
+        <div class="store-modal__frame store-modal__frame--fail">
+          <div class="store-modal__image">
+            <img :src="fail" alt="ошибка" />
+          </div>
+          <h2 class="store-modal__title">Недостаточно ресурсов</h2>
+          <p class="store-modal__description">Для начала игры необходимы жизни и энергия.</p>
+          <BaseButton @click="handleModalClose" type="button" size="small"
+            >Окей, спасибо</BaseButton
+          >
+        </div>
+      </div>
+    </BaseModal>
+    <BaseBottomSheet :is-open="showInfo" @update:is-open="showInfo = false">
+      <div class="info-sheet">
+        <h3 class="info-sheet__title">Как играть?</h3>
+        <p class="info-sheet__text">Краткое руководство</p>
+        <div class="info-sheet__content">
+          <p class="info-sheet__text">
+            Куча интересного и не очень текста о том, как играть в змейку. Помните такую на змейку
+            на Nokia? Так вот, это не одно и тоже. А вот помните Subway Surf 2014? Вот это уже ближе
+            к тому, что вы будете здесь делать.
+            <br /><br />Вот даже картинка есть
+          </p>
+
+          <img :src="snake" alt="snake" class="info-sheet__image" />
+        </div>
+      </div>
+    </BaseBottomSheet>
   </div>
 </template>
 
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
-import BaseButton from '@/components/BaseButton.vue'
 import { useRouter } from 'vue-router'
 import Phaser from 'phaser'
 import SnakeScene from '@/game/scenes/SnakeScene'
@@ -92,18 +135,35 @@ import armor from '@/assets/game/armor.png'
 import shield from '@/assets/game/shield.png'
 import sword from '@/assets/game/sword.png'
 import snake from '@/assets/game/snake.png'
+import { getGameData } from '@/api/gameApi'
+import BaseModal from '@/components/BaseModal.vue'
+import BaseModalClose from '@/components/BaseModalClose.vue'
+import BaseButton from '@/components/BaseButton.vue'
+import fail from '@/assets/game/fail.png'
+import BaseBottomSheet from '@/components/BaseBottomSheet.vue'
 
 const router = useRouter()
-
+const gamedata = ref({})
 const isGameStarted = ref(false)
 let game = null
 let snakeScene = null
+const showNoResourcesModal = ref(false)
+const showInfo = ref(false)
+
+const handleModalClose = () => {
+  showNoResourcesModal.value = false
+}
 
 const startGame = () => {
   if (isGameStarted.value) return
-  
+
+  // Проверяем ресурсы перед стартом
+  if (gamedata.value.energy <= 0 || gamedata.value.health <= 0) {
+    showNoResourcesModal.value = true
+    return
+  }
+
   isGameStarted.value = true
-  // Запускаем игру после небольшой задержки для анимации
   setTimeout(() => {
     if (snakeScene) {
       snakeScene.startGame()
@@ -138,6 +198,30 @@ onMounted(() => {
   game.events.once('ready', () => {
     snakeScene = game.scene.getScene('SnakeScene')
   })
+
+  // Загрузка данных игры
+  // Раскомментируйте для использования реального API
+  // getGameData().then((data) => {
+  //   gamedata.value = data
+  // })
+
+  gamedata.value = {
+    balance: '120к',
+    exchangeFrom: '1',
+    exchangeTo: '20к',
+    energy: 0,
+    health: 0,
+    boosts: {
+      energyBoost: 0,
+      incomeBoost: 0,
+    },
+    equipment: {
+      helmet: false,
+      armor: false,
+      shield: false,
+      sword: false,
+    },
+  }
 })
 
 onUnmounted(() => {
@@ -318,9 +402,27 @@ onUnmounted(() => {
       justify-content: center;
       width: 69px;
       height: 67px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
 
       &.first {
         margin-top: 12px;
+      }
+
+      .helmet {
+        width: 34px;
+      }
+
+      .armor {
+        width: 54px;
+      }
+
+      .shield {
+        width: 57px;
+      }
+
+      .sword {
+        width: 57px;
       }
     }
   }
@@ -333,10 +435,110 @@ onUnmounted(() => {
   transform: translateX(-50%);
   z-index: 10;
   transition: opacity 0.3s ease;
-  
+
   &.hidden {
     opacity: 0;
     pointer-events: none;
+  }
+}
+
+.store-modal {
+  position: relative;
+
+  &__close {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+  }
+
+  &__content {
+    border-radius: 16px;
+    background: rgba(27, 24, 41, 0.75);
+    box-shadow: 0px 7px 30px 0px rgba(0, 0, 0, 0.27);
+    backdrop-filter: blur(15px);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  &__frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+
+  &__image {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  &__title {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 150%;
+  }
+
+  &__description {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 150%;
+    max-width: 240px;
+  }
+}
+
+.info-sheet {
+  &__title {
+    font-family: Montserrat;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 36px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #fff;
+  }
+
+  &__text {
+    font-family: Montserrat;
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 15px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    margin-top: 2px;
+    margin-bottom: 24px;
+  }
+
+  &__content {
+    font-family: Montserrat;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    text-align: left;
+    text-underline-position: from-font;
+    text-decoration-skip-ink: none;
+    color: #ffffff80;
+    margin-bottom: 24px;
+  }
+
+  &__image {
+    width: 100%;
+    // height: 345px    margin: 0 auto;
   }
 }
 </style>
