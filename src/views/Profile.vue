@@ -5,8 +5,12 @@
     <div class="header">
       <div class="topbar">
         <div class="stats">
-          <div><img :src="heartSrc" alt="hearts" /><span>{{ user?.health || '0' }}</span></div>
-          <div><img :src="energySrc" alt="energy" /><span>{{ user?.energy || '0' }}</span></div>
+          <div>
+            <img :src="heartSrc" alt="hearts" /><span>{{ user?.health || '0' }}</span>
+          </div>
+          <div>
+            <img :src="energySrc" alt="energy" /><span>{{ user?.energy || '0' }}</span>
+          </div>
         </div>
 
         <div class="lang">
@@ -50,6 +54,28 @@
         <p class="income">+ {{ item.profit || '0' }}<img :src="scoinSrc" alt="scoin" /></p>
       </div>
     </div>
+
+    <div class="quests">
+      <BaseTabs v-model:activeTab="selectedQuestType" :tabs="questTabs" class="quests__tabs">
+      </BaseTabs>
+      <div class="quests__list">
+        <div
+          v-for="quest in filteredQuests"
+          :key="quest.id"
+          class="quest-item"
+          :class="{ 'quest-item--disabled': quest.completed }"
+          @click="handleQuestClick(quest)"
+        >
+          <div class="quest-item__info">
+            <p class="quest-item__description">{{ quest.description }}</p>
+            <div class="quest-item__reward">
+              <span>+{{ quest.reward }}</span>
+              <img :src="scoinSrc" alt="scoin" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -63,9 +89,10 @@ import avatar from '@/assets/profile/avatar.png'
 import copy from '@/assets/profile/copy.svg'
 import { useUserStore } from '@/stores/userStore'
 import BaseButton from '@/components/BaseButton.vue'
-import { ref, watch } from 'vue'
-import { getUser } from '@/api/userApi'
+import { ref, watch, computed, onMounted } from 'vue'
+import { getUser, getUserQuests, postCompleteQuest } from '@/api/userApi'
 import { useQuery } from '@tanstack/vue-query'
+import BaseTabs from '@/components/BaseTabs.vue'
 
 const headerBgSrc = bg
 const heartSrc = heart
@@ -103,10 +130,18 @@ const handleShare = () => {
 
 const user = ref(null)
 const userData = useUserStore().userData
+const userQuests = ref(null)
 
 const { data: resp, isError } = useQuery({
   queryKey: ['user'],
   queryFn: getUser,
+})
+
+const { data: questsData, isError: questsError } = useQuery({
+  queryKey: ['quests'],
+  queryFn: getUserQuests,
+  staleTime: 5 * 60 * 1000,
+  cacheTime: 30 * 60 * 1000,
 })
 
 watch(
@@ -118,6 +153,78 @@ watch(
   },
   { immediate: true },
 )
+
+watch(
+  questsData,
+  (newValue) => {
+    if (!questsError.value) {
+      userQuests.value = newValue
+    }
+  },
+  { immediate: true },
+)
+
+const selectedQuestType = ref('Ежедневные')
+const questTabs = [
+  { name: 'Ежедневные', component: 'everyDay' },
+  { name: 'Разовые', component: 'oneTime' },
+]
+
+const filteredQuests = computed(() => {
+  if (!userQuests.value) return []
+  const typeMap = {
+    Ежедневные: 'everyDay',
+    Разовые: 'oneTime',
+  }
+  return userQuests.value[typeMap[selectedQuestType.value]] || []
+})
+
+const handleQuestClick = (quest) => {
+  // Для разовых квестов открываем ссылку в новой вкладке
+  if (quest.questValue) {
+    const isTelegramLink = 
+      quest.questValue.startsWith('https://t.me/') || 
+      quest.questValue.startsWith('tg://') ||
+      quest.questValue.startsWith('t.me/')
+
+    if (isTelegramLink) {
+      // Преобразуем t.me ссылки в полный URL если нужно
+      const telegramUrl = quest.questValue.startsWith('t.me/') 
+        ? `https://${quest.questValue}`
+        : quest.questValue
+        
+      window.open(telegramUrl, '_blank')
+    } else {
+      // Для других ссылок добавляем https:// если протокол не указан
+      const url = quest.questValue.startsWith('http') 
+        ? quest.questValue 
+        : `https://${quest.questValue}`
+        
+      window.open(url, '_blank')
+    }
+  }
+
+  // После открытия ссылки отправляем запрос на выполнение квеста
+  postCompleteQuest(quest.id)
+    .then(async () => {
+      const newQuestsData = await getUserQuests()
+      userQuests.value = newQuestsData
+    })
+    .catch((error) => {
+      console.error('Error completing quest:', error)
+    })
+}
+
+// Автоматическое выполнение ежедневного задания при загрузке
+onMounted(async () => {
+  try {
+    await postCompleteQuest('everyday_join')
+    const newQuestsData = await getUserQuests()
+    userQuests.value = newQuestsData
+  } catch (error) {
+    console.error('Error completing daily quest:', error)
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -370,6 +477,78 @@ watch(
       font-weight: 700;
       line-height: 22px;
       letter-spacing: 0px;
+    }
+  }
+}
+
+.quests {
+  &__tabs {
+    width: 100%;
+  }
+
+  &__list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+:deep(.nav-tabs) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+:deep(.nav-tabs__item) {
+  width: 100%;
+}
+
+.quest-item {
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(27, 24, 41, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(30px);
+  cursor: pointer;
+
+  &--disabled {
+    background: rgba(18, 16, 27, 0.75);
+    border-color: rgba(255, 255, 255, 0.02);
+
+    .quest-item__description {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .quest-item__reward {
+      opacity: 0.5;
+    }
+  }
+
+  &__info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__description {
+    font-size: 16px;
+    line-height: 150%;
+  }
+
+  &__reward {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    span {
+      font-weight: 700;
+    }
+
+    img {
+      width: 24px;
+      height: 24px;
     }
   }
 }

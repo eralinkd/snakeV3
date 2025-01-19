@@ -29,3 +29,13 @@ export const postUserSwap = async (payload) => {
 	const { data } = await api.post(`/users/swap`, payload)
 	return data;
 }
+
+export const getUserQuests = async () => {
+	const { data } = await api.get(`/users/quests`)
+	return data;
+}
+
+export const postCompleteQuest = async (questId) => {
+	const { data } = await api.post(`/users/completeQuest/${questId}`)
+	return data;
+}

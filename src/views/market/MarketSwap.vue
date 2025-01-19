@@ -7,7 +7,11 @@
     <div v-else-if="isError || isBalancesError" class="error">Failed to fetch data</div>
 
     <template v-else>
-      <div class="content">
+      <div v-if="!hasAccessToTrade" class="swap__empty">
+        <p>Обмен пока недоступен...</p>
+      </div>
+
+      <div v-else class="content">
         <div class="swap-card">
           <BaseInput
             v-model="formattedAmountFrom"
@@ -399,6 +403,10 @@ watch(
   },
   { immediate: true },
 )
+
+const hasAccessToTrade = computed(() => {
+  return balancesResponse.value?.hasAccessToTrade ?? false
+})
 </script>
 
 <style lang="scss" scoped>
@@ -543,6 +551,13 @@ watch(
       letter-spacing: 0px;
       text-align: center;
     }
+  }
+
+  .swap__empty {
+    text-align: center;
+    padding: 40px 0;
+    font-size: 16px;
+    opacity: 0.6;
   }
 }
 
