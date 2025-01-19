@@ -232,8 +232,10 @@ import BaseModalClose from '@/components/BaseModalClose.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import fail from '@/assets/game/fail.png'
 import BaseBottomSheet from '@/components/BaseBottomSheet.vue'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { t } = useI18n()
 const gamedata = ref({})
 const gameId = ref(null)
 const isGameStarted = ref(false)
@@ -415,7 +417,7 @@ watch(isGameStarted, (playing) => {
 
 // В script setup добавим вычисляемые свойства
 const stageName = computed(() => {
-  return gamedata.value?.stage?.name || 'Лига'
+  return gamedata.value?.stage?.name || t('game.stage.title')
 })
 
 const progressPercent = computed(() => {

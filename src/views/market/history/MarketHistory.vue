@@ -5,7 +5,7 @@
     </div>
 
     <div v-if="isError" class="history__container">
-      <p class="error">Failed to fetch data</p>
+      <p class="error">{{ $t('common.error') }}</p>
     </div>
 
     <template v-if="history && !isError">
@@ -64,7 +64,7 @@
       </ul>
 
       <div v-else class="history__empty">
-        <p>Истории пока нет...</p>
+        <p>{{ $t('market.history.empty') }}</p>
       </div>
     </template>
   </div>

@@ -39,3 +39,8 @@ export const postCompleteQuest = async (questId) => {
 	const { data } = await api.post(`/users/completeQuest/${questId}`)
 	return data;
 }
+
+export const updateLanguage = async (language) => {
+	const { data } = await api.post(`/users/changeLang/${language}`)
+	return data
+}

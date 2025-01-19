@@ -1,0 +1,70 @@
+{
+  "profile": {
+    "title": "Friends Profit",
+    "invite": {
+      "description": "Invite friends and get {percent}% of their profit",
+      "button": "Invite",
+      "copied": "Copied!"
+    }
+  },
+  "quests": {
+    "tabs": {
+      "daily": "Daily",
+      "oneTime": "One Time"
+    },
+    "empty": "No quests yet..."
+  },
+  "market": {
+    "swap": {
+      "empty": "Exchange is not available yet...",
+      "sold": "Sold",
+      "insufficient": "Insufficient funds",
+      "error": {
+        "title": "Insufficient funds",
+        "description": "More funds are required for exchange."
+      },
+      "success": {
+        "title": "Success",
+        "description": "Exchange completed successfully"
+      },
+      "button": {
+        "ok": "Ok, thanks"
+      }
+    },
+    "history": {
+      "empty": "No history yet...",
+      "status": {
+        "success": "Success",
+        "pending": "Processing . . .",
+        "rejected": "Rejected"
+      },
+      "time": {
+        "justNow": "Just now",
+        "minute": "minute | minutes",
+        "hour": "hour | hours",
+        "day": "day | days",
+        "week": "week | weeks",
+        "month": "month | months"
+      }
+    }
+  },
+  "game": {
+    "stage": {
+      "title": "League"
+    },
+    "modal": {
+      "gameOver": {
+        "title": "Game Over",
+        "button": "Ok"
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "currency": {
+      "scoin": "SCOIN",
+      "usdt": "USDT"
+    }
+  }
+} 

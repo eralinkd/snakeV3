@@ -13,9 +13,9 @@
           </div>
         </div>
 
-        <div class="lang">
+        <div class="lang" @click="toggleLanguage">
           <img :src="planetSrc" alt="earth" />
-          <span>{{ user?.language || 'ru' }}</span>
+          <span>{{ currentLanguage }}</span>
         </div>
       </div>
 
@@ -28,15 +28,15 @@
       </div>
     </div>
 
-    <h2 class="title">Прибыль от друзей</h2>
+    <h2 class="title">{{ $t('profile.title') }}</h2>
 
     <div class="friends">
       <div class="invite-block">
-        <p>Приглашай друзей и получи <span class="purple">10%</span> с их прибыли</p>
+        <p>{{ $t('profile.invite.description', { percent: 10 }) }}</p>
         <div class="invite-container">
-          <BaseButton class="invite-button" @click="handleShare">{{
-            isCopied ? 'Скопировано!' : 'Пригласить'
-          }}</BaseButton>
+          <BaseButton class="invite-button" @click="handleShare">
+            {{ isCopied ? $t('profile.invite.copied') : $t('profile.invite.button') }}
+          </BaseButton>
           <div @click="handleCopy" class="copy-container base-button accentGrad">
             <img class="copy-icon" :src="copySrc" alt="copy" />
           </div>
@@ -90,9 +90,10 @@ import copy from '@/assets/profile/copy.svg'
 import { useUserStore } from '@/stores/userStore'
 import BaseButton from '@/components/BaseButton.vue'
 import { ref, watch, computed, onMounted } from 'vue'
-import { getUser, getUserQuests, postCompleteQuest } from '@/api/userApi'
+import { getUser, getUserQuests, postCompleteQuest, updateLanguage } from '@/api/userApi'
 import { useQuery } from '@tanstack/vue-query'
 import BaseTabs from '@/components/BaseTabs.vue'
+import { useI18n } from 'vue-i18n'
 
 const headerBgSrc = bg
 const heartSrc = heart
@@ -223,6 +224,26 @@ onMounted(async () => {
     userQuests.value = newQuestsData
   } catch (error) {
     console.error('Error completing daily quest:', error)
+  }
+})
+
+const { t, locale } = useI18n()
+
+const currentLanguage = computed(() => locale.value)
+
+const toggleLanguage = () => {
+  locale.value = locale.value === 'ru' ? 'en' : 'ru'
+  // Сохраняем выбранный язык в localStorage
+  localStorage.setItem('language', locale.value)
+  // Обновляем язык на сервере
+  updateLanguage(locale.value)
+}
+
+// Загружаем сохраненный язык при монтировании
+onMounted(() => {
+  const savedLanguage = localStorage.getItem('language')
+  if (savedLanguage) {
+    locale.value = savedLanguage
   }
 })
 </script>

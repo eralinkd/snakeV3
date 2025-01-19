@@ -4,11 +4,11 @@
       <Spinner />
     </div>
 
-    <div v-else-if="isError || isBalancesError" class="error">Failed to fetch data</div>
+    <div v-else-if="isError || isBalancesError" class="error">{{ $t('common.error') }}</div>
 
     <template v-else>
       <div v-if="!hasAccessToTrade" class="swap__empty">
-        <p>Обмен пока недоступен...</p>
+        <p>{{ $t('market.swap.empty') }}</p>
       </div>
 
       <div v-else class="content">
@@ -37,7 +37,7 @@
                 />
                 <div class="swap-card__select-trigger-text">
                   <p>{{ selected.label }}</p>
-                  <span>Продано</span>
+                  <span>{{ $t('market.swap.sold') }}</span>
                 </div>
                 <div
                   :class="[
@@ -142,10 +142,10 @@
             <div class="store-modal__image">
               <img :src="success" alt="Успех" />
             </div>
-            <h2 class="store-modal__title">Успех!</h2>
-            <p class="store-modal__description">Обмен успешно выполнен!</p>
+            <h2 class="store-modal__title">{{ $t('market.swap.success.title') }}</h2>
+            <p class="store-modal__description">{{ $t('market.swap.success.description') }}</p>
             <BaseButton @click="handleModalClose" type="button" size="small"
-              >Окей, спасибо</BaseButton
+              >{{ $t('market.swap.button.ok') }}</BaseButton
             >
           </div>
 
@@ -153,10 +153,10 @@
             <div class="store-modal__image">
               <img :src="fail" alt="ошибка" />
             </div>
-            <h2 class="store-modal__title">Недостаточно средств</h2>
-            <p class="store-modal__description">Для выполнения обмена требуется больше средств.</p>
+            <h2 class="store-modal__title">{{ $t('market.swap.error.title') }}</h2>
+            <p class="store-modal__description">{{ $t('market.swap.error.description') }}</p>
             <BaseButton @click="handleModalClose" type="button" size="small"
-              >Окей, спасибо</BaseButton
+              >{{ $t('market.swap.button.ok') }}</BaseButton
             >
           </div>
         </template>
