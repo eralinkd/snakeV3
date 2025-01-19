@@ -239,23 +239,34 @@ let game = null
 let snakeScene = null
 const showNoResourcesModal = ref(false)
 const showInfo = ref(false)
-const currentEnergy = ref(100)
-const currentCoins = ref(0)
+const currentEnergy = ref(0)
 const sessionCoins = ref(0)
 const energyBoostTimeLeft = ref(0)
 const showGameEndModal = ref(false)
+let energyInterval = null
 
 const handleModalClose = () => {
   showNoResourcesModal.value = false
 }
 
 const startGame = async () => {
-  if (gamedata.value.energy <= 0) {
+  if (gamedata.value.energy <= 0 && gamedata.value.health <= 0) {
     showNoResourcesModal.value = true
     return
   }
+
   isGameStarted.value = true
+  currentEnergy.value = gamedata.value.energy
+  sessionCoins.value = 0
   document.documentElement.setAttribute('data-playing', 'true')
+
+  // Запускаем интервал для уменьшения энергии
+  energyInterval = setInterval(() => {
+    currentEnergy.value--
+    if (currentEnergy.value <= 0) {
+      handleGameEnd()
+    }
+  }, 1000)
 
   try {
     const response = await postGameSnakeCreate()
@@ -265,9 +276,7 @@ const startGame = async () => {
     }
 
     gameId.value = response.id
-    currentCoins.value = 0
-    sessionCoins.value = 0
-    currentEnergy.value = gamedata.value.energy
+    energyBoostTimeLeft.value = gamedata.value.energyBoostTimeLeft
 
     setTimeout(() => {
       if (snakeScene) {
@@ -280,22 +289,32 @@ const startGame = async () => {
   }
 }
 
-const finishGame = async () => {
-  isGameStarted.value = false
-  document.documentElement.setAttribute('data-playing', 'false')
-  showGameEndModal.value = true
-
-  if (!gameId.value) {
-    console.error('No gameId available')
-    return
+const handleGameEnd = async () => {
+  // Очищаем интервал
+  if (energyInterval) {
+    clearInterval(energyInterval)
+    energyInterval = null
   }
 
+  isGameStarted.value = false
+  document.documentElement.setAttribute('data-playing', 'false')
+  
+  if (game) {
+    game.destroy(true)
+    game = null
+  }
+
+  // Отправляем результаты на сервер
   try {
     await postGameGameEnd(gameId.value)
+    
+    // Обновляем данные игры
     const newGameData = await getGameData()
     gamedata.value = newGameData
+    
+    showGameEndModal.value = true
   } catch (error) {
-    console.error('Error finishing game:', error)
+    console.error('Failed to end game:', error)
   }
 }
 
@@ -303,7 +322,6 @@ const handleCoinCollect = async () => {
   try {
     const response = await postGameCurrentContent(gameId.value, { content: 'coin' })
     if (response.amount) {
-      currentCoins.value = response.amount
       sessionCoins.value += response.amount
     }
     if (response.energy) {
@@ -321,7 +339,7 @@ const handleObstacleHit = async () => {
   try {
     const response = await postGameCurrentContent(gameId.value, { content: 'obstacle' })
     if (response.amount !== undefined) {
-      currentCoins.value = response.amount
+      sessionCoins.value = response.amount
     }
     if (response.energy) {
       currentEnergy.value = response.energy
@@ -464,7 +482,7 @@ onMounted(async () => {
 
   game.events.once('ready', () => {
     snakeScene = game.scene.getScene('SnakeScene')
-    snakeScene.setFinishCallback(finishGame)
+    snakeScene.setFinishCallback(handleGameEnd)
     snakeScene.setCollectCallback(handleCoinCollect)
     snakeScene.setObstacleCallback(handleObstacleHit)
   })
@@ -475,6 +493,10 @@ onUnmounted(() => {
     game.destroy(true)
   }
   document.documentElement.removeAttribute('data-playing')
+  if (energyInterval) {
+    clearInterval(energyInterval)
+    energyInterval = null
+  }
 })
 </script>
 
@@ -486,12 +508,6 @@ onUnmounted(() => {
   touch-action: none;
   overflow: hidden;
   padding-top: 24px;
-
-  &--playing {
-    .game__armor {
-      bottom: 0; // Перемещаем броню в самый низ при игре
-    }
-  }
 }
 
 #game-container {
