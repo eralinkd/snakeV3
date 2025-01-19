@@ -19,7 +19,7 @@ export default class SnakeScene extends Phaser.Scene {
     this.flashRect = null
     this.background = null
     this.objectSpeed = 3000
-    this.scrollSpeed = 2.3
+    this.scrollSpeed = 1.8
     this.isBackgroundMoving = false
     this.frameCount = 0
     this.objectPool = {
