@@ -30,6 +30,16 @@ const routes = [
 		name: 'Inventory',
 		component: () => import('@/views/inventory/Inventory.vue'),
 	},
+	{
+		path: '/minigames',
+		name: 'Minigames',
+		component: () => import('@/views/minigames/Minigames.vue'),
+	},
+	{
+		path: '/minigames/minesweeper',
+		name: 'Minesweeper',
+		component: () => import('@/views/minigames/Minesweeper.vue'),
+	},
 ]
 
 const router = createRouter({

@@ -623,7 +623,6 @@ onUnmounted(() => {
 
   &__image {
     width: 100%;
-    // height: 345px    margin: 0 auto;
   }
 }
 
