@@ -266,7 +266,6 @@ export default class SnakeScene extends Phaser.Scene {
         coin.destroy()
       }
     })
-    window.Telegram.WebApp.HapticFeedback.impactOccurred('rigid');
   }
 
   startObstacleSpawning() {
