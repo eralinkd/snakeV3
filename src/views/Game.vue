@@ -229,8 +229,10 @@ import BaseButton from '@/components/BaseButton.vue'
 import fail from '@/assets/game/fail.png'
 import BaseBottomSheet from '@/components/BaseBottomSheet.vue'
 import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/stores/userStore'
 
 const router = useRouter()
+const userStore = useUserStore()
 const { t } = useI18n()
 const gamedata = ref({})
 const gameId = ref(null)
@@ -248,6 +250,18 @@ let energyInterval = null
 const handleModalClose = () => {
   showNoResourcesModal.value = false
 }
+
+// Следим за состоянием авторизации
+watch(() => userStore.isAuthorized, async (isAuthorized) => {
+  if (!isAuthorized) return
+
+  try {
+    const data = await getGameData()
+    gamedata.value = data
+  } catch (error) {
+    console.error('Failed to fetch game data:', error)
+  }
+})
 
 const startGame = async () => {
   if (gamedata.value.energy <= 0 && gamedata.value.health <= 0) {
