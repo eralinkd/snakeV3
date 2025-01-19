@@ -63,7 +63,7 @@
           <img :src="energyBoost" alt="energyBoost" />
           <p>{{ gamedata.boosts?.energyBoost || '+' }}</p>
         </div>
-        <div>
+  <div>
           <img :src="incomeBoost" alt="incomeBoost" />
           <p>{{ gamedata.boosts?.incomeBoost || '+' }}</p>
         </div>
@@ -72,7 +72,18 @@
         </div>
       </div>
     </div>
-    <div class="game__bottom-bar" v-if="isGameStarted"></div>
+    <div class="game__top-stats" v-if="isGameStarted">
+      <div class="game__stats">
+        <div class="game__stats-item">
+          <img :src="energy" alt="energy" />
+          <p>{{ currentEnergy }}</p>
+        </div>
+        <div class="game__stats-item">
+          <img :src="Scoin" alt="coins" />
+          <p>{{ sessionCoins }}</p>
+        </div>
+      </div>
+    </div>
     <div
       id="game-container"
       @touchmove.prevent
@@ -135,7 +146,7 @@ import armor from '@/assets/game/armor.png'
 import shield from '@/assets/game/shield.png'
 import sword from '@/assets/game/sword.png'
 import snake from '@/assets/game/snake.png'
-import { getGameData } from '@/api/gameApi'
+import { getGameData, postGameGameEnd, postGameSnakeCreate, postGameCurrentContent } from '@/api/gameApi'
 import BaseModal from '@/components/BaseModal.vue'
 import BaseModalClose from '@/components/BaseModalClose.vue'
 import BaseButton from '@/components/BaseButton.vue'
@@ -144,31 +155,103 @@ import BaseBottomSheet from '@/components/BaseBottomSheet.vue'
 
 const router = useRouter()
 const gamedata = ref({})
+const gameId = ref(null)
 const isGameStarted = ref(false)
 let game = null
 let snakeScene = null
 const showNoResourcesModal = ref(false)
 const showInfo = ref(false)
+const collectedCoins = ref(0)
+const currentEnergy = ref(100)
+const currentCoins = ref(0)
+const sessionCoins = ref(0)
 
 const handleModalClose = () => {
   showNoResourcesModal.value = false
 }
 
-const startGame = () => {
+const startGame = async () => {
   if (isGameStarted.value) return
 
-  // Проверяем ресурсы перед стартом
   if (gamedata.value.energy <= 0 || gamedata.value.health <= 0) {
     showNoResourcesModal.value = true
     return
   }
 
-  isGameStarted.value = true
-  setTimeout(() => {
-    if (snakeScene) {
-      snakeScene.startGame()
+  try {
+    const response = await postGameSnakeCreate()
+    if (!response?.id) {
+      showNoResourcesModal.value = true
+      return
     }
-  }, 100)
+    
+    gameId.value = response.id
+    currentCoins.value = 0
+    sessionCoins.value = 0
+    currentEnergy.value = gamedata.value.energy
+    
+    isGameStarted.value = true
+    setTimeout(() => {
+      if (snakeScene) {
+        snakeScene.startGame()
+      }
+    }, 100)
+  } catch (error) {
+    console.error('Error creating game:', error)
+    showNoResourcesModal.value = true
+  }
+}
+
+const finishGame = async () => {
+  isGameStarted.value = false
+  
+  if (!gameId.value) {
+    console.error('No gameId available')
+    return
+  }
+
+  try {
+    await postGameGameEnd(gameId.value)
+    const newGameData = await getGameData()
+    gamedata.value = newGameData
+  } catch (error) {
+    console.error('Error finishing game:', error)
+  }
+}
+
+const handleCoinCollect = async () => {
+  try {
+    const response = await postGameCurrentContent(gameId.value, { content: 'coin' })
+    if (response.amount) {
+      currentCoins.value = response.amount
+      sessionCoins.value += 1
+    }
+    if (response.energy) {
+      currentEnergy.value = response.energy
+    }
+    if (response.content === 'game_end') {
+      snakeScene.forceGameEnd()
+    }
+  } catch (error) {
+    console.error('Error getting current content:', error)
+  }
+}
+
+const handleObstacleHit = async () => {
+  try {
+    const response = await postGameCurrentContent(gameId.value, { content: 'obstacle' })
+    if (response.amount) {
+      currentCoins.value = response.amount
+    }
+    if (response.energy) {
+      currentEnergy.value = response.energy
+    }
+    if (response.content === 'game_end') {
+      snakeScene.forceGameEnd()
+    }
+  } catch (error) {
+    console.error('Error getting current content:', error)
+  }
 }
 
 onMounted(() => {
@@ -197,6 +280,9 @@ onMounted(() => {
 
   game.events.once('ready', () => {
     snakeScene = game.scene.getScene('SnakeScene')
+    snakeScene.setFinishCallback(finishGame)
+    snakeScene.setCollectCallback(handleCoinCollect)
+    snakeScene.setObstacleCallback(handleObstacleHit)
   })
 
   // Загрузка данных игры
@@ -209,8 +295,8 @@ onMounted(() => {
     balance: '120к',
     exchangeFrom: '1',
     exchangeTo: '20к',
-    energy: 0,
-    health: 0,
+    energy: 100,
+    health: 100,
     boosts: {
       energyBoost: 0,
       incomeBoost: 0,
@@ -539,6 +625,46 @@ onUnmounted(() => {
   &__image {
     width: 100%;
     // height: 345px    margin: 0 auto;
+  }
+}
+
+.game__top-stats {
+  position: fixed;
+  top: 20px;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+.game__stats {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+
+  &-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: rgba(27, 24, 41, 0.9);
+    backdrop-filter: blur(15px);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+
+    img {
+      width: 20px;
+      height: 20px;
+    }
+
+    p {
+      color: #fff;
+      font-size: 16px;
+      font-weight: 500;
+      text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3);
+    }
   }
 }
 </style>

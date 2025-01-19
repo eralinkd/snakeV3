@@ -1,6 +1,21 @@
-import api from './config';
+import api from './config'
 
-export const getGameData = async () => {
-    const { data } = await api.get('/game/data');
-    return data;
-};
+export const getGameData = () => {
+    return api.get('/games/data')
+}
+
+export const postGameSnakeCreate = async () => {
+    const response = await api.post('/game/snake/create')
+    return response.data
+}
+
+export const postGameGameEnd = async (gameId) => {
+    const response = await api.post(`/game/game/end/${gameId}`)
+    return response.data
+}
+
+export const postGameCurrentContent = async (gameId, content) => {
+    const response = await api.post(`/game/game/currentContent/${gameId}`, content)
+    return response.data
+}
+

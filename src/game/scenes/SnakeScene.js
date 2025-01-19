@@ -27,6 +27,14 @@ export default class SnakeScene extends Phaser.Scene {
       obstacles: []
     }
     this.lastObstacleLane = null
+    this.finishCallback = null
+    this.collectCallback = null
+    this.obstacleCallback = null
+    this.isProcessingCollision = false
+    this.isProcessingRequest = false
+    this.lastCollisionTime = 0
+    this.collisionCooldown = 500
+    this.collectedCoins = new Set()
   }
 
   preload() {
@@ -216,6 +224,8 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   checkCoinCollision() {
+    if (!this.isGameActive || this.isProcessingCollision || this.isProcessingRequest) return
+
     const snakeHead = {
       x: this.snake.x - 25,
       y: this.snake.y - 100,
@@ -225,6 +235,8 @@ export default class SnakeScene extends Phaser.Scene {
     
     for (let i = this.coins.length - 1; i >= 0; i--) {
       const coin = this.coins[i]
+      if (this.collectedCoins.has(coin)) continue
+
       const coinBounds = {
         x: coin.x - 20,
         y: coin.y - 20,
@@ -249,21 +261,26 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   collectCoin(coin) {
-    const index = this.coins.indexOf(coin)
-    if (index > -1) {
-      this.coins.splice(index, 1)
-    }
+    if (this.isProcessingCollision || this.isProcessingRequest) return
+    
+    this.isProcessingCollision = true
+    this.isProcessingRequest = true
+    this.collectedCoins.add(coin)
 
     this.tweens.killTweensOf(coin)
-
     this.tweens.add({
       targets: coin,
       scale: coin.scale * 1.3,
       alpha: 0,
       duration: 100,
       ease: 'Quad.easeOut',
-      onComplete: () => {
+      onComplete: async () => {
+        if (this.collectCallback) {
+          await this.collectCallback()
+        }
         coin.destroy()
+        this.isProcessingCollision = false
+        this.isProcessingRequest = false
       }
     })
   }
@@ -323,6 +340,8 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   checkObstacleCollision() {
+    if (!this.isGameActive || this.isProcessingCollision || this.isProcessingRequest) return
+
     const snakeHitbox = {
       x: this.snake.x - 15,
       y: this.snake.y - 60,
@@ -330,7 +349,7 @@ export default class SnakeScene extends Phaser.Scene {
       height: 80
     }
     
-    this.obstacles.forEach(obstacle => {
+    for (const obstacle of this.obstacles) {
       const obstacleHitbox = {
         x: obstacle.x - 15,
         y: obstacle.y - 15,
@@ -340,11 +359,17 @@ export default class SnakeScene extends Phaser.Scene {
 
       if (this.checkOverlap(snakeHitbox, obstacleHitbox)) {
         this.hitObstacle()
+        return
       }
-    })
+    }
   }
 
   hitObstacle() {
+    if (this.isProcessingCollision || this.isProcessingRequest) return
+    
+    this.isProcessingCollision = true
+    this.isProcessingRequest = true
+
     this.isGameActive = false
     this.isBackgroundMoving = false
     
@@ -352,32 +377,30 @@ export default class SnakeScene extends Phaser.Scene {
     if (this.obstacleSpawnTimer) this.obstacleSpawnTimer.remove()
 
     this.snake.stop()
-    
     this.tweens.killAll()
-    
-    this.coins.forEach(coin => {
-      this.tweens.killTweensOf(coin)
-    })
-    this.obstacles.forEach(obstacle => {
-      this.tweens.killTweensOf(obstacle)
-    })
+
+    if (this.obstacleCallback) {
+      this.obstacleCallback()
+    }
 
     this.flashRect.setAlpha(1)
     this.tweens.add({
       targets: this.flashRect,
       alpha: 0,
       duration: 200,
-      ease: 'Linear'
+      ease: 'Linear',
+      onComplete: () => {
+        if (this.finishCallback) {
+          this.finishCallback()
+        }
+        this.resetScene()
+      }
     })
   }
 
-  restartGame() {
-    if (this.obstacleSpawnTimer) {
-      this.obstacleSpawnTimer.remove()
-    }
-    if (this.coinSpawnTimer) {
-      this.coinSpawnTimer.remove()
-    }
+  resetScene() {
+    if (this.coinSpawnTimer) this.coinSpawnTimer.remove()
+    if (this.obstacleSpawnTimer) this.obstacleSpawnTimer.remove()
     
     this.coins.forEach(coin => {
       coin.setActive(false)
@@ -390,23 +413,32 @@ export default class SnakeScene extends Phaser.Scene {
     this.coins = []
     this.obstacles = []
 
-    this.snake.y = 2000
+    this.snake.stop()
+    this.snake.y = window.innerHeight/2
     this.currentLane = 1
     this.snake.x = this.lanePositions[this.currentLane]
+    
+    this.isGameActive = false
+    this.isBackgroundMoving = false
+    this.lastObstacleLane = null
+    
+    this.frameCount = 0
+    this.collectedCoins.clear()
+    this.lastCollisionTime = 0
+    this.isProcessingCollision = false
+    this.isProcessingRequest = false
+  }
 
+  restartGame() {
+    this.resetScene()
     this.startGame()
   }
 
   update() {
     if (this.isGameActive && this.isBackgroundMoving) {
       this.background.tilePositionY -= this.scrollSpeed
-
-      this.frameCount++
-      if (this.frameCount % 3 === 0) {
-        this.checkCoinCollision()
-        this.checkObstacleCollision()
-        this.frameCount = 0
-      }
+      this.checkCoinCollision()
+      this.checkObstacleCollision()
     }
   }
 
@@ -465,5 +497,27 @@ export default class SnakeScene extends Phaser.Scene {
     this.obstacles.forEach(obstacle => {
       obstacle.setScale(rockScale)
     })
+  }
+
+  setFinishCallback(callback) {
+    this.finishCallback = callback
+  }
+
+  setCollectCallback(callback) {
+    this.collectCallback = callback
+  }
+
+  setObstacleCallback(callback) {
+    this.obstacleCallback = callback
+  }
+
+  forceGameEnd() {
+    this.isGameActive = false
+    this.isBackgroundMoving = false
+    
+    if (this.finishCallback) {
+      this.finishCallback()
+    }
+    this.resetScene()
   }
 } 
