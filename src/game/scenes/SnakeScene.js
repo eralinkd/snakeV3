@@ -19,7 +19,7 @@ export default class SnakeScene extends Phaser.Scene {
     this.flashRect = null
     this.background = null
     this.objectSpeed = 3000
-    this.scrollSpeed = 1.2
+    this.scrollSpeed = 2.3
     this.isBackgroundMoving = false
     this.frameCount = 0
     this.objectPool = {
@@ -289,7 +289,7 @@ export default class SnakeScene extends Phaser.Scene {
       this.objectPool.obstacles.push(obstacle)
     }
 
-    const rockScale = (window.innerHeight * 0.04) / 75
+    const rockScale = (window.innerHeight * 0.04) / 58
     obstacle.setScale(rockScale)
     obstacle.setPosition(x, 0)
     obstacle.setActive(true)
