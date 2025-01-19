@@ -27,6 +27,7 @@ let game = null
 let snakeScene = null
 
 const startGame = () => {
+  Telegram.WebApp.HapticFeedback.impactOccurred('light');
   isGameStarted.value = true
   // Запускаем игру после анимации появления
   setTimeout(() => {
