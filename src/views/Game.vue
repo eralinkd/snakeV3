@@ -161,7 +161,6 @@ let game = null
 let snakeScene = null
 const showNoResourcesModal = ref(false)
 const showInfo = ref(false)
-const collectedCoins = ref(0)
 const currentEnergy = ref(100)
 const currentCoins = ref(0)
 const sessionCoins = ref(0)
@@ -224,7 +223,7 @@ const handleCoinCollect = async () => {
     const response = await postGameCurrentContent(gameId.value, { content: 'coin' })
     if (response.amount) {
       currentCoins.value = response.amount
-      sessionCoins.value += 1
+      sessionCoins.value += response.amount
     }
     if (response.energy) {
       currentEnergy.value = response.energy
