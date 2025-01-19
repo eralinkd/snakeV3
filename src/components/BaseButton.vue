@@ -22,6 +22,7 @@ defineProps({
 const emit = defineEmits(['click'])
 
 const handleClick = (event) => {
+  window.Telegram.WebApp.HapticFeedback.impactOccurred('rigid');
   emit('click', event)
 }
 </script>

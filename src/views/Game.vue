@@ -27,7 +27,7 @@ let game = null
 let snakeScene = null
 
 const startGame = () => {
-  window.Telegram.WebApp.HapticFeedback.impactOccurred('rigid');
+  // window.Telegram.WebApp.HapticFeedback.impactOccurred('rigid');
   window.Telegram.WebApp.HapticFeedback.notificationOccurred('error');
 
   isGameStarted.value = true
