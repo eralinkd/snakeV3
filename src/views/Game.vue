@@ -156,7 +156,7 @@
           <h2 class="store-modal__title">{{ $t('game.modal.gameOver.title') }}</h2>
           <p class="store-modal__description">{{ $t('game.modal.gameOver.description') }}</p>
           <div class="store-modal__reward">
-            <p>+{{ sessionCoins }}</p>
+            <p>+{{ displayCoins }}</p>  
             <img :src="scoinGame" alt="coins" />
           </div>
           <p v-if="hasActiveArmor" class="store-modal__description">
@@ -243,9 +243,11 @@ const showNoResourcesModal = ref(false)
 const showInfo = ref(false)
 const currentEnergy = ref(0)
 const sessionCoins = ref(0)
+const finalGameCoins = ref(0)
 const energyBoostTimeLeft = ref(0)
 const showGameEndModal = ref(false)
 let energyInterval = null
+let energyTickCounter = 0
 
 const handleModalClose = () => {
   showNoResourcesModal.value = false
@@ -270,15 +272,33 @@ const startGame = async () => {
   }
 
   isGameStarted.value = true
-  currentEnergy.value = gamedata.value.energy
   sessionCoins.value = 0
+  finalGameCoins.value = 0
+  currentEnergy.value = gamedata.value.energy
   document.documentElement.setAttribute('data-playing', 'true')
 
-  // Запускаем интервал для уменьшения энергии
-  energyInterval = setInterval(() => {
-    currentEnergy.value--
-    if (currentEnergy.value <= 0) {
-      handleGameEnd()
+  // Запускаем интервал, внутри которого будем проверять состояние буста
+  energyInterval = setInterval(async () => {
+    if (!isGameStarted.value) return
+
+    // Если остался буст (energyBoostTimeLeft > 0), то уменьшаем энергию в 2 раза медленнее:
+    // При boostTimeLeft > 0: уменьшаем энергию каждые 2 "тики" (2 секунды).
+    // Если буста нет, уменьшаем энергию каждый тик (1 секунда).
+    const decrementDelay = energyBoostTimeLeft.value > 0 ? 2 : 1
+    energyTickCounter++
+
+    if (energyTickCounter >= decrementDelay) {
+      energyTickCounter = 0
+      currentEnergy.value--
+      if (currentEnergy.value <= 0) {
+        // Сначала отправляем запрос time_out, потом заканчиваем игру
+        try {
+          await postGameCurrentContent(gameId.value, { content: 'time_out' })
+        } catch (error) {
+          console.error('Error sending time_out:', error)
+        }
+        handleGameEnd()
+      }
     }
   }, 1000)
 
@@ -304,21 +324,30 @@ const startGame = async () => {
 }
 
 const handleGameEnd = async () => {
+  console.log('Game ending, current coins:', sessionCoins.value)
+  
+  // Сохраняем финальный результат перед обнулением
+  finalGameCoins.value = sessionCoins.value
+  console.log('Saved final coins:', finalGameCoins.value)
+  
   // Очищаем интервал
   if (energyInterval) {
     clearInterval(energyInterval)
     energyInterval = null
   }
 
+  // Сброс счетчика
+  energyTickCounter = 0
+
   isGameStarted.value = false
   document.documentElement.setAttribute('data-playing', 'false')
   
-  if (game) {
-    game.destroy(true)
-    game = null
+  if (game.value) {
+    game.value.destroy(true)
+    game.value = null
   }
 
-  // Отправляем результаты на сервер
+  // Отправляем результаты на сервер и показываем модалку
   try {
     await postGameGameEnd(gameId.value)
     
@@ -333,10 +362,29 @@ const handleGameEnd = async () => {
 }
 
 const handleCoinCollect = async () => {
+  if (!isGameStarted.value) {
+    console.log('Game ended, skipping coin request.')
+    return
+  }
+
   try {
     const response = await postGameCurrentContent(gameId.value, { content: 'coin' })
-    if (response.amount) {
+    console.log('Coin collect response:', response)
+
+    // Если сервер вернул ошибку "game_not_found", полностью очищаем сцену и данные
+    if (response.error === 'game_not_found') {
+      forciblyClearGame('game_not_found')
+      return
+    }
+    
+    if (response.amount !== undefined) {
+      const prevCoins = sessionCoins.value
       sessionCoins.value += response.amount
+      console.log('Coins updated:', { 
+        prev: prevCoins, 
+        added: response.amount, 
+        new: sessionCoins.value 
+      })
     }
     if (response.energy) {
       currentEnergy.value = response.energy
@@ -350,10 +398,25 @@ const handleCoinCollect = async () => {
 }
 
 const handleObstacleHit = async () => {
+  if (!isGameStarted.value) {
+    console.log('Game ended, skipping obstacle request.')
+    return
+  }
+
   try {
     const response = await postGameCurrentContent(gameId.value, { content: 'obstacle' })
-    if (response.amount !== undefined) {
-      sessionCoins.value = response.amount
+    if (response.error === 'game_not_found') {
+      forciblyClearGame('game_not_found')
+      return
+    }
+
+    if (typeof response.amount !== 'undefined') {
+      sessionCoins.value += response.amount
+      console.log('Obstacle hit - coins updated:', {
+        previous: sessionCoins.value - response.amount,
+        added: response.amount,
+        new: sessionCoins.value
+      })
     }
     if (response.energy) {
       currentEnergy.value = response.energy
@@ -364,17 +427,14 @@ const handleObstacleHit = async () => {
     } else {
       // Обновляем данные игры и брони
       const updatedArmor = { ...gamedata.value.inventory.armor }
-      // Сначала деактивируем всю броню
       Object.keys(updatedArmor).forEach((key) => {
         updatedArmor[key] = { ...updatedArmor[key], activated: false }
       })
-      // Затем активируем только те элементы, которые пришли в ответе
       response.activatedArmor.forEach((item) => {
         if (updatedArmor[item]) {
-          updatedArmor[item] = { ...updatedArmor[item], activated: true }
+          updatedArmor[item].activated = true
         }
       })
-
       gamedata.value = {
         ...gamedata.value,
         inventory: {
@@ -383,7 +443,6 @@ const handleObstacleHit = async () => {
         },
       }
 
-      // Проверяем, что сцена существует и метод доступен
       if (snakeScene && typeof snakeScene.handleCollision === 'function') {
         snakeScene.handleCollision()
       }
@@ -427,6 +486,11 @@ const startBoostTimers = () => {
 
 const handleGameEndModalClose = () => {
   showGameEndModal.value = false
+  // Даём закрыться модалке, потом обнуляем
+  setTimeout(() => {
+    finalGameCoins.value = 0
+    sessionCoins.value = 0
+  }, 0)
   router.push('/')
 }
 
@@ -463,6 +527,31 @@ const formattedNeedProgress = computed(() => {
   const needProgress = gamedata.value?.stage?.needProgress || 0
   return needProgress >= 1000 ? `${(needProgress / 1000).toFixed(1)}к` : needProgress
 })
+
+// Обновим вычисляемое свойство для отображения результата
+const displayCoins = computed(() => {
+  console.log('Displaying coins in modal:', finalGameCoins.value)
+  return finalGameCoins.value
+})
+
+// Добавим функцию, которая полностью останавливает игру и очищает данные
+const forciblyClearGame = (reason) => {
+  console.log(`Forcibly clearing game due to: ${reason}`)
+  isGameStarted.value = false
+  if (energyInterval) {
+    clearInterval(energyInterval)
+    energyInterval = null
+  }
+  energyTickCounter = 0
+
+  if (game.value) {
+    game.value.destroy(true)
+    game.value = null
+  }
+  gamedata.value = {}
+  showGameEndModal.value = false
+  document.documentElement.setAttribute('data-playing', 'false')
+}
 
 onMounted(async () => {
   // Загрузка данных игры
@@ -503,8 +592,8 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (game) {
-    game.destroy(true)
+  if (game.value) {
+    game.value.destroy(true)
   }
   document.documentElement.removeAttribute('data-playing')
   if (energyInterval) {

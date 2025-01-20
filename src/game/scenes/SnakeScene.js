@@ -366,9 +366,7 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   hitObstacle() {
-    if (this.isProcessingRequest || this.isCollisionProcessing) return
-    this.isProcessingRequest = true
-    this.isCollisionProcessing = true
+    if (!this.isGameActive) return
 
     if (this.obstacleCallback) {
       this.obstacleCallback().finally(() => {
@@ -412,6 +410,8 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   update() {
+    if (!this.isGameActive) return
+
     if (this.isGameActive && this.isBackgroundMoving && !this.isCollisionProcessing) {
       this.background.tilePositionY -= this.scrollSpeed
       
