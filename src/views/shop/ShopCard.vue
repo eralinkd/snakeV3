@@ -2,6 +2,16 @@
 import noImage from '@/assets/shop/no-image.svg'
 import usdt from '@/assets/currency-images/usdt.png'
 import snake from '@/assets/currency-images/snake-coin.png'
+import defaultHelmet from '@/assets/inventory/helmet.svg'
+import defaultArmor from '@/assets/inventory/armor.svg'
+import defaultSword from '@/assets/inventory/sword.svg'
+import defaultShield from '@/assets/inventory/shield.svg'
+import defaultEgg from '@/assets/shop/default-egg.svg'
+import defaultHealth from '@/assets/shop/default-health.svg'
+import defaultEnergy from '@/assets/shop/default-energy.svg'
+import defaultIncomeBoost from '@/assets/shop/default-income-boost.svg'
+import defaultEnergyBoost from '@/assets/shop/default-energy-boost.svg'
+import { computed } from 'vue'
 
 const props = defineProps({
   product: {
@@ -11,6 +21,28 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['click'])
+
+const getProductImage = computed(() => {
+  if (props.product?.imgSrc) {
+    return props.product.imgSrc
+  }
+
+  const imageMap = {
+    armor_helmet: defaultHelmet,
+    armor_chestplate: defaultArmor,
+    armor_shield: defaultShield,
+    armor_sword: defaultSword,
+    passive_egg_1: defaultEgg,
+    passive_egg_2: defaultEgg,
+    passive_egg_3: defaultEgg,
+    income_boost: defaultIncomeBoost,
+    energy_boost: defaultEnergyBoost,
+    health: defaultHealth,
+    energy: defaultEnergy,
+  }
+
+  return imageMap[props.product.id] || noImage
+})
 
 const handleClick = () => {
   if (props.product.available) {
@@ -28,7 +60,7 @@ const handleClick = () => {
       <span v-if="!product.available" class="store-card__unavailable">{{
         product.productType === 'EGG' ? 'Недоступно' : 'Распродано'
       }}</span>
-      <img :src="product?.imgSrc || noImage" :alt="product.name" />
+      <img :src="getProductImage" :alt="product.name" />
     </div>
 
     <div class="store-card__content">
@@ -71,6 +103,7 @@ const handleClick = () => {
       width: 100%;
       height: 100%;
       object-fit: contain;
+      padding: 10px;
     }
   }
 
