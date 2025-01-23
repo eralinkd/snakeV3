@@ -1,5 +1,5 @@
 <template>
-  <div class="game" :class="{ 'game--playing': isGameStarted }">
+  <div class="game" :class="{ 'game--playing': isGameStarted }" v-if="gamedata">
     <div class="game__top-bar" v-if="!isGameStarted">
       <div class="game__top-bar-balance">
         <img :src="Scoin" alt="balance" />
