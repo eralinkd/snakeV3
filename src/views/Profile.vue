@@ -1,5 +1,5 @@
 <template>
-  <div class="profile">
+  <div class="profile" v-if="user">
     <img :src="headerBgSrc" alt="background" class="header-background" />
 
     <div class="header">
