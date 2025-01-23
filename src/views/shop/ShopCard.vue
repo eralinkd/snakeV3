@@ -11,6 +11,7 @@ import defaultHealth from '@/assets/shop/default-health.svg'
 import defaultEnergy from '@/assets/shop/default-energy.svg'
 import defaultIncomeBoost from '@/assets/shop/default-income-boost.svg'
 import defaultEnergyBoost from '@/assets/shop/default-energy-boost.svg'
+import defaultTradeAccess from '@/assets/shop/default-swap.svg'
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -39,6 +40,7 @@ const getProductImage = computed(() => {
     energy_boost: defaultEnergyBoost,
     health: defaultHealth,
     energy: defaultEnergy,
+    trade_access: defaultTradeAccess,
   }
 
   return imageMap[props.product.id] || noImage
