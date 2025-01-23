@@ -76,10 +76,7 @@
     <div class="game__main-bottom" v-if="!isGameStarted">
       <h2>{{ stageName }}</h2>
       <div class="game__main-bottom-progress">
-        <div 
-          class="game__main-bottom-progress-bar" 
-          :style="{ width: `${progressPercent}%` }"
-        ></div>
+        <div class="game__main-bottom-progress-bar" :style="{ width: `${progressPercent}%` }"></div>
         <p class="game__main-bottom-progress-left">{{ formattedProgress }}</p>
         <p class="game__main-bottom-progress-right">{{ formattedNeedProgress }}</p>
       </div>
@@ -156,7 +153,7 @@
           <h2 class="store-modal__title">{{ $t('game.modal.gameOver.title') }}</h2>
           <p class="store-modal__description">{{ $t('game.modal.gameOver.description') }}</p>
           <div class="store-modal__reward">
-            <p>+{{ displayCoins }}</p>  
+            <p>+{{ displayCoins }}</p>
             <img :src="scoinGame" alt="coins" />
           </div>
           <p v-if="hasActiveArmor" class="store-modal__description">
@@ -201,6 +198,7 @@
 import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Phaser from 'phaser'
+import { useQuery } from '@tanstack/vue-query'
 import SnakeScene from '@/game/scenes/SnakeScene'
 import Scoin from '@/assets/currency-images/snake-coin.png'
 import usdt from '@/assets/currency-images/usdt.png'
@@ -234,7 +232,7 @@ import { useUserStore } from '@/stores/userStore'
 const router = useRouter()
 const userStore = useUserStore()
 const { t } = useI18n()
-const gamedata = ref({})
+const gamedata = ref(null)
 const gameId = ref(null)
 const isGameStarted = ref(false)
 let game = null
@@ -249,23 +247,57 @@ const showGameEndModal = ref(false)
 let energyInterval = null
 let energyTickCounter = 0
 
-const handleModalClose = () => {
-  showNoResourcesModal.value = false
-}
+// Вычисляемое свойство для проверки авторизации
+const isAuthorized = computed(() => {
+  console.log('isAuthorized', !!userStore.token, !!userStore.isAuthorized)
+  return !!userStore.token && !!userStore.isAuthorized
+})
 
-// Следим за состоянием авторизации
-watch(() => userStore.isAuthorized, async (isAuthorized) => {
-  if (!isAuthorized) return
+// Используем Vue Query для получения данных игры
+const { data: gameQueryData, isError: gameDataError } = useQuery({
+  queryKey: ['gameData'],
+  queryFn: getGameData,
+  staleTime: 30 * 60 * 1000,
+  cacheTime: 35 * 60 * 1000,
+})
 
-  try {
-    const data = await getGameData()
-    gamedata.value = data
-  } catch (error) {
+// Обновляем gamedata при получении новых данных
+watch(
+  gameQueryData,
+  (newData) => {
+    if (newData) {
+      gamedata.value = newData
+      // energyBoostTimeLeft.value = newData.energyBoostTimeLeft
+    }
+  },
+  { immediate: true },
+)
+
+// Следим за изменением статуса авторизации
+watch(isAuthorized, (newValue) => {
+  if (newValue && !gamedata.value) {
+    // Принудительно запрашиваем данные, если их еще нет
+    gameQueryData.value?.refetch?.()
+  }
+})
+
+// Отслеживаем ошибки при загрузке данных
+watch(gameDataError, (error) => {
+  if (error) {
     console.error('Failed to fetch game data:', error)
   }
 })
 
+const handleModalClose = () => {
+  showNoResourcesModal.value = false
+}
+
 const startGame = async () => {
+  if (!gamedata.value) {
+    console.log('Game data not loaded yet')
+    return
+  }
+
   if (gamedata.value.energy <= 0 && gamedata.value.health <= 0) {
     showNoResourcesModal.value = true
     return
@@ -325,11 +357,11 @@ const startGame = async () => {
 
 const handleGameEnd = async () => {
   console.log('Game ending, current coins:', sessionCoins.value)
-  
+
   // Сохраняем финальный результат перед обнулением
   finalGameCoins.value = sessionCoins.value
   console.log('Saved final coins:', finalGameCoins.value)
-  
+
   // Очищаем интервал
   if (energyInterval) {
     clearInterval(energyInterval)
@@ -341,8 +373,8 @@ const handleGameEnd = async () => {
 
   isGameStarted.value = false
   document.documentElement.setAttribute('data-playing', 'false')
-  
-  if (game.value) {
+
+  if (game?.value) {
     game.value.destroy(true)
     game.value = null
   }
@@ -350,11 +382,11 @@ const handleGameEnd = async () => {
   // Отправляем результаты на сервер и показываем модалку
   try {
     await postGameGameEnd(gameId.value)
-    
+
     // Обновляем данные игры
     const newGameData = await getGameData()
     gamedata.value = newGameData
-    
+
     showGameEndModal.value = true
   } catch (error) {
     console.error('Failed to end game:', error)
@@ -376,14 +408,14 @@ const handleCoinCollect = async () => {
       forciblyClearGame('game_not_found')
       return
     }
-    
+
     if (response.amount !== undefined) {
       const prevCoins = sessionCoins.value
       sessionCoins.value += response.amount
-      console.log('Coins updated:', { 
-        prev: prevCoins, 
-        added: response.amount, 
-        new: sessionCoins.value 
+      console.log('Coins updated:', {
+        prev: prevCoins,
+        added: response.amount,
+        new: sessionCoins.value,
       })
     }
     if (response.energy) {
@@ -415,7 +447,7 @@ const handleObstacleHit = async () => {
       console.log('Obstacle hit - coins updated:', {
         previous: sessionCoins.value - response.amount,
         added: response.amount,
-        new: sessionCoins.value
+        new: sessionCoins.value,
       })
     }
     if (response.energy) {
@@ -544,7 +576,7 @@ const forciblyClearGame = (reason) => {
   }
   energyTickCounter = 0
 
-  if (game.value) {
+  if (game?.value) {
     game.value.destroy(true)
     game.value = null
   }
@@ -592,7 +624,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (game.value) {
+  if (game?.value) {
     game.value.destroy(true)
   }
   document.documentElement.removeAttribute('data-playing')
