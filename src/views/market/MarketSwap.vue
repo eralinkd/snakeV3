@@ -32,7 +32,7 @@
               <button :class="['swap-card__select-trigger']">
                 <img
                   class="swap-card__select-trigger-icon"
-                  :src="icons[selected.value]"
+                  :src="currencyImages[selected.value]"
                   alt="filter icon"
                 />
                 <div class="swap-card__select-trigger-text">
@@ -88,7 +88,7 @@
               <button :class="['swap-card__select-trigger', { 'filter-button--active': isOpen }]">
                 <img
                   class="swap-card__select-trigger-icon"
-                  :src="icons[selected.value]"
+                  :src="currencyImages[selected.value]"
                   alt="filter icon"
                 />
                 <div class="swap-card__select-trigger-text">
@@ -144,9 +144,9 @@
             </div>
             <h2 class="store-modal__title">{{ $t('market.swap.success.title') }}</h2>
             <p class="store-modal__description">{{ $t('market.swap.success.description') }}</p>
-            <BaseButton @click="handleModalClose" type="button" size="small"
-              >{{ $t('market.swap.button.ok') }}</BaseButton
-            >
+            <BaseButton @click="handleModalClose" type="button" size="small">{{
+              $t('market.swap.button.ok')
+            }}</BaseButton>
           </div>
 
           <div v-else class="store-modal__frame store-modal__frame--fail">
@@ -155,9 +155,9 @@
             </div>
             <h2 class="store-modal__title">{{ $t('market.swap.error.title') }}</h2>
             <p class="store-modal__description">{{ $t('market.swap.error.description') }}</p>
-            <BaseButton @click="handleModalClose" type="button" size="small"
-              >{{ $t('market.swap.button.ok') }}</BaseButton
-            >
+            <BaseButton @click="handleModalClose" type="button" size="small">{{
+              $t('market.swap.button.ok')
+            }}</BaseButton>
           </div>
         </template>
       </div>
@@ -184,6 +184,7 @@ import BaseModalClose from '@/components/BaseModalClose.vue'
 import success from '@/assets/shop/purchase-success.svg'
 import fail from '@/assets/shop/purchase-fail.svg'
 import { useMutation } from '@tanstack/vue-query'
+import { currencyImages } from '@/constants/constants'
 
 const balances = ref(null)
 
@@ -196,20 +197,6 @@ const {
   queryFn: fetchCryptos,
   staleTime: 5 * 60 * 1000,
   cacheTime: 30 * 60 * 1000,
-})
-
-const icons = computed(() => {
-  return new Proxy(
-    {
-      SCOIN: scoinIcon,
-      BTC: bitcoinIcon,
-      ETH: ethIcon,
-      USDT_TRC20: usdtIcon,
-    },
-    {
-      get: (target, prop) => target[prop] || scoinIcon,
-    },
-  )
 })
 
 const {
