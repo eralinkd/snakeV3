@@ -184,5 +184,10 @@
 		"info_title": "How to play?",
 		"info_subtitle": "Quick guide",
 		"info_text": "Lots of interesting and not so interesting text about how to play Snake. Remember that Snake game on Nokia? Well, this is not the same thing. But remember Subway Surf 2014? That's closer to what you'll be doing here.\nThere's even a picture here"
+	},
+	"loader": {
+		"running": "Running",
+		"snake": "Snake",
+		"loading": "Loading"
 	}
 }

@@ -25,10 +25,8 @@ onMounted(async () => {
   console.log('=== onMounted start ===')
   
   try {
-    // Создаем Promise для минимального времени загрузки
-    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300))
+    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 3000))
     
-    // Создаем Promise для авторизации
     const authProcess = (async () => {
       // Проверяем наличие токена в куках
       const savedToken = document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1]
