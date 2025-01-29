@@ -562,10 +562,10 @@ export default class SnakeScene extends Phaser.Scene {
     if (!this.isGameActive || this.isProcessingRequest) return
 
     const snakeHitbox = {
-      x: this.snake.x - 20,
-      y: this.snake.y - 40,
-      width: 40,
-      height: 60
+      x: this.snake.x - 15,
+      y: this.snake.y - 80,
+      width: 30,
+      height: 40
     }
     
     for (const obstacle of this.obstacles) {
