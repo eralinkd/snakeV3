@@ -639,6 +639,43 @@ const forciblyClearGame = (reason) => {
   document.documentElement.setAttribute('data-playing', 'false')
 }
 
+// Функция для остановки игры
+const stopGame = () => {
+  if (isGameStarted.value) {
+    console.log('Stopping game due to app closing')
+    if (energyInterval) {
+      clearInterval(energyInterval)
+      energyInterval = null
+    }
+    
+    if (game && snakeScene) {
+      snakeScene.forceGameEnd()
+      game.scene.remove('SnakeScene')
+      snakeScene = null
+    }
+    
+    isGameStarted.value = false
+    document.documentElement.setAttribute('data-playing', 'false')
+  }
+}
+
+// Обработчик видимости страницы
+const handleVisibilityChange = () => {
+  if (document.hidden && isGameStarted.value) {
+    stopGame()
+  }
+}
+
+// Обработчик закрытия страницы
+const handleBeforeUnload = (event) => {
+  if (isGameStarted.value) {
+    stopGame()
+    // Показываем предупреждение пользователю
+    event.preventDefault()
+    event.returnValue = ''
+  }
+}
+
 onMounted(async () => {
   // Загрузка данных игры
   gamedata.value = await getGameData()
@@ -675,6 +712,10 @@ onMounted(async () => {
     snakeScene.setCollectCallback(handleCoinCollect)
     snakeScene.setObstacleCallback(handleObstacleHit)
   })
+
+  // Добавляем слушатели событий
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
 onUnmounted(() => {
@@ -686,6 +727,10 @@ onUnmounted(() => {
     clearInterval(energyInterval)
     energyInterval = null
   }
+
+  // Удаляем слушатели событий
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 </script>
 
