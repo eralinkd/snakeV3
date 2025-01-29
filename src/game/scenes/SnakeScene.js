@@ -68,6 +68,11 @@ export default class SnakeScene extends Phaser.Scene {
     this.currentSnakeSprite = 'snake_0'
     this.pendingArmorUpdate = null
     this.currentLeague = 1
+    
+    // Если начальная лига больше 3, используем первую лигу
+    this.currentLeague = this.currentLeague > 3 ? 1 : this.currentLeague
+
+    this.isSceneReady = false
   }
 
   preload() {
@@ -167,8 +172,25 @@ export default class SnakeScene extends Phaser.Scene {
     const width = window.innerWidth
     this.lanePositions = [width * 0.167, width * 0.5, width * 0.833]
 
-    this.createSnake()
-    this.setupControls()
+    this.isSceneReady = false
+
+    Promise.all([
+        this.checkTextureLoaded('background'),
+        this.checkTextureLoaded('coin'),
+        this.checkTextureLoaded('rock'),
+        ...Object.keys(this.armorSprites).map(type => 
+            this.checkTextureLoaded(type.toLowerCase())
+        ),
+        this.checkTextureLoaded(`snake_${this.currentLeague}_0`)
+    ]).then(() => {
+        this.createSnake()
+        this.setupControls()
+        this.createObjectPools()
+        this.isSceneReady = true
+        console.log('Scene is fully loaded and ready')
+    }).catch(error => {
+        console.error('Error loading scene assets:', error)
+    })
 
     this.input.on('pointerdown', () => {
       if (!this.isGameActive && this.snake.y === window.innerHeight/2) {
@@ -283,38 +305,55 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   startGame() {
-    // Сначала запускаем анимацию змеи с текущим спрайтом
-    if (this.snake && !this.snake.destroyed) {
-        const currentSpriteKey = `snake_${this.currentLeague}_0`
-        this.currentSnakeSprite = currentSpriteKey
-        this.snake.play(`${currentSpriteKey}Anim`)
+    if (!this.isSceneReady) {
+        console.log('Scene is not ready yet, delaying game start')
+        this.time.delayedCall(500, () => this.startGame())
+        return
     }
-    
-    // Запускаем анимации брони
-    Object.keys(this.armorSprites).forEach(type => {
-        if (this.activeArmor[type] && this.armorSprites[type] && !this.armorSprites[type].destroyed) {
-            this.armorSprites[type].play(`${type.toLowerCase()}Anim`)
+
+    if (!this.snake || this.snake.destroyed) {
+        console.log('Snake not ready, recreating...')
+        this.createSnake()
+    }
+
+    try {
+        // Сначала запускаем анимацию змеи с текущим спрайтом
+        if (this.snake && !this.snake.destroyed) {
+            const currentSpriteKey = `snake_${this.currentLeague}_0`
+            this.currentSnakeSprite = currentSpriteKey
+            this.snake.play(`${currentSpriteKey}Anim`)
         }
-    })
-
-    this.time.delayedCall(100, () => {
-        const targets = [
-            this.snake,
-            ...Object.values(this.armorSprites).filter(sprite => sprite.visible)
-        ].filter(sprite => sprite && !sprite.destroyed)
-
-        this.tweens.add({
-            targets: targets,
-            y: window.innerHeight * 0.7,
-            duration: 2000,
-            ease: 'Cubic.easeOut',
-            onComplete: () => {
-                this.isGameActive = true
-                this.isBackgroundMoving = true
-                this.startGameLoop()
+        
+        // Запускаем анимации брони
+        Object.keys(this.armorSprites).forEach(type => {
+            if (this.activeArmor[type] && this.armorSprites[type] && !this.armorSprites[type].destroyed) {
+                this.armorSprites[type].play(`${type.toLowerCase()}Anim`)
             }
         })
-    })
+
+        this.time.delayedCall(100, () => {
+            const targets = [
+                this.snake,
+                ...Object.values(this.armorSprites).filter(sprite => sprite.visible)
+            ].filter(sprite => sprite && !sprite.destroyed)
+
+            this.tweens.add({
+                targets: targets,
+                y: window.innerHeight * 0.7,
+                duration: 2000,
+                ease: 'Cubic.easeOut',
+                onComplete: () => {
+                    this.isGameActive = true
+                    this.isBackgroundMoving = true
+                    this.startGameLoop()
+                }
+            })
+        })
+    } catch (error) {
+        console.error('Error starting game:', error)
+        // В случае ошибки пробуем перезапустить сцену
+        this.scene.restart()
+    }
   }
 
   startGameLoop() {
@@ -1145,19 +1184,20 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   setLeague(league) {
-    if (league >= 1 && league <= 3) {
-      this.currentLeague = league
-      // Обновляем текущий спрайт с учетом лиги
-      const progressPercent = (this.currentProgress / this.needProgress) * 100
-      let progressSuffix = '0'
-      
-      if (progressPercent >= 75) progressSuffix = '75'
-      else if (progressPercent >= 50) progressSuffix = '50'
-      else if (progressPercent >= 25) progressSuffix = '25'
-      
-      const newSpriteKey = `snake_${this.currentLeague}_${progressSuffix}`
-      
-      if (this.snake && !this.snake.destroyed) {
+    // Если лига больше 3, используем первую лигу
+    this.currentLeague = league > 3 ? 1 : league
+    
+    // Обновляем текущий спрайт с учетом лиги
+    const progressPercent = (this.currentProgress / this.needProgress) * 100
+    let progressSuffix = '0'
+    
+    if (progressPercent >= 75) progressSuffix = '75'
+    else if (progressPercent >= 50) progressSuffix = '50'
+    else if (progressPercent >= 25) progressSuffix = '25'
+    
+    const newSpriteKey = `snake_${this.currentLeague}_${progressSuffix}`
+    
+    if (this.snake && !this.snake.destroyed) {
         const currentX = this.snake.x
         const currentY = this.snake.y
         const currentScale = this.snake.scale
@@ -1168,9 +1208,8 @@ export default class SnakeScene extends Phaser.Scene {
         this.snake.setScale(currentScale)
         
         if (this.isGameActive) {
-          this.snake.play(`${newSpriteKey}Anim`)
+            this.snake.play(`${newSpriteKey}Anim`)
         }
-      }
     }
   }
 
@@ -1221,5 +1260,15 @@ export default class SnakeScene extends Phaser.Scene {
         this.snake.destroy()
         this.snake = null
     }
+  }
+
+  checkTextureLoaded(key) {
+    return new Promise((resolve, reject) => {
+        if (this.textures.exists(key)) {
+            resolve()
+        } else {
+            reject(new Error(`Texture ${key} not found`))
+        }
+    })
   }
 } 

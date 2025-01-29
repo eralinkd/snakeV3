@@ -1,5 +1,9 @@
 <template>
   <div class="game" :class="{ 'game--playing': isGameStarted }" v-if="gamedata">
+    <!-- Упрощенный экран загрузки -->
+    <div class="game-loader" v-if="isLoading">
+      <div class="game-loader__spinner"></div>
+    </div>
     <!-- Добавляем тестовую панель -->
     <div class="test-panel" v-if="isDev">
       <div class="test-panel__group">
@@ -269,6 +273,7 @@ const energyBoostTimeLeft = ref(0)
 const showGameEndModal = ref(false)
 let energyInterval = null
 let energyTickCounter = 0
+const isLoading = ref(false)
 
 // Добавляем определение режима разработки
 const isDev = process.env.NODE_ENV === 'development'
@@ -339,6 +344,59 @@ const handleModalClose = () => {
   showNoResourcesModal.value = false
 }
 
+// Функция для создания игры
+const createGame = () => {
+  if (game) {
+    console.log('Game already exists, destroying...')
+    game.destroy(true)
+    game = null
+    snakeScene = null
+  }
+
+  const config = {
+    type: Phaser.AUTO,
+    parent: 'game-container',
+    width: window.innerWidth,
+    height: window.innerHeight,
+    backgroundColor: '#000000',
+    scene: SnakeScene,
+    scale: {
+      mode: Phaser.Scale.RESIZE,
+      autoCenter: Phaser.Scale.CENTER_BOTH
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      game = new Phaser.Game(config)
+      
+      const checkSceneReady = () => {
+        snakeScene = game.scene.getScene('SnakeScene')
+        if (snakeScene?.isSceneReady) {
+          snakeScene.setFinishCallback(handleGameEnd)
+          snakeScene.setCollectCallback(handleCoinCollect)
+          snakeScene.setObstacleCallback(handleObstacleHit)
+          console.log('Game scene initialized successfully')
+          resolve()
+        } else {
+          setTimeout(checkSceneReady, 100)
+        }
+      }
+
+      game.events.once('ready', checkSceneReady)
+
+      setTimeout(() => {
+        if (!snakeScene?.isSceneReady) {
+          reject(new Error('Scene initialization timeout'))
+        }
+      }, 5000)
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
+// Обновляем функцию startGame
 const startGame = async () => {
   if (!gamedata.value) {
     console.log('Game data not loaded yet')
@@ -350,32 +408,19 @@ const startGame = async () => {
     return
   }
 
-  // Пересоздаем игру при каждом запуске
-  if (game) {
-    // Полностью останавливаем и удаляем старую сцену
-    if (snakeScene) {
-      game.scene.remove('SnakeScene')
-      snakeScene = null
-    }
-    
-    // Создаем новую сцену
-    const newScene = new SnakeScene()
-    game.scene.add('SnakeScene', newScene, true)
-    snakeScene = game.scene.getScene('SnakeScene')
-    
-    // Устанавливаем колбэки для новой сцены
-    snakeScene.setFinishCallback(handleGameEnd)
-    snakeScene.setCollectCallback(handleCoinCollect)
-    snakeScene.setObstacleCallback(handleObstacleHit)
-  }
-
-  isGameStarted.value = true
-  sessionCoins.value = 0
-  finalGameCoins.value = 0
-  currentEnergy.value = gamedata.value.energy
-  document.documentElement.setAttribute('data-playing', 'true')
-
   try {
+    // Показываем экран загрузки только когда пользователь начал игру
+    isLoading.value = true
+    
+    // Создаем игру и ждем инициализации сцены
+    await createGame()
+    
+    isGameStarted.value = true
+    sessionCoins.value = 0
+    finalGameCoins.value = 0
+    currentEnergy.value = gamedata.value.energy
+    document.documentElement.setAttribute('data-playing', 'true')
+
     const response = await postGameSnakeCreate()
     if (!response?.id) {
       showNoResourcesModal.value = true
@@ -385,16 +430,17 @@ const startGame = async () => {
     gameId.value = response.id
     energyBoostTimeLeft.value = gamedata.value.energyBoostTimeLeft
 
-    // Запускаем игру после создания новой сцены
-    if (snakeScene) {
-      const activeArmor = Object.entries(gamedata.value.inventory.armor)
-        .filter(([_, value]) => value.activated)
-        .map(([key]) => key.toUpperCase())
-      
-      console.log('Setting initial armor:', activeArmor)
-      snakeScene.setActiveArmor(activeArmor)
-      snakeScene.startGame()
-    }
+    // Теперь мы точно знаем, что сцена готова
+    const activeArmor = Object.entries(gamedata.value.inventory.armor)
+      .filter(([_, value]) => value.activated)
+      .map(([key]) => key.toUpperCase())
+    
+    console.log('Setting initial armor:', activeArmor)
+    snakeScene.setActiveArmor(activeArmor)
+    snakeScene.startGame()
+
+    // Скрываем экран загрузки после полной инициализации
+    isLoading.value = false
 
     // Запускаем интервал для энергии
     energyInterval = setInterval(async () => {
@@ -421,7 +467,13 @@ const startGame = async () => {
       }
     }, 1000)
   } catch (error) {
-    console.error('Error creating game:', error)
+    console.error('Error starting game:', error)
+    if (game) {
+      game.destroy(true)
+      game = null
+      snakeScene = null
+    }
+    isLoading.value = false // Скрываем загрузку в случае ошибки
     showNoResourcesModal.value = true
   }
 }
@@ -639,40 +691,92 @@ const forciblyClearGame = (reason) => {
   document.documentElement.setAttribute('data-playing', 'false')
 }
 
-// Функция для остановки игры
-const stopGame = () => {
+// Функция для немедленной остановки игры
+const forceStopGame = () => {
   if (isGameStarted.value) {
-    console.log('Stopping game due to app closing')
+    console.log('Force stopping game')
+    
+    // Останавливаем все таймеры
     if (energyInterval) {
       clearInterval(energyInterval)
       energyInterval = null
     }
+    energyTickCounter = 0
     
+    // Останавливаем игровые процессы
     if (game && snakeScene) {
-      snakeScene.forceGameEnd()
-      game.scene.remove('SnakeScene')
-      snakeScene = null
+      try {
+        // Синхронно останавливаем все процессы игры
+        snakeScene.isGameActive = false
+        snakeScene.isBackgroundMoving = false
+        if (snakeScene.coinSpawnTimer) {
+          snakeScene.coinSpawnTimer.remove()
+          snakeScene.coinSpawnTimer = null
+        }
+        if (snakeScene.obstacleSpawnTimer) {
+          snakeScene.obstacleSpawnTimer.remove()
+          snakeScene.obstacleSpawnTimer = null
+        }
+        snakeScene.tweens?.killAll()
+        snakeScene.anims?.pauseAll()
+        snakeScene.clearGameObjects()
+      } catch (e) {
+        console.error('Error during force stop:', e)
+      }
     }
     
+    // Сбрасываем состояние
     isGameStarted.value = false
     document.documentElement.setAttribute('data-playing', 'false')
-  }
-}
+    
+    // Используем sendBeacon для отправки данных при закрытии страницы
+    if (gameId.value) {
+      const data = new Blob([JSON.stringify({ gameId: gameId.value })], { type: 'application/json' })
+      const success = navigator.sendBeacon(`/api/game/game-end/${gameId.value}`, data)
+      console.log('Game end request sent:', {
+        success,
+        gameId: gameId.value,
+        timestamp: new Date().toISOString()
+      })
 
-// Обработчик видимости страницы
-const handleVisibilityChange = () => {
-  if (document.hidden && isGameStarted.value) {
-    stopGame()
+      // Добавляем обработчик для проверки статуса запроса
+      if (success) {
+        const checkResponse = async () => {
+          try {
+            const response = await fetch(`/api/game/status/${gameId.value}`)
+            const result = await response.json()
+            console.log('Game end response:', result)
+          } catch (e) {
+            console.error('Error checking game end status:', e)
+          }
+        }
+        checkResponse()
+      }
+    }
   }
 }
 
 // Обработчик закрытия страницы
 const handleBeforeUnload = (event) => {
   if (isGameStarted.value) {
-    stopGame()
+    forceStopGame()
     // Показываем предупреждение пользователю
     event.preventDefault()
     event.returnValue = ''
+  }
+}
+
+// Обработчик видимости страницы
+const handleVisibilityChange = async () => {
+  if (document.hidden && isGameStarted.value) {
+    try {
+      // Используем обычный асинхронный запрос для visibilitychange
+      await postGameGameEnd(gameId.value)
+    } catch (e) {
+      console.error('Error sending game end request:', e)
+    } finally {
+      forceStopGame()
+    }
   }
 }
 
@@ -716,6 +820,7 @@ onMounted(async () => {
   // Добавляем слушатели событий
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.addEventListener('beforeunload', handleBeforeUnload)
+  window.addEventListener('unload', forceStopGame)
 })
 
 onUnmounted(() => {
@@ -728,9 +833,10 @@ onUnmounted(() => {
     energyInterval = null
   }
 
-  // Удаляем слушатели событий
+  // Удаляем все слушатели
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  window.removeEventListener('unload', forceStopGame)
 })
 </script>
 
@@ -1320,5 +1426,33 @@ onUnmounted(() => {
       background: #ae8bff;
     }
   }
+}
+
+.game-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &__spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #ffffff3d;
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
