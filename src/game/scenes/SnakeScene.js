@@ -1,7 +1,7 @@
-import snakeSprite from '@/assets/sprites/leagues/snake_1_0.png'
-import snakeSprite25 from '@/assets/sprites/progress/snake_1_25.png'
-import snakeSprite50 from '@/assets/sprites/progress/snake_1_50.png'
-import snakeSprite75 from '@/assets/sprites/progress/snake_1_75.png'
+import snakeSprite from '@/assets/sprites/leagues/snake_legue_1_default.png'
+import snakeSprite25 from '@/assets/sprites/progress/progress_league_1_25.png'
+import snakeSprite50 from '@/assets/sprites/progress/progress_league_1_50.png'
+import snakeSprite75 from '@/assets/sprites/progress/progress_league_1_75.png'
 import snakeBg from '@/assets/games/snake/bg.png'
 import coin from '@/assets/games/snake/coin.png'
 import rock from '@/assets/games/snake/rock.png'
@@ -9,6 +9,18 @@ import helmetSprite from '@/assets/sprites/armor/helmet.png'
 import chestplateSprite from '@/assets/sprites/armor/chestplate.png'
 import shieldSprite from '@/assets/sprites/armor/shield.png'
 import swordSprite from '@/assets/sprites/armor/sword.png'
+import snakeSprite1 from '@/assets/sprites/leagues/snake_legue_1_default.png'
+import snakeSprite2 from '@/assets/sprites/leagues/snake_legue_2_default.png'
+import snakeSprite3 from '@/assets/sprites/leagues/snake_legue_3_default.png'
+import snakeSprite1_25 from '@/assets/sprites/progress/progress_league_1_25.png'
+import snakeSprite1_50 from '@/assets/sprites/progress/progress_league_1_50.png'
+import snakeSprite1_75 from '@/assets/sprites/progress/progress_league_1_75.png'
+import snakeSprite2_25 from '@/assets/sprites/progress/progress_league_2_25.png'
+import snakeSprite2_50 from '@/assets/sprites/progress/progress_league_2_50.png'
+import snakeSprite2_75 from '@/assets/sprites/progress/progress_league_2_75.png'
+import snakeSprite3_25 from '@/assets/sprites/progress/progress_league_3_25.png'
+import snakeSprite3_50 from '@/assets/sprites/progress/progress_league_3_50.png'
+import snakeSprite3_75 from '@/assets/sprites/progress/progress_league_3_75.png'
 
 export default class SnakeScene extends Phaser.Scene {
   constructor() {
@@ -54,17 +66,13 @@ export default class SnakeScene extends Phaser.Scene {
     this.currentProgress = 0
     this.needProgress = 0
     this.currentSnakeSprite = 'snake_0'
+    this.pendingArmorUpdate = null
+    this.currentLeague = 1
   }
 
   preload() {
     this.load.on('filecomplete', (key, type, data) => {
       const texture = this.textures.get(key)
-      console.log('Loaded:', key, {
-        type,
-        textureWidth: texture.source[0].width,
-        textureHeight: texture.source[0].height,
-        expectedFrames: Math.floor(texture.source[0].width / 143)
-      })
     })
 
     this.load.on('loaderror', (file) => {
@@ -72,7 +80,7 @@ export default class SnakeScene extends Phaser.Scene {
     })
 
     const config = {
-      frameWidth: 143,
+      frameWidth: 200,
       frameHeight: 450,
       spacing: 0,
       margin: 0
@@ -82,7 +90,19 @@ export default class SnakeScene extends Phaser.Scene {
       'snake_0': snakeSprite,
       'snake_25': snakeSprite25,
       'snake_50': snakeSprite50,
-      'snake_75': snakeSprite75
+      'snake_75': snakeSprite75,
+      'snake_1_0': snakeSprite1,
+      'snake_1_25': snakeSprite1_25,
+      'snake_1_50': snakeSprite1_50,
+      'snake_1_75': snakeSprite1_75,
+      'snake_2_0': snakeSprite2,
+      'snake_2_25': snakeSprite2_25,
+      'snake_2_50': snakeSprite2_50,
+      'snake_2_75': snakeSprite2_75,
+      'snake_3_0': snakeSprite3,
+      'snake_3_25': snakeSprite3_25,
+      'snake_3_50': snakeSprite3_50,
+      'snake_3_75': snakeSprite3_75
     }
 
     const armorSprites = {
@@ -96,11 +116,6 @@ export default class SnakeScene extends Phaser.Scene {
       Object.entries(sprites).forEach(([key, sprite]) => {
         const img = new Image()
         img.onload = () => {
-          console.log(`${prefix}${key} dimensions:`, {
-            width: img.width,
-            height: img.height,
-            expectedFrames: Math.floor(img.width / 143)
-          })
         }
         img.src = sprite
 
@@ -125,12 +140,6 @@ export default class SnakeScene extends Phaser.Scene {
         const texture = this.textures.get(key)
         const totalWidth = texture.source[0].width
         const expectedFrames = Math.floor(totalWidth / 143)
-        
-        console.log(`${prefix}Texture ${key}:`, {
-          totalWidth,
-          height: texture.source[0].height,
-          expectedFrames
-        })
       })
     }
 
@@ -186,7 +195,7 @@ export default class SnakeScene extends Phaser.Scene {
     this.snake = this.add.sprite(
       this.lanePositions[1],
       window.innerHeight + 400,
-      'snake_0'
+      `snake_${this.currentLeague}_0`
     )
     
     const baseHeight = 450
@@ -194,6 +203,7 @@ export default class SnakeScene extends Phaser.Scene {
     const scale = targetHeight / baseHeight
 
     this.snake.setScale(scale)
+    this.snake.setDepth(10)
 
     const snakeTypes = ['snake_0', 'snake_25', 'snake_50', 'snake_75']
     
@@ -202,17 +212,12 @@ export default class SnakeScene extends Phaser.Scene {
       const totalWidth = texture.source[0].width
       const frameCount = Math.floor(totalWidth / 143)
 
-      console.log(`Creating animation for ${type}:`, {
-        totalWidth,
-        frameCount
-      })
-
       if (frameCount > 0) {
         this.anims.create({
           key: `${type}Anim`,
           frames: this.anims.generateFrameNumbers(type, {
             start: 0,
-            end: frameCount - 1
+            end: 74
           }),
           frameRate: 30,
           repeat: -1,
@@ -226,25 +231,21 @@ export default class SnakeScene extends Phaser.Scene {
     Object.keys(this.armorSprites).forEach(type => {
       const sprite = this.add.sprite(this.snake.x, this.snake.y, type.toLowerCase())
       sprite.setScale(this.snake.scale)
+      sprite.setDepth(this.snake.depth + 1)
       sprite.setVisible(false)
-      sprite.setDepth(1)
+      sprite.setAlpha(1)
       this.armorSprites[type] = sprite
 
       const texture = this.textures.get(type.toLowerCase())
       const totalWidth = texture.source[0].width
       const frameCount = Math.floor(totalWidth / 143)
 
-      console.log(`Armor: Creating animation for ${type.toLowerCase()}:`, {
-        totalWidth,
-        frameCount
-      })
-
       if (frameCount > 0) {
         this.anims.create({
           key: `${type.toLowerCase()}Anim`,
           frames: this.anims.generateFrameNumbers(type.toLowerCase(), {
             start: 0,
-            end: frameCount - 1
+            end: 74
           }),
           frameRate: 30,
           repeat: -1,
@@ -254,6 +255,32 @@ export default class SnakeScene extends Phaser.Scene {
         console.error(`Armor: Invalid frame count for ${type.toLowerCase()}: ${frameCount}`)
       }
     })
+
+    // Создаем анимации для всех лиг
+    for (let league = 1; league <= 3; league++) {
+      const progressSteps = [0, 25, 50, 75]
+      progressSteps.forEach(progress => {
+        const type = `snake_${league}_${progress}`
+        const texture = this.textures.get(type)
+        const totalWidth = texture.source[0].width
+        const frameCount = Math.floor(totalWidth / 200)
+
+        if (frameCount > 0) {
+          this.anims.create({
+            key: `${type}Anim`,
+            frames: this.anims.generateFrameNumbers(type, {
+              start: 0,
+              end: 74
+            }),
+            frameRate: 30,
+            repeat: -1,
+            duration: 2500
+          })
+        } else {
+          console.error(`Invalid frame count for ${type}: ${frameCount}`)
+        }
+      })
+    }
   }
 
   setupControls() {
@@ -519,14 +546,41 @@ export default class SnakeScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Аналогично collectCoin: не отправляем повторный запрос, пока не завершён предыдущий.
+   * По завершении запроса вызываем handleCollision(), затем, если сервер даёт обновлённую броню,
+   * вызываем setActiveArmor(...).
+   */
   hitObstacle() {
-    if (!this.isGameActive) return
+    if (!this.isGameActive || this.isProcessingRequest) return
+    this.isProcessingRequest = true
 
     if (this.obstacleCallback) {
-      this.obstacleCallback().finally(() => {
-        this.isProcessingRequest = false
-        this.isCollisionProcessing = false
-      })
+      this.obstacleCallback()
+        .then((response) => {
+          console.log('Obstacle collision response:', response)
+          if (response && response.content) {
+            const [action, brokenArmor] = response.content.split('|')
+            if (action === 'obstacle' && brokenArmor) {
+              const armorType = brokenArmor.toUpperCase()
+              console.log('Armor broken:', armorType)
+              
+              this.pendingArmorUpdate = armorType
+            }
+          }
+          this.handleCollision()
+        })
+        .catch(error => {
+          console.error('Error in obstacle collision:', error)
+          this.handleCollision()
+        })
+        .finally(() => {
+          this.isProcessingRequest = false
+          this.isCollisionProcessing = false
+        })
+    } else {
+      this.handleCollision()
+      this.isProcessingRequest = false
     }
   }
 
@@ -564,9 +618,9 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   update() {
-    if (!this.isGameActive) return
+    if (!this.isGameActive || !this.background || !this.scene.isActive()) return
 
-    if (this.isGameActive && this.isBackgroundMoving && !this.isCollisionProcessing) {
+    if (this.isGameActive && this.isBackgroundMoving) {
       this.background.tilePositionY -= this.scrollSpeed
       this.updateArmorPosition()
       
@@ -659,116 +713,146 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   forceGameEnd() {
+    if (this.coinSpawnTimer) {
+        this.coinSpawnTimer.remove()
+        this.coinSpawnTimer = null
+    }
+    if (this.obstacleSpawnTimer) {
+        this.obstacleSpawnTimer.remove()
+        this.obstacleSpawnTimer = null
+    }
+
+    // Останавливаем все анимации и твины
+    this.tweens.killAll()
+    this.anims.pauseAll()
+
+    // Очищаем все игровые объекты
+    this.clearGameObjects()
+
     this.isGameActive = false
     this.isBackgroundMoving = false
     this.isProcessingRequest = false
     
     if (this.finishCallback) {
-      this.finishCallback()
+        this.finishCallback()
     }
+
     this.resetScene()
+    
+    // Важно: НЕ уничтожаем сцену здесь, так как она может быть перезапущена
+    // this.scene.stop()
   }
 
   handleCollision() {
-    this.isCollisionProcessing = true
-    
     if (this.coinSpawnTimer) {
-      this.coinSpawnTimer.remove()
-      this.coinSpawnTimer = null
+        this.coinSpawnTimer.remove()
+        this.coinSpawnTimer = null
     }
     if (this.obstacleSpawnTimer) {
-      this.obstacleSpawnTimer.remove()
-      this.obstacleSpawnTimer = null
+        this.obstacleSpawnTimer.remove()
+        this.obstacleSpawnTimer = null
     }
 
     this.isGameActive = false
     this.isBackgroundMoving = false
 
+    this.tweens.killAll()
+    this.anims.pauseAll()
+
     const flash = this.add.rectangle(0, 0, this.game.config.width, this.game.config.height, 0xffffff)
     flash.setOrigin(0)
     flash.setAlpha(0.5)
 
-    Object.keys(this.activeArmor).forEach(type => {
-      if (this.activeArmor[type] && this.armorSprites[type]) {
-        this.armorSprites[type].stop()
+    // Обрабатываем сломанную броню
+    const brokenArmorType = this.pendingArmorUpdate
+    if (brokenArmorType && this.activeArmor[brokenArmorType] && this.armorSprites[brokenArmorType]) {
+        console.log('Removing broken armor:', brokenArmorType)
+        this.armorSprites[brokenArmorType].stop()
         this.tweens.add({
-          targets: this.armorSprites[type],
-          alpha: 0,
-          scale: this.armorSprites[type].scale * 1.5,
-          duration: 200,
-          onComplete: () => {
-            this.armorSprites[type].setVisible(false)
-            this.activeArmor[type] = false
-          }
+            targets: this.armorSprites[brokenArmorType],
+            alpha: 0,
+            scale: this.armorSprites[brokenArmorType].scale * 1.5,
+            duration: 200,
+            onComplete: () => {
+                this.armorSprites[brokenArmorType].setVisible(false)
+                this.activeArmor[brokenArmorType] = false
+            }
         })
-      }
-    })
+    }
 
     this.tweens.add({
-      targets: flash,
-      alpha: 0,
-      duration: 100,
-      ease: 'Power1',
-      onComplete: () => {
-        flash.destroy()
-        this.clearGameObjects()
-        
-        this.isGameActive = true
-        this.isBackgroundMoving = true
-        
-        this.setupObjectGeneration()
-        this.isCollisionProcessing = false
-      }
+        targets: flash,
+        alpha: 0,
+        duration: 100,
+        ease: 'Power1',
+        onComplete: () => {
+            flash.destroy()
+            
+            // Сохраняем текущую позицию змеи
+            const currentX = this.snake ? this.snake.x : this.lanePositions[this.currentLane]
+            const currentY = this.snake ? this.snake.y : window.innerHeight * 0.7
+            
+            // Очищаем объекты, кроме змеи и брони
+            this.clearGameObjectsExceptSnake()
+            
+            // Пересоздаем змею на той же позиции
+            if (!this.snake || this.snake.destroyed) {
+                this.createSnake()
+                this.snake.setPosition(currentX, currentY)
+            }
+            
+            this.isGameActive = true
+            this.isBackgroundMoving = true
+            
+            this.pendingArmorUpdate = null
+            
+            this.setupObjectGeneration()
+            this.anims.resumeAll()
+            
+            // Запускаем анимацию змеи
+            if (this.snake && !this.snake.destroyed) {
+                this.snake.play(`${this.currentSnakeSprite}Anim`)
+            }
+
+            if (this.scene.isActive()) {
+                this.isCollisionProcessing = false
+            }
+        }
     })
   }
 
-  clearGameObjects() {
-    if (this.coinSpawnTimer) {
-      this.coinSpawnTimer.remove()
-      this.coinSpawnTimer = null
-    }
-    if (this.obstacleSpawnTimer) {
-      this.obstacleSpawnTimer.remove()
-      this.obstacleSpawnTimer = null
-    }
-
+  // Новый метод для очистки объектов, кроме змеи
+  clearGameObjectsExceptSnake() {
+    // Очищаем монеты
     this.coins.forEach(coin => {
-      this.tweens.killTweensOf(coin)
-      coin.setActive(false)
-      coin.setVisible(false)
-      coin.destroy()
+        if (coin && !coin.destroyed) {
+            coin.destroy()
+        }
     })
     this.coins = []
 
+    // Очищаем препятствия
     this.obstacles.forEach(obstacle => {
-      this.tweens.killTweensOf(obstacle)
-      obstacle.setActive(false)
-      obstacle.setVisible(false)
-      obstacle.destroy()
+        if (obstacle && !obstacle.destroyed) {
+            obstacle.destroy()
+        }
     })
     this.obstacles = []
 
+    // Очищаем пулы объектов
     this.objectPool.coins.forEach(coin => {
-      if (coin.active) {
-        this.tweens.killTweensOf(coin)
-        coin.setActive(false)
-        coin.setVisible(false)
-        coin.destroy()
-      }
+        if (coin && !coin.destroyed) {
+            coin.destroy()
+        }
     })
     this.objectPool.coins = []
 
     this.objectPool.obstacles.forEach(obstacle => {
-      if (obstacle.active) {
-        this.tweens.killTweensOf(obstacle)
-        obstacle.setActive(false)
-        obstacle.setVisible(false)
-        obstacle.destroy()
-      }
+        if (obstacle && !obstacle.destroyed) {
+            obstacle.destroy()
+        }
     })
     this.objectPool.obstacles = []
-
-    this.createObjectPools()
   }
 
   setupObjectGeneration() {
@@ -812,25 +896,55 @@ export default class SnakeScene extends Phaser.Scene {
       if (this.armorSprites[type] && this.activeArmor[type]) {
         this.armorSprites[type].x = this.snake.x
         this.armorSprites[type].y = this.snake.y
+        console.log(`Updated armor position for ${type}:`, {
+          x: this.snake.x,
+          y: this.snake.y,
+          visible: this.armorSprites[type].visible,
+          active: this.activeArmor[type]
+        })
       }
     })
   }
 
   setActiveArmor(armorData) {
-    Object.keys(this.activeArmor).forEach(type => {
-      const isActive = armorData[type]?.activated || false
-      this.activeArmor[type] = isActive
-      const sprite = this.armorSprites[type]
-      
-      if (sprite) {
-        sprite.setVisible(isActive)
-        if (isActive && this.isGameActive) {
-          sprite.play(`${type.toLowerCase()}Anim`)
-        } else if (!isActive) {
-          sprite.stop()
+    console.log('Setting active armor with data:', armorData)
+    if (!Array.isArray(armorData)) {
+        console.warn('Invalid armorData format:', armorData)
+        return
+    }
+
+    console.log('Current armor state before update:', this.activeArmor)
+
+    // Сначала деактивируем всю броню
+    Object.keys(this.activeArmor).forEach(typeKey => {
+        this.activeArmor[typeKey] = false
+        const sprite = this.armorSprites[typeKey]
+        if (sprite) {
+            sprite.stop()
+            sprite.setVisible(false)
         }
-      }
     })
+
+    // Затем активируем нужную броню
+    armorData.forEach(typeKey => {
+        this.activeArmor[typeKey] = true
+        const sprite = this.armorSprites[typeKey]
+        if (sprite) {
+            sprite.setVisible(true)
+            sprite.setAlpha(1)
+            sprite.x = this.snake.x
+            sprite.y = this.snake.y
+            sprite.setDepth(this.snake.depth + 1)
+            sprite.play(`${typeKey.toLowerCase()}Anim`)
+            console.log(`Activated armor ${typeKey}:`, {
+                visible: sprite.visible,
+                alpha: sprite.alpha,
+                playing: sprite.anims.isPlaying
+            })
+        }
+    })
+
+    console.log('Final armor state:', this.activeArmor)
   }
 
   updateSnakeSprite(progress, needProgress) {
@@ -838,15 +952,13 @@ export default class SnakeScene extends Phaser.Scene {
     this.needProgress = needProgress
 
     const progressPercent = (progress / needProgress) * 100
-    let newSpriteKey = 'snake_0'
+    let progressSuffix = '0'
 
-    if (progressPercent >= 75) {
-      newSpriteKey = 'snake_75'
-    } else if (progressPercent >= 50) {
-      newSpriteKey = 'snake_50'
-    } else if (progressPercent >= 25) {
-      newSpriteKey = 'snake_25'
-    }
+    if (progressPercent >= 75) progressSuffix = '75'
+    else if (progressPercent >= 50) progressSuffix = '50'
+    else if (progressPercent >= 25) progressSuffix = '25'
+
+    const newSpriteKey = `snake_${this.currentLeague}_${progressSuffix}`
 
     if (this.currentSnakeSprite !== newSpriteKey) {
       this.currentSnakeSprite = newSpriteKey
@@ -856,7 +968,6 @@ export default class SnakeScene extends Phaser.Scene {
       const currentScale = this.snake.scale
       const wasPlaying = this.snake.anims.isPlaying
       
-      // Сохраняем текущий прогресс анимации
       const currentProgress = this.snake.anims.currentFrame ? 
         this.snake.anims.currentFrame.index / this.snake.anims.currentAnim.frames.length : 
         0
@@ -867,13 +978,95 @@ export default class SnakeScene extends Phaser.Scene {
       this.snake.setScale(currentScale)
       
       if (wasPlaying && this.isGameActive) {
-        // Запускаем новую анимацию с сохраненным прогрессом
         this.snake.play(`${newSpriteKey}Anim`)
         
-        // Устанавливаем текущий кадр на основе сохраненного прогресса
         const newAnim = this.snake.anims.currentAnim
         const targetFrame = Math.floor(currentProgress * newAnim.frames.length)
         this.snake.anims.setProgress(currentProgress)
+      }
+    }
+  }
+
+  setInitialArmor(initialArmorData) {
+    console.log('Setting initial armor:', initialArmorData)
+    if (initialArmorData && initialArmorData.armor) {
+      const activeArmor = []
+      Object.entries(initialArmorData.armor).forEach(([key, value]) => {
+        if (value.activated) {
+          activeArmor.push(key.toUpperCase())
+        }
+      })
+      this.setActiveArmor(activeArmor)
+    }
+  }
+
+  shutdown() {
+    // Останавливаем все таймеры
+    if (this.coinSpawnTimer) {
+        this.coinSpawnTimer.remove()
+        this.coinSpawnTimer = null
+    }
+    if (this.obstacleSpawnTimer) {
+        this.obstacleSpawnTimer.remove()
+        this.obstacleSpawnTimer = null
+    }
+
+    // Останавливаем все анимации и твины
+    this.tweens.killAll()
+    this.anims.pauseAll()
+
+    // Очищаем все игровые объекты
+    this.clearGameObjects()
+
+    // Сбрасываем все флаги
+    this.isGameActive = false
+    this.isBackgroundMoving = false
+    this.isProcessingRequest = false
+    this.isCollisionProcessing = false
+    this.currentLane = 1
+    this.frameCount = 0
+    this.pendingArmorUpdate = null
+
+    // Очищаем все обработчики событий
+    if (this.input && this.input.keyboard) {
+        this.input.keyboard.shutdown()
+    }
+    if (this.input) {
+        this.input.shutdown()
+    }
+
+    // Останавливаем сцену
+    if (this.scene && this.scene.isActive()) {
+        this.scene.stop()
+    }
+  }
+
+  setLeague(league) {
+    if (league >= 1 && league <= 3) {
+      this.currentLeague = league
+      // Обновляем текущий спрайт с учетом лиги
+      const progressPercent = (this.currentProgress / this.needProgress) * 100
+      let progressSuffix = '0'
+      
+      if (progressPercent >= 75) progressSuffix = '75'
+      else if (progressPercent >= 50) progressSuffix = '50'
+      else if (progressPercent >= 25) progressSuffix = '25'
+      
+      const newSpriteKey = `snake_${this.currentLeague}_${progressSuffix}`
+      
+      if (this.snake && !this.snake.destroyed) {
+        const currentX = this.snake.x
+        const currentY = this.snake.y
+        const currentScale = this.snake.scale
+        
+        this.snake.stop()
+        this.snake.setTexture(newSpriteKey)
+        this.snake.setPosition(currentX, currentY)
+        this.snake.setScale(currentScale)
+        
+        if (this.isGameActive) {
+          this.snake.play(`${newSpriteKey}Anim`)
+        }
       }
     }
   }

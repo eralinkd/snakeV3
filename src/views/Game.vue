@@ -2,14 +2,26 @@
   <div class="game" :class="{ 'game--playing': isGameStarted }" v-if="gamedata">
     <!-- Добавляем тестовую панель -->
     <div class="test-panel" v-if="isDev">
-      <button 
-        v-for="progress in [0, 25, 50, 75]" 
-        :key="progress"
-        @click="testSnakeProgress(progress)"
-        :class="{ active: currentTestProgress === progress }"
-      >
-        Snake {{ progress }}%
-      </button>
+      <div class="test-panel__group">
+        <button 
+          v-for="progress in [0, 25, 50, 75]" 
+          :key="progress"
+          @click="testSnakeProgress(progress)"
+          :class="{ active: currentTestProgress === progress }"
+        >
+          Progress {{ progress }}%
+        </button>
+      </div>
+      <div class="test-panel__group">
+        <button 
+          v-for="league in [1, 2, 3]" 
+          :key="league"
+          @click="testSnakeLeague(league)"
+          :class="{ active: currentTestLeague === league }"
+        >
+          League {{ league }}
+        </button>
+      </div>
     </div>
     <div class="game__top-bar" v-if="!isGameStarted">
       <div class="game__top-bar-balance">
@@ -139,7 +151,7 @@
         </div>
       </div>
     </BaseBottomSheet>
-    <div class="game__armor" v-if="isGameStarted && hasActiveArmor">
+    <!-- <div class="game__armor" v-if="isGameStarted && hasActiveArmor">
       <div v-if="gamedata.inventory?.armor.HELMET.activated" class="game__armor-item">
         <img class="helmet" :src="helmet" alt="helmet" />
       </div>
@@ -152,7 +164,7 @@
       <div v-if="gamedata.inventory?.armor.SWORD.activated" class="game__armor-item">
         <img class="sword" :src="sword" alt="sword" />
       </div>
-    </div>
+    </div> -->
     <BaseModal
       :isOpen="showGameEndModal"
       @update:isOpen="handleGameEndModalClose"
@@ -263,6 +275,7 @@ const isDev = process.env.NODE_ENV === 'development'
 
 // Добавляем состояние для тестовой панели
 const currentTestProgress = ref(0)
+const currentTestLeague = ref(1)
 
 // Функция для тестирования прогресса змеи
 const testSnakeProgress = (progress) => {
@@ -271,6 +284,13 @@ const testSnakeProgress = (progress) => {
     // Используем фиксированное значение needProgress для тестов
     const testNeedProgress = 100
     snakeScene.updateSnakeSprite(progress, testNeedProgress)
+  }
+}
+
+const testSnakeLeague = (league) => {
+  currentTestLeague.value = league
+  if (snakeScene) {
+    snakeScene.setLeague(league)
   }
 }
 
@@ -373,8 +393,13 @@ const startGame = async () => {
 
     setTimeout(() => {
       if (snakeScene) {
-        // Передаем информацию о броне в сцену
-        snakeScene.setActiveArmor(gamedata.value.inventory.armor)
+        // Преобразуем объект брони в массив активных элементов
+        const activeArmor = Object.entries(gamedata.value.inventory.armor)
+          .filter(([_, value]) => value.activated)
+          .map(([key]) => key.toUpperCase())
+        
+        console.log('Setting initial armor:', activeArmor)
+        snakeScene.setActiveArmor(activeArmor)
         snakeScene.startGame()
       }
     }, 100)
@@ -387,35 +412,32 @@ const startGame = async () => {
 const handleGameEnd = async () => {
   console.log('Game ending, current coins:', sessionCoins.value)
 
-  // Сохраняем финальный результат перед обнулением
   finalGameCoins.value = sessionCoins.value
   console.log('Saved final coins:', finalGameCoins.value)
 
-  // Очищаем интервал
   if (energyInterval) {
     clearInterval(energyInterval)
     energyInterval = null
   }
 
-  // Сброс счетчика
   energyTickCounter = 0
-
   isGameStarted.value = false
   document.documentElement.setAttribute('data-playing', 'false')
 
   if (game?.value) {
+    // Вызываем shutdown перед уничтожением игры
+    if (snakeScene) {
+      snakeScene.shutdown()
+      snakeScene = null
+    }
     game.value.destroy(true)
     game.value = null
   }
 
-  // Отправляем результаты на сервер и показываем модалку
   try {
     await postGameGameEnd(gameId.value)
-
-    // Обновляем данные игры
     const newGameData = await getGameData()
     gamedata.value = newGameData
-
     showGameEndModal.value = true
   } catch (error) {
     console.error('Failed to end game:', error)
@@ -496,12 +518,7 @@ const handleObstacleHit = async () => {
     } else {
       // Обновляем броню в сцене
       if (snakeScene) {
-        snakeScene.setActiveArmor({
-          HELMET: response.activatedArmor.includes('HELMET'),
-          CHESTPLATE: response.activatedArmor.includes('CHESTPLATE'),
-          SHIELD: response.activatedArmor.includes('SHIELD'),
-          SWORD: response.activatedArmor.includes('SWORD')
-        })
+        snakeScene.setActiveArmor(response.activatedArmor)
       }
     }
   } catch (error) {
@@ -553,6 +570,7 @@ const handleGameEndModalClose = () => {
 
 // Добавим вычисляемое свойство для проверки наличия активной брони
 const hasActiveArmor = computed(() => {
+  console.log('dsadasd----------------', gamedata.value)
   return (
     gamedata.value?.inventory?.armor &&
     Object.values(gamedata.value.inventory.armor).some((item) => item.activated)
@@ -1217,10 +1235,16 @@ onUnmounted(() => {
   transform: translateX(-50%);
   z-index: 1000;
   display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 8px;
   background: rgba(0, 0, 0, 0.8);
   border-radius: 0 0 8px 8px;
+
+  &__group {
+    display: flex;
+    gap: 8px;
+  }
 
   button {
     padding: 8px 16px;

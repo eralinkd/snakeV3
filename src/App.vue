@@ -26,7 +26,7 @@ onMounted(async () => {
   
   try {
     // Создаем Promise для минимального времени загрузки
-    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 3000))
+    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 300))
     
     // Создаем Promise для авторизации
     const authProcess = (async () => {
