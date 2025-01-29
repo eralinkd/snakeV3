@@ -5,7 +5,7 @@
     </div>
 
     <div v-if="isError" class="history__container">
-      <p class="error">{{ $t('common.error') }}</p>
+      <p class="error">{{ t('market.errors_fetch') }}</p>
     </div>
 
     <template v-if="history && !isError">
@@ -18,7 +18,7 @@
         <template #trigger="{ selected, isOpen }">
           <button :class="['filter-button plateBg', { 'filter-button--active': isOpen }]">
             <div class="filter-button__img-container">
-              <img :src="selected.icon" alt="filter icon" />
+              <img :src="selected.icon" :alt="t('market.history.alt_filter')" />
             </div>
             <span>{{ selected.label }}</span>
             <div
@@ -52,7 +52,7 @@
             class="history__select-option select-option"
           >
             <div class="select-option__img-container">
-              <img :src="option.icon" alt="filter icon" />
+              <img :src="option.icon" :alt="t('market.history.alt_filter')" />
             </div>
             <span>{{ option.label }}</span>
           </li>
@@ -64,7 +64,7 @@
       </ul>
 
       <div v-else class="history__empty">
-        <p>{{ $t('market.history.empty') }}</p>
+        <p>{{ t('market.history.empty') }}</p>
       </div>
     </template>
   </div>
@@ -81,12 +81,15 @@ import filterAll from '@/assets/history/filter-all.svg'
 import filterDeposit from '@/assets/history/filter-deposit.svg'
 import filterWithdraw from '@/assets/history/filter-withdraw.svg'
 import filterSwap from '@/assets/history/filter-swap.svg'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const filters = [
-  { value: 'NONE', label: 'Все', icon: filterAll },
-  { value: 'REPLENISHMENT', label: 'Пополнение', icon: filterDeposit },
-  { value: 'WITHDRAW', label: 'Вывод', icon: filterWithdraw },
-  { value: 'SWAP', label: 'Обмен', icon: filterSwap },
+  { value: 'NONE', label: t('market.history.filters_all'), icon: filterAll },
+  { value: 'REPLENISHMENT', label: t('market.history.filters_deposit'), icon: filterDeposit },
+  { value: 'WITHDRAW', label: t('market.history.filters_withdraw'), icon: filterWithdraw },
+  { value: 'SWAP', label: t('market.history.filters_swap'), icon: filterSwap },
 ]
 
 const selectedFilter = ref('NONE')

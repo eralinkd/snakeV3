@@ -35,6 +35,11 @@ export const getUserQuests = async () => {
 	return data;
 }
 
+export const getUserLeagues = async () => {
+	const { data } = await api.get(`/users/stages`)
+	return data;
+}
+
 export const postCompleteQuest = async (questId) => {
 	const { data } = await api.post(`/users/completeQuest/${questId}`)
 	return data;

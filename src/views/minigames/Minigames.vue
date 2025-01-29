@@ -1,25 +1,25 @@
 <template>
   <div class="minigames">
-    <h1>Зарабатывайте, играя в мини-игры!</h1>
+    <h1>{{ t('minigames.title') }}</h1>
     <div class="minigames__list">
       <div class="minigames__item" @click="router.push('/minigames/minesweeper')">
         <img :src="minesweeper" alt="Сапёр" />
-        <h2>Сапёр</h2>
+        <h2>{{ t('minigames.minesweeper') }}</h2>
       </div>
       <div class="minigames__item">
         <img :src="crash" alt="Сапёр" />
-        <h2>Crash</h2>
-        <p class="minigames__item-soon">Скоро...</p>
+        <h2>{{ t('minigames.crash') }}</h2>
+        <p class="minigames__item-soon">{{ t('minigames.soon') }}</p>
       </div>
       <div class="minigames__item">
         <img :src="coinflip" alt="Сапёр" />
-        <h2>Coinflip</h2>
-        <p class="minigames__item-soon">Скоро...</p>
+        <h2>{{ t('minigames.coinflip') }}</h2>
+        <p class="minigames__item-soon">{{ t('minigames.soon') }}</p>
       </div>
       <div class="minigames__item">
         <img :src="roulette" alt="Сапёр" />
-        <h2>Рулетка</h2>
-        <p class="minigames__item-soon">Скоро...</p>
+        <h2>{{ t('minigames.roulette') }}</h2>
+        <p class="minigames__item-soon">{{ t('minigames.soon') }}</p>
       </div>
     </div>
   </div>
@@ -31,6 +31,9 @@ import minesweeper from '@/assets/games/minigames/miner.png'
 import crash from '@/assets/games/minigames/crash.png'
 import coinflip from '@/assets/games/minigames/coinflip.png'
 import roulette from '@/assets/games/minigames/roulette.png'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 </script>

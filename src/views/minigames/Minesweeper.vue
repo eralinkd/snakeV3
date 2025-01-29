@@ -47,7 +47,7 @@
 
     <!-- Информация о ставке -->
     <div class="info">
-      <h2 class="betText">Сделайте ставку</h2>
+      <h2 class="betText">{{ t('minigames.minesweeper_game.bet_title') }}</h2>
       <div class="infoImg" @click="showInfo = true">
         <img :src="infoImg" alt="info" />
       </div>
@@ -85,7 +85,7 @@
               />
               <div class="swap-card__select-trigger-text">
                 <p>{{ selected.label }}</p>
-                <span>Ставка</span>
+                <span>{{ t('minigames.minesweeper_game.bet') }}</span>
               </div>
               <div
                 :class="[
@@ -115,7 +115,7 @@
 
       <!-- Количество мин -->
       <div class="minesAmountContainer">
-        <label>Выберите количество бомб</label>
+        <label>{{ t('minigames.minesweeper_game.bet_bomb') }}</label>
         <div class="minesSelector">
           <div
             v-for="option in minesAmountOptions"
@@ -132,26 +132,22 @@
         </div>
       </div>
 
-      <BaseButton :disabled="gameStarted" @click="handlePlay" v-if="!gameStarted"
-        >Начать игру</BaseButton
-      >
+      <BaseButton :disabled="gameStarted" @click="handlePlay" v-if="!gameStarted">{{
+        t('minigames.minesweeper_game.bet_start')
+      }}</BaseButton>
       <BaseButton :disabled="!gameStarted || !currentWin" @click="handleWin" v-else
-        >Забрать {{ currentWin }}</BaseButton
+        >{{ t('minigames.minesweeper_game.bet_win') }} {{ currentWin }}</BaseButton
       >
     </div>
 
     <!-- Добавляем шторку с информацией -->
     <BaseBottomSheet :is-open="showInfo" @update:is-open="showInfo = false">
       <div class="info-sheet">
-        <h3 class="info-sheet__title">Как играть?</h3>
-        <p class="info-sheet__text">Краткое руководство</p>
+        <h3 class="info-sheet__title">{{ t('minigames.minesweeper_game.info_title') }}</h3>
+        <p class="info-sheet__text">{{ t('minigames.minesweeper_game.info_subtitle') }}</p>
         <div class="info-sheet__content">
           <p class="info-sheet__text">
-            Зачем мне объяснять вам как играть в сапёра? Есть монета - ты хочешь монету, есть бомба
-            - ты не хочешь бомбу. Тыкай на клетку и надейся на лучшее. А и да, тебе нужно платить
-            SCOIN или USDT, чтобы иметь хоть какие-то шансы.
-            <br /><br />
-            А ты что думал? Бесплатный сыр?
+            {{ t('minigames.minesweeper_game.info_text') }}
           </p>
         </div>
         <img :src="snake" alt="snake" class="info-sheet__image" />
@@ -176,6 +172,9 @@ import infoImg from '@/assets/games/minigames/miner/info.png'
 import snake from '@/assets/game/snake.png'
 import bitcoinIcon from '@/assets/currency-images/bitcoin.png'
 import ethIcon from '@/assets/currency-images/eth.png'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // Константы для игры
 const minesAmountOptions = [3, 5, 10, 15]

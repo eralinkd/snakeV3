@@ -4,16 +4,16 @@
   </div>
 
   <div v-else-if="isError" class="inventory__error">
-    <p class="error">Не удалось загрузить данные</p>
+    <p class="error">{{ t('inventory.error') }}</p>
   </div>
 
   <div v-else-if="userData?.inventory" class="inventory">
     <BaseTabs v-model:activeTab="activeTab" :tabs="INVENTORY_TABS" className="inventory__tabs" />
 
-    <template v-if="activeTab === 'Снаряжение'">
+    <template v-if="activeTab === 'inventory.tabs_armor'">
       <EquipmentTab :inventory="userData.inventory?.armor" />
     </template>
-    <template v-else-if="activeTab === 'Яйца'">
+    <template v-else-if="activeTab === 'inventory.tabs_eggs'">
       <EggsTab :eggs="userData.inventory?.eggs" />
     </template>
   </div>
@@ -27,13 +27,16 @@ import BaseTabs from '@/components/BaseTabs.vue'
 import Spinner from '@/components/Spinner.vue'
 import EquipmentTab from './tabs/equipment/EquipmentTab.vue'
 import EggsTab from './tabs/eggs/EggsTab.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const INVENTORY_TABS = [
-  { name: 'Снаряжение', value: 'equipment' },
-  { name: 'Яйца', value: 'eggs' },
+  { name: 'inventory.tabs_armor', value: 'equipment' },
+  { name: 'inventory.tabs_eggs', value: 'eggs' },
 ]
 
-const activeTab = ref('Снаряжение')
+const activeTab = ref('inventory.tabs_armor')
 
 const {
   data: userData,

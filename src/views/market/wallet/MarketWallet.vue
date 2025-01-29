@@ -5,6 +5,9 @@ import { getUser } from '@/api/userApi'
 import { fetchCryptos } from '@/api/marketApi'
 import CurrencyCard from '@/views/market/wallet/CurrencyCard.vue'
 import Spinner from '@/components/Spinner.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const balances = ref(null)
 
@@ -46,7 +49,7 @@ watch(
     </div>
 
     <div v-if="isError" class="container">
-      <p class="error">Failed to fetch data</p>
+      <p class="error">{{ t('market.wallet.errors_fetch') }}</p>
     </div>
 
     <div v-if="cryptos && !isError" class="list">

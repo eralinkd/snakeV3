@@ -73,8 +73,8 @@
       </div>
     </div>
 
-    <div class="game__main-bottom" v-if="!isGameStarted">
-      <h2>{{ stageName }}</h2>
+    <div class="game__main-bottom" v-if="!isGameStarted" @click="router.push('/leagues')">
+      <h2>{{ t(stageName) }}</h2>
       <div class="game__main-bottom-progress">
         <div class="game__main-bottom-progress-bar" :style="{ width: `${progressPercent}%` }"></div>
         <p class="game__main-bottom-progress-left">{{ formattedProgress }}</p>
@@ -110,19 +110,19 @@
           <div class="store-modal__image">
             <img :src="fail" alt="ошибка" />
           </div>
-          <h2 class="store-modal__title">{{ $t('game.modal.noResources.title') }}</h2>
-          <p class="store-modal__description">{{ $t('game.modal.noResources.description') }}</p>
+          <h2 class="store-modal__title">{{ t('game.modal_noHearts_title') }}</h2>
+          <p class="store-modal__description">{{ t('game.modal_noHearts_description') }}</p>
           <BaseButton @click="handleModalClose" type="button" size="small">
-            {{ $t('game.modal.noResources.button') }}
+            {{ t('game.modal_agree_button') }}
           </BaseButton>
         </div>
       </div>
     </BaseModal>
     <BaseBottomSheet :is-open="showInfo" @update:is-open="showInfo = false">
       <div class="info-sheet">
-        <h3 class="info-sheet__title">{{ $t('game.info.title') }}</h3>
-        <p class="info-sheet__text">{{ $t('game.info.subtitle') }}</p>
-        <p class="info-sheet__text">{{ $t('game.info.description') }}</p>
+        <h3 class="info-sheet__title">{{ t('game.info_title') }}</h3>
+        <p class="info-sheet__text">{{ t('game.info_subtitle') }}</p>
+        <p class="info-sheet__text">{{ t('game.info_text') }}</p>
         <div class="info-sheet__content">
           <img :src="snake" alt="snake" class="info-sheet__image" />
         </div>
@@ -150,14 +150,14 @@
       <div class="store-modal__content">
         <BaseModalClose @click="handleGameEndModalClose" className="store-modal__close" />
         <div class="store-modal__frame store-modal__frame--success">
-          <h2 class="store-modal__title">{{ $t('game.modal.gameOver.title') }}</h2>
-          <p class="store-modal__description">{{ $t('game.modal.gameOver.description') }}</p>
+          <h2 class="store-modal__title">{{ t('game.modal_game_over_title') }}</h2>
+          <p class="store-modal__description">{{ t('game.modal_game_over_description') }}</p>
           <div class="store-modal__reward">
             <p>+{{ displayCoins }}</p>
             <img :src="scoinGame" alt="coins" />
           </div>
           <p v-if="hasActiveArmor" class="store-modal__description">
-            {{ $t('game.modal.gameOver.equipment') }}
+            {{ t('game.modal_game_over_armor') }}
           </p>
           <div v-if="hasActiveArmor" class="store-modal__equipment">
             <div
@@ -185,9 +185,9 @@
               <img class="sword" :src="sword" alt="sword" />
             </div>
           </div>
-          <BaseButton @click="handleGameEndModalClose" type="button" size="small"
-            >Окей, спасибо</BaseButton
-          >
+          <BaseButton @click="handleGameEndModalClose" type="button" size="small">{{
+            t('game.modal_agree_button')
+          }}</BaseButton>
         </div>
       </div>
     </BaseModal>
@@ -1121,7 +1121,12 @@ onUnmounted(() => {
   width: 100%;
   padding: 0 20px;
   z-index: 100;
-  pointer-events: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
 
   h2 {
     font-family: Montserrat;

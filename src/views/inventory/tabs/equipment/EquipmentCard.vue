@@ -37,6 +37,9 @@ import defaultSword from '@/assets/inventory/sword.svg'
 import defaultShield from '@/assets/inventory/shield.svg'
 import defaultHelmet from '@/assets/inventory/helmet.svg'
 import defaultArmor from '@/assets/inventory/armor.svg'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   type: {
@@ -55,14 +58,14 @@ const selectedAction = ref('')
 
 const availableActions = computed(() => {
   if (props.selectedItem?.activated) {
-    return [{ value: 'remove', label: 'Снять' }]
+    return [{ value: 'remove', label: t('inventory.select_remove') }]
   }
 
   if (props.selectedItem?.amount <= 0) {
-    return [{ value: 'unavailable', label: 'Нет доступных предметов', disabled: true }]
+    return [{ value: 'unavailable', label: t('inventory.select_empty'), disabled: true }]
   }
 
-  return [{ value: 'equip', label: 'Надеть' }]
+  return [{ value: 'equip', label: t('inventory.select_equip') }]
 })
 
 const getDefaultImage = computed(() => {

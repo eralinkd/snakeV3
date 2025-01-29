@@ -15,7 +15,7 @@
           class="eggs-swiper__slide"
         >
           <div class="egg-card">
-            <h2 class="egg-card__title">{{ egg.name }}</h2>
+            <h2 class="egg-card__title">{{ t(`${egg.name}`) }}</h2>
             <div
               class="egg-card__bottom-plate-container"
               :class="{
@@ -36,7 +36,7 @@
                     :isProcessing="egg.status === 'PROCESSING'"
                     @timer-end="handleTimerEnd"
                   />
-                  <p>До получения награды</p>
+                  <p>{{ t('inventory.egg_processing') }}</p>
                 </div>
               </div>
               <div
@@ -44,16 +44,16 @@
                 class="egg-card__reward-plate reward-plate"
               >
                 <div class="reward-plate__content">
-                  <h3>Яйцо разбито!</h3>
-                  <p>награда доступна к получению</p>
-                  <BaseButton size="small" @click="handleTakeReward(egg)"
-                    >Получить награду</BaseButton
-                  >
+                  <h3>{{ t('inventory.egg_broken') }}</h3>
+                  <p>{{ t('inventory.egg_broken_description') }}</p>
+                  <BaseButton size="small" @click="handleTakeReward(egg)">{{
+                    t('inventory.egg_broken_button')
+                  }}</BaseButton>
                 </div>
               </div>
               <div v-if="!egg.available" class="egg-card__unavailable-plate unavailable-plate">
                 <div class="unavailable-plate__content">
-                  <p>Яйцо недоступно</p>
+                  <p>{{ t('inventory.egg_unavailable') }}</p>
                 </div>
               </div>
             </div>
@@ -75,6 +75,9 @@ import 'swiper/css'
 import 'swiper/css/pagination'
 import Timer from './Timer.vue'
 import BaseButton from '@/components/BaseButton.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   eggs: {

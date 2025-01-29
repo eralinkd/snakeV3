@@ -6,12 +6,15 @@ import BaseTabs from '@/components/BaseTabs.vue'
 import ShopCard from './ShopCard.vue'
 import Spinner from '@/components/Spinner.vue'
 import ShopModal from './ShopModal.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const FILTER_TABS = [
-  { value: 'NONE', name: 'Все' },
-  { value: 'ARMOR', name: 'Броня и Оружие' },
-  { value: 'CONSUMABLES', name: 'Расходники' },
-  { value: 'EGG', name: 'Яйца' },
+  { value: 'NONE', name: 'shop.tabs_all' },
+  { value: 'ARMOR', name: 'shop.tabs_armor_and_weapons' },
+  { value: 'CONSUMABLES', name: 'shop.tabs_consumables' },
+  { value: 'EGG', name: 'shop.tabs_eggs' },
 ]
 
 const selectedTab = ref(FILTER_TABS[0].value)
@@ -52,7 +55,7 @@ const handleModalClose = () => {
 <template>
   <section class="shop">
     <div v-if="isError" class="shop__container">
-      <p class="error">Failed to fetch data</p>
+      <p class="error">{{ t('shop.error') }}</p>
     </div>
 
     <template v-if="!isError">

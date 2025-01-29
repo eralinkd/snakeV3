@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   tabs: {
@@ -21,6 +22,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:activeTab'])
+const { t } = useI18n()
 
 const setActiveTab = (tab) => {
   emit('update:activeTab', tab)
@@ -44,7 +46,7 @@ const currentComponent = computed(() => {
         }"
         @click="setActiveTab(tab.name)"
       >
-        {{ tab.name }}
+        {{ t(tab.name) }}
       </li>
     </ul>
 

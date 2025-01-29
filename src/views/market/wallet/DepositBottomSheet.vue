@@ -1,6 +1,7 @@
 <script setup>
 import { computed, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
+import { useI18n } from 'vue-i18n'
 import BaseBottomSheet from '@/components/BaseBottomSheet.vue'
 import CurrencyInfo from '@/components/CurrencyInfo.vue'
 import { currencyImages } from '@/constants/constants'
@@ -22,6 +23,8 @@ const props = defineProps({
     required: true,
   },
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits(['update:isOpen'])
 
@@ -82,7 +85,7 @@ const copyToClipboard = async () => {
           <CurrencyInfo :img-src="imageSrc" :title="currency.simpleName" :text="currency.type" />
           <div class="deposit__balance">
             <h4>{{ balance }}</h4>
-            <span>Баланс</span>
+            <span>{{ t('market.wallet.balance') }}</span>
           </div>
         </div>
 
@@ -91,32 +94,32 @@ const copyToClipboard = async () => {
         </div>
 
         <div v-else-if="depositAddress" class="deposit__qr">
-          <img :src="qrCode" alt="QR код для пополнения" />
+          <img :src="qrCode" :alt="t('market.wallet.deposit.qr_alt')" />
         </div>
 
         <div class="address-field plateBg">
           <div class="address-field__content">
             <div class="address-field__text-wrapper">
-              <span class="address-field__label">Адрес пополнения</span>
+              <span class="address-field__label">{{
+                t('market.wallet.deposit.address_label')
+              }}</span>
               <div class="address-field__text">
-                {{ depositAddress || 'Адрес загружается...' }}
+                {{ depositAddress || t('market.wallet.deposit.address_loading') }}
               </div>
             </div>
             <button
               class="address-field__copy-btn"
               @click="copyToClipboard"
               :disabled="!depositAddress"
+              :title="t('market.wallet.deposit.address_copy')"
             >
-              <img :src="copyIcon" alt="Копировать" />
+              <img :src="copyIcon" :alt="t('market.wallet.deposit.address_copy')" />
             </button>
           </div>
         </div>
 
         <div class="deposit__info">
-          <p>
-            У вас есть 30 минут на пополнение этого кошелька, любая сумма, отправленная сюда будет
-            пополненна на ваш баланс
-          </p>
+          <p>{{ t('market.wallet.deposit.info') }}</p>
         </div>
       </div>
     </div>

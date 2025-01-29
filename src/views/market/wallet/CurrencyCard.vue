@@ -7,6 +7,7 @@ import { currencyImages } from '@/constants/constants'
 import BaseSelect from '@/components/BaseSelect.vue'
 import WithdrawBottomSheet from './WithdrawBottomSheet.vue'
 import DepositBottomSheet from './DepositBottomSheet.vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   item: {
@@ -23,6 +24,8 @@ const props = defineProps({
   },
 })
 
+const { t } = useI18n()
+
 const marketStore = useMarketStore()
 
 const imageSrc = computed(() => currencyImages[props.item.apiName] || currencyImages.default)
@@ -32,13 +35,13 @@ const actions = computed(() => {
   const availableActions = []
 
   if (props.item.replenishment) {
-    availableActions.push({ value: 'deposit', label: 'Пополнить' })
+    availableActions.push({ value: 'deposit', label: t('market.wallet.actions_deposit') })
   }
   if (props.item.withdraw) {
-    availableActions.push({ value: 'withdraw', label: 'Вывести' })
+    availableActions.push({ value: 'withdraw', label: t('market.wallet.actions_withdraw') })
   }
   if (props.item.swap) {
-    availableActions.push({ value: 'swap', label: 'Обмен' })
+    availableActions.push({ value: 'swap', label: t('market.wallet.actions_swap') })
   }
 
   return availableActions

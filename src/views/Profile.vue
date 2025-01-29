@@ -14,8 +14,20 @@
         </div>
 
         <div class="lang" @click="toggleLanguage">
-          <img :src="planetSrc" alt="earth" />
-          <span>{{ currentLanguage }}</span>
+          <BaseSelect
+            v-model="locale"
+            :options="languages"
+            @select="handleLanguageChange"
+            placement="bottom"
+            class="lang-select"
+          >
+            <template #trigger="{ selected }">
+              <div class="lang-select-trigger">
+                <img :src="planetSrc" alt="earth" />
+                <span>{{ selected?.label || currentLanguage }}</span>
+              </div>
+            </template>
+          </BaseSelect>
         </div>
       </div>
 
@@ -28,14 +40,14 @@
       </div>
     </div>
 
-    <h2 class="title">{{ $t('profile.title') }}</h2>
+    <h2 class="title">{{ t('profile.title') }}</h2>
 
     <div class="friends">
       <div class="invite-block">
-        <p>{{ $t('profile.invite.description', { percent: 10 }) }}</p>
+        <p>{{ t('profile.invite_description') }}</p>
         <div class="invite-container">
           <BaseButton class="invite-button" @click="handleShare">
-            {{ isCopied ? $t('profile.invite.copied') : $t('profile.invite.button') }}
+            {{ isCopied ? t('profile.invite_copied') : t('profile.invite_button') }}
           </BaseButton>
           <div @click="handleCopy" class="copy-container base-button accentGrad">
             <img class="copy-icon" :src="copySrc" alt="copy" />
@@ -67,7 +79,7 @@
           @click="handleQuestClick(quest)"
         >
           <div class="quest-item__info">
-            <p class="quest-item__description">{{ quest.description }}</p>
+            <p class="quest-item__description">{{ t(`profile.${quest.description}`) }}</p>
             <div class="quest-item__reward">
               <span>+{{ quest.reward }}</span>
               <img :src="scoinSrc" alt="scoin" />
@@ -89,11 +101,14 @@ import avatar from '@/assets/profile/avatar.png'
 import copy from '@/assets/profile/copy.svg'
 import { useUserStore } from '@/stores/userStore'
 import BaseButton from '@/components/BaseButton.vue'
+import BaseSelect from '@/components/BaseSelect.vue'
 import { ref, watch, computed, onMounted } from 'vue'
 import { getUser, getUserQuests, postCompleteQuest, updateLanguage } from '@/api/userApi'
 import { useQuery } from '@tanstack/vue-query'
 import BaseTabs from '@/components/BaseTabs.vue'
 import { useI18n } from 'vue-i18n'
+
+const { t, locale } = useI18n()
 
 const headerBgSrc = bg
 const heartSrc = heart
@@ -165,17 +180,17 @@ watch(
   { immediate: true },
 )
 
-const selectedQuestType = ref('Ежедневные')
+const selectedQuestType = ref('profile.quests.tabs_daily')
 const questTabs = [
-  { name: 'Ежедневные', component: 'everyDay' },
-  { name: 'Разовые', component: 'oneTime' },
+  { name: 'profile.quests.tabs_daily', component: 'everyDay' },
+  { name: 'profile.quests.tabs_oneTime', component: 'oneTime' },
 ]
 
 const filteredQuests = computed(() => {
   if (!userQuests.value) return []
   const typeMap = {
-    Ежедневные: 'everyDay',
-    Разовые: 'oneTime',
+    'profile.quests.tabs_daily': 'everyDay',
+    'profile.quests.tabs_oneTime': 'oneTime',
   }
   return userQuests.value[typeMap[selectedQuestType.value]] || []
 })
@@ -183,24 +198,24 @@ const filteredQuests = computed(() => {
 const handleQuestClick = (quest) => {
   // Для разовых квестов открываем ссылку в новой вкладке
   if (quest.questValue) {
-    const isTelegramLink = 
-      quest.questValue.startsWith('https://t.me/') || 
+    const isTelegramLink =
+      quest.questValue.startsWith('https://t.me/') ||
       quest.questValue.startsWith('tg://') ||
       quest.questValue.startsWith('t.me/')
 
     if (isTelegramLink) {
       // Преобразуем t.me ссылки в полный URL если нужно
-      const telegramUrl = quest.questValue.startsWith('t.me/') 
+      const telegramUrl = quest.questValue.startsWith('t.me/')
         ? `https://${quest.questValue}`
         : quest.questValue
-        
+
       window.open(telegramUrl, '_blank')
     } else {
       // Для других ссылок добавляем https:// если протокол не указан
-      const url = quest.questValue.startsWith('http') 
-        ? quest.questValue 
+      const url = quest.questValue.startsWith('http')
+        ? quest.questValue
         : `https://${quest.questValue}`
-        
+
       window.open(url, '_blank')
     }
   }
@@ -227,17 +242,31 @@ onMounted(async () => {
   }
 })
 
-const { t, locale } = useI18n()
+const languages = [
+  { value: 'en', label: 'English' },
+  { value: 'ru', label: 'Русский' },
+  { value: 'ua', label: 'Українська' },
+  { value: 'zh', label: '中文' },
+]
 
-const currentLanguage = computed(() => locale.value)
+const currentLanguage = computed(() => {
+  return languages.find((lang) => lang.value === locale.value)?.label || locale.value
+})
 
-const toggleLanguage = () => {
-  locale.value = locale.value === 'ru' ? 'en' : 'ru'
-  // Сохраняем выбранный язык в localStorage
-  localStorage.setItem('language', locale.value)
-  // Обновляем язык на сервере
-  updateLanguage(locale.value)
+const handleLanguageChange = (option) => {
+  locale.value = option.value
+  localStorage.setItem('language', option.value)
+  updateLanguage(option.value)
 }
+// const currentLanguage = computed(() => locale.value)
+
+// const toggleLanguage = () => {
+//   locale.value = locale.value === 'ru' ? 'en' : 'ru'
+//   // Сохраняем выбранный язык в localStorage
+//   localStorage.setItem('language', locale.value)
+//   // Обновляем язык на сервере
+//   updateLanguage(locale.value)
+// }
 
 // Загружаем сохраненный язык при монтировании
 onMounted(() => {
@@ -572,5 +601,11 @@ onMounted(() => {
       height: 24px;
     }
   }
+}
+
+.lang-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

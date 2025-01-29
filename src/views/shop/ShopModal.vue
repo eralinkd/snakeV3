@@ -9,6 +9,7 @@ import snake from '@/assets/currency-images/snake-coin.png'
 import success from '@/assets/shop/purchase-success.svg'
 import fail from '@/assets/shop/purchase-fail.svg'
 import BaseButton from '@/components/BaseButton.vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   isOpen: {
@@ -20,6 +21,8 @@ const props = defineProps({
     default: null,
   },
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits(['update:isOpen', 'after-close'])
 
@@ -80,9 +83,9 @@ onUnmounted(() => {
       <template v-if="!response && !isError">
         <h2 class="store-modal__title">
           <template v-if="!isPending">
-            Купить <span>{{ product.name }}</span> ?
+            {{ t('shop.modal_buy') }} <span>{{ t(product.name) }}</span> ?
           </template>
-          <template v-else> Обработка покупки... </template>
+          <template v-else> {{ t('shop.modal_processing') }} </template>
         </h2>
         <div class="store-modal__prices">
           <button
@@ -106,9 +109,11 @@ onUnmounted(() => {
         <div class="store-modal__image">
           <img :src="success" alt="Успех" />
         </div>
-        <h2 class="store-modal__title">Успех!</h2>
-        <p class="store-modal__description">Товар успешно приобретён!</p>
-        <BaseButton @click="handleClose" type="button" size="small">Окей, спасибо</BaseButton>
+        <h2 class="store-modal__title">{{ t('shop.modal_success') }}</h2>
+        <p class="store-modal__description">{{ t('shop.modal_success_description') }}</p>
+        <BaseButton @click="handleClose" type="button" size="small">{{
+          t('shop.modal_ok')
+        }}</BaseButton>
       </div>
 
       <div
@@ -118,20 +123,24 @@ onUnmounted(() => {
         <div class="store-modal__image">
           <img :src="fail" alt="ошибка" />
         </div>
-        <h2 class="store-modal__title">Недостаточно средств</h2>
+        <h2 class="store-modal__title">{{ t('shop.modal_fail') }}</h2>
         <p class="store-modal__description">
-          Чтобы приобрести даный товар, вам требуется больше средств.
+          {{ t('shop.modal_fail_description') }}
         </p>
-        <BaseButton @click="handleClose" type="button" size="small">Окей, спасибо</BaseButton>
+        <BaseButton @click="handleClose" type="button" size="small">{{
+          t('shop.modal_ok')
+        }}</BaseButton>
       </div>
 
       <div v-else-if="isError" class="store-modal__frame store-modal__frame--error">
         <div class="store-modal__image">
           <img :src="fail" alt="ошибка" />
         </div>
-        <h2 class="store-modal__title">Упс, что-то пошло не так...</h2>
-        <p class="store-modal__description">Попробуйте повторить покупку позже.</p>
-        <BaseButton @click="handleClose" type="button" size="small">Окей, спасибо</BaseButton>
+        <h2 class="store-modal__title">{{ t('shop.modal_error') }}</h2>
+        <p class="store-modal__description">{{ t('shop.modal_error_description') }}</p>
+        <BaseButton @click="handleClose" type="button" size="small">{{
+          t('shop.modal_ok')
+        }}</BaseButton>
       </div>
     </div>
   </BaseModal>

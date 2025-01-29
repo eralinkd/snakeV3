@@ -4,9 +4,21 @@
       <template #text>
         <div class="history-card__status-wrapper">
           <div class="history-card__status-image">
-            <img :src="pendingIcon" alt="pending" v-if="!item.confirmed && !item.canceled" />
-            <img :src="errorIcon" alt="error" v-else-if="item.canceled && !item.confirmed" />
-            <img :src="successIcon" alt="success" v-else-if="item.confirmed && !item.canceled" />
+            <img
+              :src="pendingIcon"
+              :alt="t('market.history.alt_pending')"
+              v-if="!item.confirmed && !item.canceled"
+            />
+            <img
+              :src="errorIcon"
+              :alt="t('market.history.alt_error')"
+              v-else-if="item.canceled && !item.confirmed"
+            />
+            <img
+              :src="successIcon"
+              :alt="t('market.history.alt_success')"
+              v-else-if="item.confirmed && !item.canceled"
+            />
           </div>
           <span
             class="history-card__status"
@@ -35,11 +47,15 @@
     >
       <template #image>
         <div class="history-card__swap-image">
-          <img class="history-card__swap-image--from" :src="imageSrc" alt="crypto from" />
+          <img
+            class="history-card__swap-image--from"
+            :src="imageSrc"
+            :alt="t('market.history.alt_crypto')"
+          />
           <img
             class="history-card__swap-image--to"
             :src="currencyImages[sourceData[0]]"
-            alt="crypto to"
+            :alt="t('market.history.alt_crypto')"
           />
         </div>
       </template>
@@ -47,7 +63,7 @@
         <div class="history-card__swap-title">
           <span>{{ item.crypto }}</span>
           <div class="history-card__swap-arrow">
-            <img :src="swapArrow" alt="swap arrow" />
+            <img :src="swapArrow" :alt="t('market.history.alt_swap_arrow')" />
           </div>
           <span>{{ sourceData[0] }}</span>
         </div>
@@ -73,6 +89,7 @@ import pendingIcon from '@/assets/history/pending.svg'
 import successIcon from '@/assets/history/succeed.svg'
 import errorIcon from '@/assets/history/declined.svg'
 import swapArrow from '@/assets/history/filter-swap.svg'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   item: {
@@ -80,6 +97,8 @@ const props = defineProps({
     required: true,
   },
 })
+
+const { t } = useI18n()
 
 // Получение данных для SWAP операции
 const sourceData = computed(() => {
@@ -97,11 +116,11 @@ const cardClasses = computed(() => ({
 
 const getStatusText = computed(() => {
   if (props.item.paymentType === 'WITHDRAW') {
-    if (props.item.confirmed) return 'Успех'
-    if (props.item.canceled) return 'Отклонён'
-    return 'Обработка . . .'
+    if (props.item.confirmed) return t('market.history.status_success')
+    if (props.item.canceled) return t('market.history.status_declined')
+    return t('market.history.status_processing')
   }
-  return '50 мин назад'
+  return formatTime(props.item.timePassed)
 })
 
 const formatAmount = (amount, operationType) => {
@@ -111,7 +130,7 @@ const formatAmount = (amount, operationType) => {
 
 const formatTime = (milliseconds) => {
   if (milliseconds < 60) {
-    return 'Только что'
+    return t('market.history.time_just_now')
   }
 
   const seconds = Math.floor(milliseconds / 1000)
@@ -121,26 +140,28 @@ const formatTime = (milliseconds) => {
   const weeks = Math.floor(days / 7)
   const months = Math.floor(days / 30)
 
-  const getPlural = (number, singular, few, many) => {
+  const getPlural = (number, type) => {
     if (number % 10 === 1 && number % 100 !== 11) {
-      return singular
+      return t(`market.history.time_${type}_one`)
     } else if ([2, 3, 4].includes(number % 10) && ![12, 13, 14].includes(number % 100)) {
-      return few
+      return t(`market.history.time_${type}_few`)
     } else {
-      return many
+      return t(`market.history.time_${type}_many`)
     }
   }
 
   if (minutes < 60) {
-    return `${minutes} ${getPlural(minutes, 'минута', 'минуты', 'минут')}`
+    return `${minutes} ${getPlural(minutes, 'minute')}`
   } else if (hours < 24) {
-    return `${hours} ${getPlural(hours, 'час', 'часа', 'часов')}`
+    return `${hours} ${getPlural(hours, 'hour')}`
   } else if (days < 7) {
-    return `${days} ${getPlural(days, 'день', 'дня', 'дней')}`
+    return `${days} ${getPlural(days, 'day')}`
   } else if (days < 30) {
-    return `${weeks} ${getPlural(weeks, 'неделя', 'недели', 'недель')}`
+    return `${weeks} ${getPlural(weeks, 'week')}`
+  } else if (days < 365) {
+    return `${months} ${getPlural(months, 'month')}`
   } else {
-    return `${months} ${getPlural(months, 'месяц', 'месяца', 'месяцев')}`
+    return `${years} ${getPlural(years, 'year')}`
   }
 }
 </script>

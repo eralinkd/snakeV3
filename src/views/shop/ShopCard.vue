@@ -13,6 +13,7 @@ import defaultIncomeBoost from '@/assets/shop/default-income-boost.svg'
 import defaultEnergyBoost from '@/assets/shop/default-energy-boost.svg'
 import defaultTradeAccess from '@/assets/shop/default-swap.svg'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   product: {
@@ -20,6 +21,8 @@ const props = defineProps({
     required: true,
   },
 })
+
+const { t } = useI18n()
 
 const emit = defineEmits(['click'])
 
@@ -60,13 +63,13 @@ const handleClick = () => {
   >
     <div class="store-card__image">
       <span v-if="!product.available" class="store-card__unavailable">{{
-        product.productType === 'EGG' ? 'Недоступно' : 'Распродано'
+        product.productType === 'EGG' ? t('shop.unavailable') : t('shop.sold')
       }}</span>
-      <img :src="getProductImage" :alt="product.name" />
+      <img :src="getProductImage" :alt="t(product.name)" />
     </div>
 
     <div class="store-card__content">
-      <h3 class="store-card__title">{{ product.name }}</h3>
+      <h3 class="store-card__title">{{ t(product.name) }}</h3>
 
       <div class="store-card__prices">
         <div

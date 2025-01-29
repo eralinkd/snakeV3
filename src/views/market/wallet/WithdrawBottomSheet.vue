@@ -8,6 +8,7 @@ import { currencyImages } from '@/constants/constants'
 import { validatePaymentAddress, withdrawBalance } from '@/api/marketApi'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseTextarea from '@/components/BaseTextarea.vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   isOpen: {
@@ -26,6 +27,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:isOpen', 'success'])
 
+const { t } = useI18n()
+
 // Form state
 const amount = ref('')
 const address = ref('')
@@ -42,14 +45,14 @@ const withdrawMutation = useMutation({
     closeModal()
   },
   onError: (error) => {
-    error.value = 'Ошибка при выводе средств. Попробуйте еще раз.'
+    error.value = 'withdraw_errors'
   },
 })
 
 const validateAddressMutation = useMutation({
   mutationFn: (data) => validatePaymentAddress(data),
   onError: () => {
-    error.value = 'Ошибка при проверке адреса. Попробуйте снова.'
+    error.value = 'validation_errors'
   },
 })
 
@@ -67,12 +70,12 @@ const handleWithdraw = async () => {
   isLoading.value = true
 
   if (!amount.value || parseFloat(amount.value) <= 0) {
-    amountError.value = 'Введите корректную сумму.'
+    amountError.value = t('market.wallet.withdraw.form_amount_error')
     isLoading.value = false
     return
   }
   if (!address.value) {
-    addressError.value = 'Введите адрес кошелька.'
+    addressError.value = t('market.wallet.withdraw.form_address_error')
     isLoading.value = false
     return
   }
@@ -85,7 +88,7 @@ const handleWithdraw = async () => {
     })
 
     if (!validationResponse?.result) {
-      addressError.value = 'Адрес кошелька недействителен.'
+      addressError.value = t('market.wallet.withdraw.form_address_invalid')
       isLoading.value = false
       return
     }
@@ -111,22 +114,22 @@ const handleWithdraw = async () => {
           <CurrencyInfo :img-src="imageSrc" :title="currency.simpleName" :text="currency.type" />
           <div class="withdraw__balance">
             <h4>{{ balance }}</h4>
-            <span>Баланс</span>
+            <span>{{ $t('market.balance') }}</span>
           </div>
         </div>
         <BaseInput
           v-model="amount"
           type="number"
-          placeholder="0.00"
-          :label="currency.simpleName"
+          :placeholder="t('market.wallet.withdraw.form_amount_placeholder')"
+          :label="t('market.wallet.withdraw.form_amount_label')"
           :has-error="!!amountError"
           :error-message="amountError"
         />
 
         <BaseTextarea
           v-model="address"
-          placeholder="Код из 26-34 символов"
-          label="Адрес кошелька"
+          :placeholder="t('market.wallet.withdraw.form_address_placeholder')"
+          :label="t('market.wallet.withdraw.form_address_label')"
           :has-error="!!addressError"
           :error-message="addressError"
         />
@@ -137,7 +140,7 @@ const handleWithdraw = async () => {
           class="withdraw__button"
           @click="handleWithdraw"
         >
-          Вывести
+          {{ t('market.wallet.withdraw.form_button') }}
         </BaseButton>
       </div>
     </div>
