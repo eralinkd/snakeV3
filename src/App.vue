@@ -25,74 +25,83 @@ onMounted(async () => {
   console.log('=== onMounted start ===')
   
   try {
-    // Проверяем наличие токена в куках
-    const savedToken = document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1]
+    // Создаем Promise для минимального времени загрузки
+    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 3000))
     
-    if (savedToken) {
-      console.log('Found saved token, skipping auth')
-      userStore.setToken(savedToken)
-      return
-    }
-
-    const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
-    let startParam = telegramInitData.start_param
-
-    if (telegramInitData && env === 'prod') {
-      console.log('Production mode with Telegram data')
-      const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
-      const dataKeys = Object.keys(authHeader).sort()
-      const items = dataKeys.map((key) => key + '=' + authHeader[key])
-      let dataCheckString = items.join('&')
-      console.log('Auth data string:', dataCheckString)
-
-      userStore.setUserData({
-        first_name: telegramInitData.user?.first_name,
-        last_name: telegramInitData.user?.last_name,
-        username: telegramInitData.user?.username,
-        photo_url: telegramInitData.user?.photo_url,
-      })
-      console.log('Set user data:', telegramInitData.user)
-
-      if (telegramInitData.user?.id) {
-        userStore.setUserId(telegramInitData.user.id)
-        console.log('Set user ID:', telegramInitData.user.id)
+    // Создаем Promise для авторизации
+    const authProcess = (async () => {
+      // Проверяем наличие токена в куках
+      const savedToken = document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1]
+      
+      if (savedToken) {
+        console.log('Found saved token, skipping auth')
+        userStore.setToken(savedToken)
+        return
       }
 
-      token = await postAuth(dataCheckString)
-      console.log('Auth response:', token)
-      if (token && token.token) {
-        userStore.setToken(token.token)
-        // Сохраняем токен в куки на день
-        document.cookie = `auth_token=${token.token}; max-age=86400; path=/`
+      const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
+      let startParam = telegramInitData.start_param
+
+      if (telegramInitData && env === 'prod') {
+        console.log('Production mode with Telegram data')
+        const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
+        const dataKeys = Object.keys(authHeader).sort()
+        const items = dataKeys.map((key) => key + '=' + authHeader[key])
+        let dataCheckString = items.join('&')
+        console.log('Auth data string:', dataCheckString)
+
+        userStore.setUserData({
+          first_name: telegramInitData.user?.first_name,
+          last_name: telegramInitData.user?.last_name,
+          username: telegramInitData.user?.username,
+          photo_url: telegramInitData.user?.photo_url,
+        })
+        console.log('Set user data:', telegramInitData.user)
+
+        if (telegramInitData.user?.id) {
+          userStore.setUserId(telegramInitData.user.id)
+          console.log('Set user ID:', telegramInitData.user.id)
+        }
+
+        token = await postAuth(dataCheckString)
+        console.log('Auth response:', token)
+        if (token && token.token) {
+          userStore.setToken(token.token)
+          // Сохраняем токен в куки на день
+          document.cookie = `auth_token=${token.token}; max-age=86400; path=/`
+        } else {
+          console.error('Authorization failed')
+        }
+      } else if (env === 'dev') {
+        console.log('Development mode')
+        const testDataCheckString =
+          'auth_date=1736960774&chat_instance=8610356838351439092&chat_type=private&hash=f11aaab0a3b3deb9f3140fdd216c46086947d4426081f27da0c85f5dbc142e51&signature=9cgzhZs_ncdtZTBRXylP7OXnNl5PveVFlAdYzExgMWYil9Vh38gZeekt5Khcvcjwtzvd1hH--WTF--7unJrtDg&user={"id":1,"first_name":"eralinkd","last_name":"","username":"sb_newest","language_code":"ru","allows_write_to_pm":true,"photo_url":"https:\/\/t.me\/i\/userpic\/320\/t8iGW7XVQ3k-EvpOOkPQ0IawHU5MwdAHEG5QJrYx3Gs.svg"}'
+        console.log('Test auth string:', testDataCheckString)
+        token = await postAuth(testDataCheckString)
+        console.log('Dev auth response:', token)
+        if (token && token.token) {
+          userStore.setToken(token.token)
+          // Сохраняем токен в куки на день
+          document.cookie = `auth_token=${token.token}; max-age=86400; path=/`
+          console.log('Dev token saved:', token.token)
+
+        } else {
+          console.error('Authorization failed for dev mode')
+        }
       } else {
-        console.error('Authorization failed')
+        console.log('env is not prod or dev')
       }
-    } else if (env === 'dev') {
-      console.log('Development mode')
-      const testDataCheckString =
-        'auth_date=1736960774&chat_instance=8610356838351439092&chat_type=private&hash=f11aaab0a3b3deb9f3140fdd216c46086947d4426081f27da0c85f5dbc142e51&signature=9cgzhZs_ncdtZTBRXylP7OXnNl5PveVFlAdYzExgMWYil9Vh38gZeekt5Khcvcjwtzvd1hH--WTF--7unJrtDg&user={"id":1,"first_name":"eralinkd","last_name":"","username":"sb_newest","language_code":"ru","allows_write_to_pm":true,"photo_url":"https:\/\/t.me\/i\/userpic\/320\/t8iGW7XVQ3k-EvpOOkPQ0IawHU5MwdAHEG5QJrYx3Gs.svg"}'
-      console.log('Test auth string:', testDataCheckString)
-      token = await postAuth(testDataCheckString)
-      console.log('Dev auth response:', token)
-      if (token && token.token) {
-        userStore.setToken(token.token)
-        // Сохраняем токен в куки на день
-        document.cookie = `auth_token=${token.token}; max-age=86400; path=/`
-        console.log('Dev token saved:', token.token)
 
-      } else {
-        console.error('Authorization failed for dev mode')
+      if (startParam) {
+        console.log(`Adding referral code: ${startParam}`)
+        const res = await postAddRef(startParam)
+        console.log(`Referral code added successfully: ${res}`)
       }
-    } else {
-      console.log('env is not prod or dev')
-    }
+    })()
 
-    if (startParam) {
-      console.log(`Adding referral code: ${startParam}`)
-      const res = await postAddRef(startParam)
-      console.log(`Referral code added successfully: ${res}`)
-    }
-
+    // Ждем завершения обоих Promise
+    await Promise.all([minLoadingTime, authProcess])
+    
     console.log('=== onMounted end ===')
   } catch (error) {
     console.error('Auth error:', error)
