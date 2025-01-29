@@ -214,6 +214,10 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   createSnake() {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    )
+
     this.snake = this.add.sprite(
       this.lanePositions[1],
       window.innerHeight + 400,
@@ -227,32 +231,37 @@ export default class SnakeScene extends Phaser.Scene {
     this.snake.setScale(scale)
     this.snake.setDepth(10)
 
-    // Создаем анимации для всех лиг и их прогресса
+    // Оптимизированное создание анимаций для мобильных устройств
     for (let league = 1; league <= 3; league++) {
       const progressSteps = [0, 25, 50, 75]
       progressSteps.forEach(progress => {
         const type = `snake_${league}_${progress}`
         
-        // Удаляем старую анимацию если она существует
         if (this.anims.exists(`${type}Anim`)) {
           this.anims.remove(`${type}Anim`)
         }
 
-        // Создаем новую анимацию
         this.anims.create({
           key: `${type}Anim`,
           frames: this.anims.generateFrameNumbers(type, {
             start: 0,
             end: 74
           }),
-          frameRate: 30,
+          frameRate: isMobile ? 24 : 30, // Уменьшаем частоту кадров на мобильных
           repeat: -1,
-          duration: 2500
+          duration: isMobile ? 3000 : 2500, // Увеличиваем длительность на мобильных
+          ...(isMobile && {
+            skipMissedFrames: true,
+            delay: 0,
+            yoyo: false,
+            showOnStart: true,
+            hideOnComplete: false
+          })
         })
       })
     }
 
-    // Создаем анимации для брони
+    // Аналогично для анимаций брони
     Object.keys(this.armorSprites).forEach(type => {
       const sprite = this.add.sprite(this.snake.x, this.snake.y, type.toLowerCase())
       sprite.setScale(this.snake.scale)
@@ -261,26 +270,30 @@ export default class SnakeScene extends Phaser.Scene {
       sprite.setAlpha(1)
       this.armorSprites[type] = sprite
 
-      // Удаляем старую анимацию если она существует
       const animKey = `${type.toLowerCase()}Anim`
       if (this.anims.exists(animKey)) {
         this.anims.remove(animKey)
       }
 
-      // Создаем новую анимацию
       this.anims.create({
         key: animKey,
         frames: this.anims.generateFrameNumbers(type.toLowerCase(), {
           start: 0,
           end: 74
         }),
-        frameRate: 30,
+        frameRate: isMobile ? 24 : 30,
         repeat: -1,
-        duration: 2500
+        duration: isMobile ? 3000 : 2500,
+        ...(isMobile && {
+          skipMissedFrames: true,
+          delay: 0,
+          yoyo: false,
+          showOnStart: true,
+          hideOnComplete: false
+        })
       })
     })
 
-    // Устанавливаем текущий спрайт змеи
     this.currentSnakeSprite = `snake_${this.currentLeague}_0`
   }
 

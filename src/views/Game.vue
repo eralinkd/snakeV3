@@ -361,6 +361,10 @@ const createGame = () => {
     snakeScene = null
   }
 
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  )
+
   const config = {
     type: Phaser.AUTO,
     parent: 'game-container',
@@ -371,7 +375,28 @@ const createGame = () => {
     scale: {
       mode: Phaser.Scale.RESIZE,
       autoCenter: Phaser.Scale.CENTER_BOTH
-    }
+    },
+    render: {
+      pixelArt: false,
+      antialias: true,
+      powerPreference: 'high-performance',
+      clearBeforeRender: true,
+      preserveDrawingBuffer: true
+    },
+    // Специальные настройки для мобильных устройств
+    ...(isMobile && {
+      type: Phaser.CANVAS,
+      roundPixels: true,
+      transparent: false,
+      clearBeforeRender: true,
+      desynchronized: true,
+      banner: false,
+      antialiasGL: false,
+      maxLights: 0,
+      maxTextures: 1,
+      mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
+      failIfMajorPerformanceCaveat: true
+    })
   }
 
   return new Promise((resolve, reject) => {
