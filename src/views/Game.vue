@@ -79,7 +79,7 @@
         </div>
       </div>
       <div class="game__main-snake" @click="startGame">
-        <img :src="snake" alt="snake" />
+        <img :src="currentSnakeImage" alt="snake" />
       </div>
       <div class="game__main-right">
         <div @click="router.push('/shop')">
@@ -151,7 +151,9 @@
         <p class="info-sheet__text">{{ t('game.info_subtitle') }}</p>
         <p class="info-sheet__text">{{ t('game.info_text') }}</p>
         <div class="info-sheet__content">
-          <img :src="snake" alt="snake" class="info-sheet__image" />
+          <img :src="snakeHint1" alt="hint" class="info-sheet__image" />
+          <img :src="snakeHint2" alt="hint" class="info-sheet__image" />
+          <img :src="snakeHint3" alt="hint" class="info-sheet__image" />
         </div>
       </div>
     </BaseBottomSheet>
@@ -255,6 +257,12 @@ import fail from '@/assets/game/fail.png'
 import BaseBottomSheet from '@/components/BaseBottomSheet.vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/userStore'
+import snakeLegue1 from '@/assets/game/snakes/snake_legue_1_default_main.png'
+import snakeLegue2 from '@/assets/game/snakes/snake_legue_2_default_main.png'
+import snakeLegue3 from '@/assets/game/snakes/snake_legue_3_default_main.png'
+import snakeHint1 from '@/assets/hints/snake_hint1.png'
+import snakeHint2 from '@/assets/hints/snake_hint2.png'
+import snakeHint3 from '@/assets/hints/snake_hint3.png'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -780,6 +788,26 @@ const handleVisibilityChange = async () => {
   }
 }
 
+// Добавляем вычисляемое свойство для определения изображения змеи
+const currentSnakeImage = computed(() => {
+  if (!gamedata.value?.stage?.league) return snakeLegue1
+  
+  const league = gamedata.value.stage.league
+  
+  if (league > 3) return snakeLegue1
+  
+  switch (league) {
+    case 1:
+      return snakeLegue1
+    case 2:
+      return snakeLegue2
+    case 3:
+      return snakeLegue3
+    default:
+      return snakeLegue1
+  }
+})
+
 onMounted(async () => {
   // Загрузка данных игры
   gamedata.value = await getGameData()
@@ -1157,19 +1185,15 @@ onUnmounted(() => {
   }
 
   &__content {
-    font-family: Montserrat;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 24px;
-    text-align: left;
-    text-underline-position: from-font;
-    text-decoration-skip-ink: none;
-    color: #ffffff80;
-    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   &__image {
     width: 100%;
+    height: auto;
+    object-fit: contain;
   }
 }
 
