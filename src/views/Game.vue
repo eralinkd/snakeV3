@@ -1,5 +1,16 @@
 <template>
   <div class="game" :class="{ 'game--playing': isGameStarted }" v-if="gamedata">
+    <!-- Добавляем тестовую панель -->
+    <div class="test-panel" v-if="isDev">
+      <button 
+        v-for="progress in [0, 25, 50, 75]" 
+        :key="progress"
+        @click="testSnakeProgress(progress)"
+        :class="{ active: currentTestProgress === progress }"
+      >
+        Snake {{ progress }}%
+      </button>
+    </div>
     <div class="game__top-bar" v-if="!isGameStarted">
       <div class="game__top-bar-balance">
         <img :src="Scoin" alt="balance" />
@@ -247,6 +258,22 @@ const showGameEndModal = ref(false)
 let energyInterval = null
 let energyTickCounter = 0
 
+// Добавляем определение режима разработки
+const isDev = process.env.NODE_ENV === 'development'
+
+// Добавляем состояние для тестовой панели
+const currentTestProgress = ref(0)
+
+// Функция для тестирования прогресса змеи
+const testSnakeProgress = (progress) => {
+  currentTestProgress.value = progress
+  if (snakeScene) {
+    // Используем фиксированное значение needProgress для тестов
+    const testNeedProgress = 100
+    snakeScene.updateSnakeSprite(progress, testNeedProgress)
+  }
+}
+
 // Вычисляемое свойство для проверки авторизации
 const isAuthorized = computed(() => {
   console.log('isAuthorized', !!userStore.token, !!userStore.isAuthorized)
@@ -346,6 +373,8 @@ const startGame = async () => {
 
     setTimeout(() => {
       if (snakeScene) {
+        // Передаем информацию о броне в сцену
+        snakeScene.setActiveArmor(gamedata.value.inventory.armor)
         snakeScene.startGame()
       }
     }, 100)
@@ -403,7 +432,6 @@ const handleCoinCollect = async () => {
     const response = await postGameCurrentContent(gameId.value, { content: 'coin' })
     console.log('Coin collect response:', response)
 
-    // Если сервер вернул ошибку "game_not_found", полностью очищаем сцену и данные
     if (response.error === 'game_not_found') {
       forciblyClearGame('game_not_found')
       return
@@ -420,6 +448,10 @@ const handleCoinCollect = async () => {
     }
     if (response.energy) {
       currentEnergy.value = response.energy
+    }
+    // Добавляем обновление спрайта змеи
+    if (response.progressBarProgress !== undefined && response.stage?.needProgress) {
+      snakeScene.updateSnakeSprite(response.progressBarProgress, response.stage.needProgress)
     }
     if (response.content === 'game_end') {
       snakeScene.forceGameEnd()
@@ -454,29 +486,22 @@ const handleObstacleHit = async () => {
       currentEnergy.value = response.energy
     }
 
+    // Добавляем обновление спрайта змеи
+    if (response.progressBarProgress !== undefined && response.stage?.needProgress) {
+      snakeScene.updateSnakeSprite(response.progressBarProgress, response.stage.needProgress)
+    }
+
     if (response.content === 'game_end') {
       snakeScene.forceGameEnd()
     } else {
-      // Обновляем данные игры и брони
-      const updatedArmor = { ...gamedata.value.inventory.armor }
-      Object.keys(updatedArmor).forEach((key) => {
-        updatedArmor[key] = { ...updatedArmor[key], activated: false }
-      })
-      response.activatedArmor.forEach((item) => {
-        if (updatedArmor[item]) {
-          updatedArmor[item].activated = true
-        }
-      })
-      gamedata.value = {
-        ...gamedata.value,
-        inventory: {
-          ...gamedata.value.inventory,
-          armor: updatedArmor,
-        },
-      }
-
-      if (snakeScene && typeof snakeScene.handleCollision === 'function') {
-        snakeScene.handleCollision()
+      // Обновляем броню в сцене
+      if (snakeScene) {
+        snakeScene.setActiveArmor({
+          HELMET: response.activatedArmor.includes('HELMET'),
+          CHESTPLATE: response.activatedArmor.includes('CHESTPLATE'),
+          SHIELD: response.activatedArmor.includes('SHIELD'),
+          SWORD: response.activatedArmor.includes('SWORD')
+        })
       }
     }
   } catch (error) {
@@ -1181,6 +1206,38 @@ onUnmounted(() => {
 
     &-right {
       right: 0;
+    }
+  }
+}
+
+.test-panel {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 0 0 8px 8px;
+
+  button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background: #333;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #444;
+    }
+
+    &.active {
+      background: #ae8bff;
     }
   }
 }

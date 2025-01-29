@@ -1,5 +1,6 @@
 <template>
-  <div class="wrapper">
+  <LoaderScreen v-if="isLoading" />
+  <div v-else class="wrapper">
     <main class="main">
       <router-view class="router-content" />
     </main>
@@ -8,13 +9,15 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import Navigation from '@/components/Navigation.vue'
+import LoaderScreen from '@/components/LoaderScreen.vue'
 import { postAddRef } from '@/api/referralApi'
 import { postAuth } from '@/api/auth'
 
 const userStore = useUserStore()
+const isLoading = ref(true)
 let token
 const env = import.meta.env.VITE_ENV // prod or dev
 
@@ -110,6 +113,14 @@ onMounted(async () => {
     console.log(`Referral code added successfully: ${res}`)
   }
   console.log('=== onMounted end ===')
+
+  try {
+    // Выполняем всю существующую логику авторизации
+    
+    // В самом конце выключаем лоадер
+  } finally {
+    isLoading.value = false
+  }
 })
 </script>
 
