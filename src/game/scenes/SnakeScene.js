@@ -205,14 +205,18 @@ export default class SnakeScene extends Phaser.Scene {
     this.snake.setScale(scale)
     this.snake.setDepth(10)
 
-    const snakeTypes = ['snake_0', 'snake_25', 'snake_50', 'snake_75']
-    
-    snakeTypes.forEach(type => {
-      const texture = this.textures.get(type)
-      const totalWidth = texture.source[0].width
-      const frameCount = Math.floor(totalWidth / 143)
+    // Создаем анимации для всех лиг и их прогресса
+    for (let league = 1; league <= 3; league++) {
+      const progressSteps = [0, 25, 50, 75]
+      progressSteps.forEach(progress => {
+        const type = `snake_${league}_${progress}`
+        
+        // Удаляем старую анимацию если она существует
+        if (this.anims.exists(`${type}Anim`)) {
+          this.anims.remove(`${type}Anim`)
+        }
 
-      if (frameCount > 0) {
+        // Создаем новую анимацию
         this.anims.create({
           key: `${type}Anim`,
           frames: this.anims.generateFrameNumbers(type, {
@@ -223,11 +227,10 @@ export default class SnakeScene extends Phaser.Scene {
           repeat: -1,
           duration: 2500
         })
-      } else {
-        console.error(`Invalid frame count for ${type}: ${frameCount}`)
-      }
-    })
+      })
+    }
 
+    // Создаем анимации для брони
     Object.keys(this.armorSprites).forEach(type => {
       const sprite = this.add.sprite(this.snake.x, this.snake.y, type.toLowerCase())
       sprite.setScale(this.snake.scale)
@@ -236,51 +239,27 @@ export default class SnakeScene extends Phaser.Scene {
       sprite.setAlpha(1)
       this.armorSprites[type] = sprite
 
-      const texture = this.textures.get(type.toLowerCase())
-      const totalWidth = texture.source[0].width
-      const frameCount = Math.floor(totalWidth / 143)
-
-      if (frameCount > 0) {
-        this.anims.create({
-          key: `${type.toLowerCase()}Anim`,
-          frames: this.anims.generateFrameNumbers(type.toLowerCase(), {
-            start: 0,
-            end: 74
-          }),
-          frameRate: 30,
-          repeat: -1,
-          duration: 2500
-        })
-      } else {
-        console.error(`Armor: Invalid frame count for ${type.toLowerCase()}: ${frameCount}`)
+      // Удаляем старую анимацию если она существует
+      const animKey = `${type.toLowerCase()}Anim`
+      if (this.anims.exists(animKey)) {
+        this.anims.remove(animKey)
       }
+
+      // Создаем новую анимацию
+      this.anims.create({
+        key: animKey,
+        frames: this.anims.generateFrameNumbers(type.toLowerCase(), {
+          start: 0,
+          end: 74
+        }),
+        frameRate: 30,
+        repeat: -1,
+        duration: 2500
+      })
     })
 
-    // Создаем анимации для всех лиг
-    for (let league = 1; league <= 3; league++) {
-      const progressSteps = [0, 25, 50, 75]
-      progressSteps.forEach(progress => {
-        const type = `snake_${league}_${progress}`
-        const texture = this.textures.get(type)
-        const totalWidth = texture.source[0].width
-        const frameCount = Math.floor(totalWidth / 200)
-
-        if (frameCount > 0) {
-          this.anims.create({
-            key: `${type}Anim`,
-            frames: this.anims.generateFrameNumbers(type, {
-              start: 0,
-              end: 74
-            }),
-            frameRate: 30,
-            repeat: -1,
-            duration: 2500
-          })
-        } else {
-          console.error(`Invalid frame count for ${type}: ${frameCount}`)
-        }
-      })
-    }
+    // Устанавливаем текущий спрайт змеи
+    this.currentSnakeSprite = `snake_${this.currentLeague}_0`
   }
 
   setupControls() {
@@ -304,31 +283,37 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   startGame() {
-    this.snake.play(`${this.currentSnakeSprite}Anim`)
+    // Сначала запускаем анимацию змеи с текущим спрайтом
+    if (this.snake && !this.snake.destroyed) {
+        const currentSpriteKey = `snake_${this.currentLeague}_0`
+        this.currentSnakeSprite = currentSpriteKey
+        this.snake.play(`${currentSpriteKey}Anim`)
+    }
     
+    // Запускаем анимации брони
     Object.keys(this.armorSprites).forEach(type => {
-      if (this.activeArmor[type]) {
-        this.armorSprites[type].play(`${type.toLowerCase()}Anim`)
-      }
+        if (this.activeArmor[type] && this.armorSprites[type] && !this.armorSprites[type].destroyed) {
+            this.armorSprites[type].play(`${type.toLowerCase()}Anim`)
+        }
     })
 
     this.time.delayedCall(100, () => {
-      const targets = [
-        this.snake,
-        ...Object.values(this.armorSprites).filter(sprite => sprite.visible)
-      ]
+        const targets = [
+            this.snake,
+            ...Object.values(this.armorSprites).filter(sprite => sprite.visible)
+        ].filter(sprite => sprite && !sprite.destroyed)
 
-      this.tweens.add({
-        targets: targets,
-        y: window.innerHeight * 0.7,
-        duration: 2000,
-        ease: 'Cubic.easeOut',
-        onComplete: () => {
-          this.isGameActive = true
-          this.isBackgroundMoving = true
-          this.startGameLoop()
-        }
-      })
+        this.tweens.add({
+            targets: targets,
+            y: window.innerHeight * 0.7,
+            duration: 2000,
+            ease: 'Cubic.easeOut',
+            onComplete: () => {
+                this.isGameActive = true
+                this.isBackgroundMoving = true
+                this.startGameLoop()
+            }
+        })
     })
   }
 
@@ -585,25 +570,37 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   resetScene() {
-    if (this.coinSpawnTimer) this.coinSpawnTimer.remove()
-    if (this.obstacleSpawnTimer) this.obstacleSpawnTimer.remove()
+    if (this.coinSpawnTimer) {
+        this.coinSpawnTimer.remove()
+        this.coinSpawnTimer = null
+    }
+    if (this.obstacleSpawnTimer) {
+        this.obstacleSpawnTimer.remove()
+        this.obstacleSpawnTimer = null
+    }
     
     this.coins.forEach(coin => {
-      coin.setActive(false)
-      coin.setVisible(false)
-      this.tweens.killTweensOf(coin)
+        if (coin && !coin.destroyed) {
+            coin.setActive(false)
+            coin.setVisible(false)
+            this.tweens.killTweensOf(coin)
+        }
     })
     this.obstacles.forEach(obstacle => {
-      obstacle.setActive(false)
-      obstacle.setVisible(false)
+        if (obstacle && !obstacle.destroyed) {
+            obstacle.setActive(false)
+            obstacle.setVisible(false)
+        }
     })
     this.coins = []
     this.obstacles = []
 
-    this.snake.stop()
-    this.snake.y = window.innerHeight/2
-    this.currentLane = 1
-    this.snake.x = this.lanePositions[this.currentLane]
+    if (this.snake && !this.snake.destroyed) {
+        this.snake.stop()
+        this.snake.y = window.innerHeight/2
+        this.currentLane = 1
+        this.snake.x = this.lanePositions[this.currentLane]
+    }
     
     this.frameCount = 0
     this.isProcessingRequest = false
@@ -726,8 +723,8 @@ export default class SnakeScene extends Phaser.Scene {
     this.tweens.killAll()
     this.anims.pauseAll()
 
-    // Очищаем все игровые объекты
-    this.clearGameObjects()
+    // Очищаем все игровые объекты, кроме змеи
+    this.clearGameObjectsExceptSnake()
 
     this.isGameActive = false
     this.isBackgroundMoving = false
@@ -738,12 +735,15 @@ export default class SnakeScene extends Phaser.Scene {
     }
 
     this.resetScene()
-    
-    // Важно: НЕ уничтожаем сцену здесь, так как она может быть перезапущена
-    // this.scene.stop()
   }
 
   handleCollision() {
+    // Проверяем, активна ли сцена
+    if (!this.scene?.systems?.isActive) {
+        console.log('Scene is not active, skipping collision handling')
+        return
+    }
+
     if (this.coinSpawnTimer) {
         this.coinSpawnTimer.remove()
         this.coinSpawnTimer = null
@@ -759,6 +759,7 @@ export default class SnakeScene extends Phaser.Scene {
     this.tweens.killAll()
     this.anims.pauseAll()
 
+    // Создаем flash-эффект только если сцена активна
     const flash = this.add.rectangle(0, 0, this.game.config.width, this.game.config.height, 0xffffff)
     flash.setOrigin(0)
     flash.setAlpha(0.5)
@@ -774,8 +775,10 @@ export default class SnakeScene extends Phaser.Scene {
             scale: this.armorSprites[brokenArmorType].scale * 1.5,
             duration: 200,
             onComplete: () => {
-                this.armorSprites[brokenArmorType].setVisible(false)
-                this.activeArmor[brokenArmorType] = false
+                if (this.scene?.systems?.isActive) {  // Проверяем снова перед изменением состояния
+                    this.armorSprites[brokenArmorType].setVisible(false)
+                    this.activeArmor[brokenArmorType] = false
+                }
             }
         })
     }
@@ -786,6 +789,10 @@ export default class SnakeScene extends Phaser.Scene {
         duration: 100,
         ease: 'Power1',
         onComplete: () => {
+            if (!this.scene?.systems?.isActive) {  // Проверяем снова
+                return
+            }
+
             flash.destroy()
             
             // Сохраняем текущую позицию змеи
@@ -814,7 +821,7 @@ export default class SnakeScene extends Phaser.Scene {
                 this.snake.play(`${this.currentSnakeSprite}Anim`)
             }
 
-            if (this.scene.isActive()) {
+            if (this.scene?.systems?.isActive) {
                 this.isCollisionProcessing = false
             }
         }
@@ -823,36 +830,47 @@ export default class SnakeScene extends Phaser.Scene {
 
   // Новый метод для очистки объектов, кроме змеи
   clearGameObjectsExceptSnake() {
-    // Очищаем монеты
-    this.coins.forEach(coin => {
-        if (coin && !coin.destroyed) {
-            coin.destroy()
-        }
-    })
-    this.coins = []
+    try {
+        // Очищаем монеты
+        this.coins?.forEach(coin => {
+            if (coin?.destroy && !coin.destroyed) {
+                coin.destroy()
+            }
+        })
+        this.coins = []
 
-    // Очищаем препятствия
-    this.obstacles.forEach(obstacle => {
-        if (obstacle && !obstacle.destroyed) {
-            obstacle.destroy()
-        }
-    })
-    this.obstacles = []
+        // Очищаем препятствия
+        this.obstacles?.forEach(obstacle => {
+            if (obstacle?.destroy && !obstacle.destroyed) {
+                obstacle.destroy()
+            }
+        })
+        this.obstacles = []
 
-    // Очищаем пулы объектов
-    this.objectPool.coins.forEach(coin => {
-        if (coin && !coin.destroyed) {
-            coin.destroy()
+        // Очищаем пулы объектов
+        this.objectPool?.coins?.forEach(coin => {
+            if (coin?.destroy && !coin.destroyed) {
+                coin.destroy()
+            }
+        })
+        if (this.objectPool) {
+            this.objectPool.coins = []
         }
-    })
-    this.objectPool.coins = []
 
-    this.objectPool.obstacles.forEach(obstacle => {
-        if (obstacle && !obstacle.destroyed) {
-            obstacle.destroy()
+        this.objectPool?.obstacles?.forEach(obstacle => {
+            if (obstacle?.destroy && !obstacle.destroyed) {
+                obstacle.destroy()
+            }
+        })
+        if (this.objectPool) {
+            this.objectPool.obstacles = []
         }
-    })
-    this.objectPool.obstacles = []
+
+        // НЕ очищаем спрайты брони и змеи
+        // Они должны оставаться активными после столкновения
+    } catch (error) {
+        console.error('Error during cleanup:', error)
+    }
   }
 
   setupObjectGeneration() {
@@ -913,15 +931,27 @@ export default class SnakeScene extends Phaser.Scene {
         return
     }
 
+    // Проверяем, активна ли сцена
+    if (!this.scene?.systems?.isActive) {
+        console.log('Scene is not active, skipping armor update')
+        return
+    }
+
     console.log('Current armor state before update:', this.activeArmor)
 
     // Сначала деактивируем всю броню
     Object.keys(this.activeArmor).forEach(typeKey => {
         this.activeArmor[typeKey] = false
         const sprite = this.armorSprites[typeKey]
-        if (sprite) {
-            sprite.stop()
-            sprite.setVisible(false)
+        if (sprite?.destroy && !sprite.destroyed) {
+            try {
+                if (sprite.anims) {
+                    sprite.stop()
+                }
+                sprite.setVisible(false)
+            } catch (e) {
+                console.warn(`Could not update armor sprite ${typeKey}:`, e)
+            }
         }
     })
 
@@ -929,18 +959,26 @@ export default class SnakeScene extends Phaser.Scene {
     armorData.forEach(typeKey => {
         this.activeArmor[typeKey] = true
         const sprite = this.armorSprites[typeKey]
-        if (sprite) {
-            sprite.setVisible(true)
-            sprite.setAlpha(1)
-            sprite.x = this.snake.x
-            sprite.y = this.snake.y
-            sprite.setDepth(this.snake.depth + 1)
-            sprite.play(`${typeKey.toLowerCase()}Anim`)
-            console.log(`Activated armor ${typeKey}:`, {
-                visible: sprite.visible,
-                alpha: sprite.alpha,
-                playing: sprite.anims.isPlaying
-            })
+        if (sprite?.destroy && !sprite.destroyed) {
+            try {
+                sprite.setVisible(true)
+                sprite.setAlpha(1)
+                if (this.snake?.x) sprite.x = this.snake.x
+                if (this.snake?.y) sprite.y = this.snake.y
+                sprite.setDepth(this.snake?.depth + 1 || 11)
+                
+                if (sprite.anims) {
+                    sprite.play(`${typeKey.toLowerCase()}Anim`)
+                }
+                
+                console.log(`Activated armor ${typeKey}:`, {
+                    visible: sprite.visible,
+                    alpha: sprite.alpha,
+                    playing: sprite?.anims?.isPlaying
+                })
+            } catch (e) {
+                console.warn(`Could not activate armor sprite ${typeKey}:`, e)
+            }
         }
     })
 
@@ -1012,11 +1050,76 @@ export default class SnakeScene extends Phaser.Scene {
     }
 
     // Останавливаем все анимации и твины
-    this.tweens.killAll()
-    this.anims.pauseAll()
+    if (this.tweens) {
+        this.tweens.killAll()
+    }
+    if (this.anims) {
+        this.anims.pauseAll()
+    }
 
-    // Очищаем все игровые объекты
-    this.clearGameObjects()
+    // Безопасно очищаем все игровые объекты
+    try {
+        // Очищаем монеты
+        this.coins?.forEach(coin => {
+            if (coin?.destroy && !coin.destroyed) {
+                coin.destroy()
+            }
+        })
+        this.coins = []
+
+        // Очищаем препятствия
+        this.obstacles?.forEach(obstacle => {
+            if (obstacle?.destroy && !obstacle.destroyed) {
+                obstacle.destroy()
+            }
+        })
+        this.obstacles = []
+
+        // Очищаем пулы объектов
+        this.objectPool?.coins?.forEach(coin => {
+            if (coin?.destroy && !coin.destroyed) {
+                coin.destroy()
+            }
+        })
+        this.objectPool.coins = []
+
+        this.objectPool?.obstacles?.forEach(obstacle => {
+            if (obstacle?.destroy && !obstacle.destroyed) {
+                obstacle.destroy()
+            }
+        })
+        this.objectPool.obstacles = []
+
+        // Останавливаем и уничтожаем спрайты брони
+        Object.values(this.armorSprites || {}).forEach(sprite => {
+            if (sprite?.destroy && !sprite.destroyed) {
+                if (sprite.anims) {
+                    try {
+                        sprite.stop()
+                    } catch (e) {
+                        console.warn('Could not stop sprite animation:', e)
+                    }
+                }
+                sprite.destroy()
+            }
+        })
+        this.armorSprites = {}
+
+        // Останавливаем и уничтожаем спрайт змеи
+        if (this.snake?.destroy && !this.snake.destroyed) {
+            if (this.snake.anims) {
+                try {
+                    this.snake.stop()
+                } catch (e) {
+                    console.warn('Could not stop snake animation:', e)
+                }
+            }
+            this.snake.destroy()
+            this.snake = null
+        }
+    } catch (error) {
+        console.error('Error during cleanup:', error)
+    }
 
     // Сбрасываем все флаги
     this.isGameActive = false
@@ -1028,7 +1131,7 @@ export default class SnakeScene extends Phaser.Scene {
     this.pendingArmorUpdate = null
 
     // Очищаем все обработчики событий
-    if (this.input && this.input.keyboard) {
+    if (this.input?.keyboard) {
         this.input.keyboard.shutdown()
     }
     if (this.input) {
@@ -1036,7 +1139,7 @@ export default class SnakeScene extends Phaser.Scene {
     }
 
     // Останавливаем сцену
-    if (this.scene && this.scene.isActive()) {
+    if (this.scene?.systems?.isActive) {
         this.scene.stop()
     }
   }
@@ -1068,6 +1171,55 @@ export default class SnakeScene extends Phaser.Scene {
           this.snake.play(`${newSpriteKey}Anim`)
         }
       }
+    }
+  }
+
+  clearGameObjects() {
+    // Очищаем монеты
+    this.coins.forEach(coin => {
+        if (coin && !coin.destroyed) {
+            coin.destroy()
+        }
+    })
+    this.coins = []
+
+    // Очищаем препятствия
+    this.obstacles.forEach(obstacle => {
+        if (obstacle && !obstacle.destroyed) {
+            obstacle.destroy()
+        }
+    })
+    this.obstacles = []
+
+    // Очищаем пулы объектов
+    this.objectPool.coins.forEach(coin => {
+        if (coin && !coin.destroyed) {
+            coin.destroy()
+        }
+    })
+    this.objectPool.coins = []
+
+    this.objectPool.obstacles.forEach(obstacle => {
+        if (obstacle && !obstacle.destroyed) {
+            obstacle.destroy()
+        }
+    })
+    this.objectPool.obstacles = []
+
+    // Останавливаем и уничтожаем спрайты брони
+    Object.values(this.armorSprites).forEach(sprite => {
+        if (sprite && !sprite.destroyed) {
+            sprite.stop()
+            sprite.destroy()
+        }
+    })
+    this.armorSprites = {}
+
+    // Останавливаем и уничтожаем спрайт змеи
+    if (this.snake && !this.snake.destroyed) {
+        this.snake.stop()
+        this.snake.destroy()
+        this.snake = null
     }
   }
 } 

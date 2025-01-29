@@ -350,36 +350,30 @@ const startGame = async () => {
     return
   }
 
+  // Пересоздаем игру при каждом запуске
+  if (game) {
+    // Полностью останавливаем и удаляем старую сцену
+    if (snakeScene) {
+      game.scene.remove('SnakeScene')
+      snakeScene = null
+    }
+    
+    // Создаем новую сцену
+    const newScene = new SnakeScene()
+    game.scene.add('SnakeScene', newScene, true)
+    snakeScene = game.scene.getScene('SnakeScene')
+    
+    // Устанавливаем колбэки для новой сцены
+    snakeScene.setFinishCallback(handleGameEnd)
+    snakeScene.setCollectCallback(handleCoinCollect)
+    snakeScene.setObstacleCallback(handleObstacleHit)
+  }
+
   isGameStarted.value = true
   sessionCoins.value = 0
   finalGameCoins.value = 0
   currentEnergy.value = gamedata.value.energy
   document.documentElement.setAttribute('data-playing', 'true')
-
-  // Запускаем интервал, внутри которого будем проверять состояние буста
-  energyInterval = setInterval(async () => {
-    if (!isGameStarted.value) return
-
-    // Если остался буст (energyBoostTimeLeft > 0), то уменьшаем энергию в 2 раза медленнее:
-    // При boostTimeLeft > 0: уменьшаем энергию каждые 2 "тики" (2 секунды).
-    // Если буста нет, уменьшаем энергию каждый тик (1 секунда).
-    const decrementDelay = energyBoostTimeLeft.value > 0 ? 2 : 1
-    energyTickCounter++
-
-    if (energyTickCounter >= decrementDelay) {
-      energyTickCounter = 0
-      currentEnergy.value--
-      if (currentEnergy.value <= 0) {
-        // Сначала отправляем запрос time_out, потом заканчиваем игру
-        try {
-          await postGameCurrentContent(gameId.value, { content: 'time_out' })
-        } catch (error) {
-          console.error('Error sending time_out:', error)
-        }
-        handleGameEnd()
-      }
-    }
-  }, 1000)
 
   try {
     const response = await postGameSnakeCreate()
@@ -391,18 +385,41 @@ const startGame = async () => {
     gameId.value = response.id
     energyBoostTimeLeft.value = gamedata.value.energyBoostTimeLeft
 
-    setTimeout(() => {
-      if (snakeScene) {
-        // Преобразуем объект брони в массив активных элементов
-        const activeArmor = Object.entries(gamedata.value.inventory.armor)
-          .filter(([_, value]) => value.activated)
-          .map(([key]) => key.toUpperCase())
-        
-        console.log('Setting initial armor:', activeArmor)
-        snakeScene.setActiveArmor(activeArmor)
-        snakeScene.startGame()
+    // Запускаем игру после создания новой сцены
+    if (snakeScene) {
+      const activeArmor = Object.entries(gamedata.value.inventory.armor)
+        .filter(([_, value]) => value.activated)
+        .map(([key]) => key.toUpperCase())
+      
+      console.log('Setting initial armor:', activeArmor)
+      snakeScene.setActiveArmor(activeArmor)
+      snakeScene.startGame()
+    }
+
+    // Запускаем интервал для энергии
+    energyInterval = setInterval(async () => {
+      if (!isGameStarted.value) return
+
+      // Если остался буст (energyBoostTimeLeft > 0), то уменьшаем энергию в 2 раза медленнее:
+      // При boostTimeLeft > 0: уменьшаем энергию каждые 2 "тики" (2 секунды).
+      // Если буста нет, уменьшаем энергию каждый тик (1 секунда).
+      const decrementDelay = energyBoostTimeLeft.value > 0 ? 2 : 1
+      energyTickCounter++
+
+      if (energyTickCounter >= decrementDelay) {
+        energyTickCounter = 0
+        currentEnergy.value--
+        if (currentEnergy.value <= 0) {
+          // Сначала отправляем запрос time_out, потом заканчиваем игру
+          try {
+            await postGameCurrentContent(gameId.value, { content: 'time_out' })
+          } catch (error) {
+            console.error('Error sending time_out:', error)
+          }
+          handleGameEnd()
+        }
       }
-    }, 100)
+    }, 1000)
   } catch (error) {
     console.error('Error creating game:', error)
     showNoResourcesModal.value = true
@@ -411,9 +428,7 @@ const startGame = async () => {
 
 const handleGameEnd = async () => {
   console.log('Game ending, current coins:', sessionCoins.value)
-
   finalGameCoins.value = sessionCoins.value
-  console.log('Saved final coins:', finalGameCoins.value)
 
   if (energyInterval) {
     clearInterval(energyInterval)
@@ -424,14 +439,10 @@ const handleGameEnd = async () => {
   isGameStarted.value = false
   document.documentElement.setAttribute('data-playing', 'false')
 
-  if (game?.value) {
-    // Вызываем shutdown перед уничтожением игры
-    if (snakeScene) {
-      snakeScene.shutdown()
-      snakeScene = null
-    }
-    game.value.destroy(true)
-    game.value = null
+  // Полностью удаляем сцену
+  if (game && snakeScene) {
+    game.scene.remove('SnakeScene')
+    snakeScene = null
   }
 
   try {
@@ -1230,7 +1241,7 @@ onUnmounted(() => {
 
 .test-panel {
   position: fixed;
-  top: 0;
+  top: 50px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
