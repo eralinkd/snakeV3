@@ -923,7 +923,6 @@ onMounted(async () => {
       console.log('Telegram Mini App deactivated');
       if (isGameStarted.value) {
         try {
-          alert('deactivated start')
           // Используем базовый URL из конфига
           const baseUrl = import.meta.env.VITE_BASE_URL;
           const xhr = new XMLHttpRequest();
@@ -933,7 +932,6 @@ onMounted(async () => {
         } catch (e) {
           console.error('Error during deactivation:', e);
         } finally {
-          alert('deactivated')
           forceStopGame();
         }
       }
