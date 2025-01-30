@@ -914,12 +914,26 @@ onMounted(async () => {
   if (window.Telegram?.WebApp) {
     console.log('Telegram WebApp is available')
     window.Telegram.WebApp.onEvent('close', handleAppClose);
-    
-    // Добавляем слушатель для MainButton (если он используется)
     window.Telegram.WebApp.onEvent('mainButton:click', handleAppClose);
-    
-    // Добавляем слушатель для backButton (если он используется)
     window.Telegram.WebApp.onEvent('backButton:click', handleAppClose);
+    
+    // Добавляем обработчик deactivated
+    window.Telegram.WebApp.onEvent('deactivated', () => {
+      console.log('Telegram Mini App deactivated');
+      if (isGameStarted.value) {
+        try {
+          // Синхронный запрос для гарантированной отправки
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', `/api/game/game-end/${gameId.value}`, false);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(JSON.stringify({ gameId: gameId.value }));
+        } catch (e) {
+          console.error('Error during deactivation:', e);
+        } finally {
+          forceStopGame();
+        }
+      }
+    });
   }
   
   // Добавляем слушатель для мобильных событий
@@ -946,6 +960,8 @@ onUnmounted(() => {
     window.Telegram.WebApp.offEvent('close', handleAppClose);
     window.Telegram.WebApp.offEvent('mainButton:click', handleAppClose);
     window.Telegram.WebApp.offEvent('backButton:click', handleAppClose);
+    // Удаляем обработчик deactivated
+    window.Telegram.WebApp.offEvent('deactivated', handleAppClose);
   }
   
   window.removeEventListener('pagehide', handleAppClose);
