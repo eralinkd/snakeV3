@@ -8,7 +8,7 @@
 
     <template v-else>
       <div v-if="!hasAccessToTrade" class="swap__empty">
-        <p>{{ $t('market.swap.empty') }}</p>
+        <p>{{ $t('market.swap_empty') }}</p>
       </div>
 
       <div v-else class="content">
@@ -37,7 +37,7 @@
                 />
                 <div class="swap-card__select-trigger-text">
                   <p>{{ selected.label }}</p>
-                  <span>{{ $t('market.swap.sold') }}</span>
+                  <span>{{ $t('market.swap_sold') }}</span>
                 </div>
                 <div
                   :class="[
@@ -93,7 +93,7 @@
                 />
                 <div class="swap-card__select-trigger-text">
                   <p>{{ selected.label }}</p>
-                  <span>{{ $t('market.swap.received') }}</span>
+                  <span>{{ $t('market.swap_received') }}</span>
                 </div>
                 <div
                   :class="[
@@ -129,7 +129,7 @@
           :disabled="!amountFrom || !amountTo || isSwapping"
           @click="handleSubmit"
         >
-          {{ $t('market.swap.exchange') }}
+          {{ $t('market.swap_exchange') }}
         </BaseButton>
       </div>
     </template>
@@ -142,10 +142,10 @@
             <div class="store-modal__image">
               <img :src="success" alt="Успех" />
             </div>
-            <h2 class="store-modal__title">{{ $t('market.swap.success.title') }}</h2>
-            <p class="store-modal__description">{{ $t('market.swap.success.description') }}</p>
+            <h2 class="store-modal__title">{{ $t('market.swap_success_title') }}</h2>
+            <p class="store-modal__description">{{ $t('market.swap_success_description') }}</p>
             <BaseButton @click="handleModalClose" type="button" size="small">{{
-              $t('market.swap.button.ok')
+              $t('market.swap_button_ok')
             }}</BaseButton>
           </div>
 
@@ -153,10 +153,10 @@
             <div class="store-modal__image">
               <img :src="fail" alt="ошибка" />
             </div>
-            <h2 class="store-modal__title">{{ $t('market.swap.error.title') }}</h2>
-            <p class="store-modal__description">{{ $t('market.swap.error.description') }}</p>
+            <h2 class="store-modal__title">{{ $t('market.swap_error_title') }}</h2>
+            <p class="store-modal__description">{{ $t('market.swap_error_description') }}</p>
             <BaseButton @click="handleModalClose" type="button" size="small">{{
-              $t('market.swap.button.ok')
+              $t('market.swap_button_ok')
             }}</BaseButton>
           </div>
         </template>

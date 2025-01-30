@@ -49,7 +49,7 @@ watch(
     </div>
 
     <div v-if="isError" class="container">
-      <p class="error">{{ t('market.wallet.errors_fetch') }}</p>
+      <p class="error">{{ t('market.wallet_errors_fetch') }}</p>
     </div>
 
     <div v-if="cryptos && !isError" class="list">

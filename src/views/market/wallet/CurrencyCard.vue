@@ -35,13 +35,13 @@ const actions = computed(() => {
   const availableActions = []
 
   if (props.item.replenishment) {
-    availableActions.push({ value: 'deposit', label: t('market.wallet.actions_deposit') })
+    availableActions.push({ value: 'deposit', label: t('market.wallet_actions_deposit') })
   }
   if (props.item.withdraw) {
-    availableActions.push({ value: 'withdraw', label: t('market.wallet.actions_withdraw') })
+    availableActions.push({ value: 'withdraw', label: t('market.wallet_actions_withdraw') })
   }
   if (props.item.swap) {
-    availableActions.push({ value: 'swap', label: t('market.wallet.actions_swap') })
+    availableActions.push({ value: 'swap', label: t('market.wallet_actions_swap') })
   }
 
   return availableActions

@@ -41,7 +41,9 @@ onMounted(async () => {
       last_name: telegramInitData.user?.last_name,
       username: telegramInitData.user?.username,
       photo_url: telegramInitData.user?.photo_url,
+      language_code: telegramInitData.user?.language_code.toLowerCase(),
     })
+
     console.log('Set user data:', telegramInitData.user)
 
     if (telegramInitData.user?.id) {
@@ -65,6 +67,7 @@ onMounted(async () => {
           last_name: telegramInitData.user?.last_name,
           username: telegramInitData.user?.username,
           photo_url: telegramInitData.user?.photo_url,
+          language_code: telegramInitData.user?.language_code.toLowerCase(),
         }),
       )
       console.log('Token saved to session storage')
@@ -118,14 +121,12 @@ onMounted(async () => {
 /* The following style is NOT scoped, so it applies globally. 
    We check for data-playing="true" on the html tag, and hide .navigation and .bottom-navigation. */
 
-:root[data-playing="true"] {
+:root[data-playing='true'] {
   .navigation,
   .bottom-navigation {
     display: none !important;
   }
 }
-
-
 
 .main {
   display: flex;

@@ -6,17 +6,17 @@
           <div class="history-card__status-image">
             <img
               :src="pendingIcon"
-              :alt="t('market.history.alt_pending')"
+              :alt="t('market.history_alt_pending')"
               v-if="!item.confirmed && !item.canceled"
             />
             <img
               :src="errorIcon"
-              :alt="t('market.history.alt_error')"
+              :alt="t('market.history_alt_error')"
               v-else-if="item.canceled && !item.confirmed"
             />
             <img
               :src="successIcon"
-              :alt="t('market.history.alt_success')"
+              :alt="t('market.history_alt_success')"
               v-else-if="item.confirmed && !item.canceled"
             />
           </div>
@@ -50,12 +50,12 @@
           <img
             class="history-card__swap-image--from"
             :src="imageSrc"
-            :alt="t('market.history.alt_crypto')"
+            :alt="t('market.history_alt_crypto')"
           />
           <img
             class="history-card__swap-image--to"
             :src="currencyImages[sourceData[0]]"
-            :alt="t('market.history.alt_crypto')"
+            :alt="t('market.history_alt_crypto')"
           />
         </div>
       </template>
@@ -63,7 +63,7 @@
         <div class="history-card__swap-title">
           <span>{{ item.crypto }}</span>
           <div class="history-card__swap-arrow">
-            <img :src="swapArrow" :alt="t('market.history.alt_swap_arrow')" />
+            <img :src="swapArrow" :alt="t('market.history_alt_swap_arrow')" />
           </div>
           <span>{{ sourceData[0] }}</span>
         </div>
@@ -116,9 +116,9 @@ const cardClasses = computed(() => ({
 
 const getStatusText = computed(() => {
   if (props.item.paymentType === 'WITHDRAW') {
-    if (props.item.confirmed) return t('market.history.status_success')
-    if (props.item.canceled) return t('market.history.status_declined')
-    return t('market.history.status_processing')
+    if (props.item.confirmed) return t('market.history_status_success')
+    if (props.item.canceled) return t('market.history_status_declined')
+    return t('market.history_status_processing')
   }
   return formatTime(props.item.timePassed)
 })
@@ -130,7 +130,7 @@ const formatAmount = (amount, operationType) => {
 
 const formatTime = (milliseconds) => {
   if (milliseconds < 60) {
-    return t('market.history.time_just_now')
+    return t('market.history_time_just_now')
   }
 
   const seconds = Math.floor(milliseconds / 1000)
@@ -142,11 +142,11 @@ const formatTime = (milliseconds) => {
 
   const getPlural = (number, type) => {
     if (number % 10 === 1 && number % 100 !== 11) {
-      return t(`market.history.time_${type}_one`)
+      return t(`market.history_time_${type}_one`)
     } else if ([2, 3, 4].includes(number % 10) && ![12, 13, 14].includes(number % 100)) {
-      return t(`market.history.time_${type}_few`)
+      return t(`market.history_time_${type}_few`)
     } else {
-      return t(`market.history.time_${type}_many`)
+      return t(`market.history_time_${type}_many`)
     }
   }
 

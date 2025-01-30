@@ -9,7 +9,8 @@ export const useUserStore = defineStore('user', () => {
 		username: null,
 		photo_url: null,
 		auth_date: null,
-		hash: null
+		hash: null,
+		language_code: null
 	})
 	const token = ref(null)
 

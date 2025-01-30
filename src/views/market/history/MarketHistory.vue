@@ -18,7 +18,7 @@
         <template #trigger="{ selected, isOpen }">
           <button :class="['filter-button plateBg', { 'filter-button--active': isOpen }]">
             <div class="filter-button__img-container">
-              <img :src="selected.icon" :alt="t('market.history.alt_filter')" />
+              <img :src="selected.icon" :alt="t('market.history_alt_filter')" />
             </div>
             <span>{{ selected.label }}</span>
             <div
@@ -52,7 +52,7 @@
             class="history__select-option select-option"
           >
             <div class="select-option__img-container">
-              <img :src="option.icon" :alt="t('market.history.alt_filter')" />
+              <img :src="option.icon" :alt="t('market.history_alt_filter')" />
             </div>
             <span>{{ option.label }}</span>
           </li>
@@ -64,7 +64,7 @@
       </ul>
 
       <div v-else class="history__empty">
-        <p>{{ t('market.history.empty') }}</p>
+        <p>{{ t('market.history_empty') }}</p>
       </div>
     </template>
   </div>
@@ -86,10 +86,10 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 
 const filters = [
-  { value: 'NONE', label: t('market.history.filters_all'), icon: filterAll },
-  { value: 'REPLENISHMENT', label: t('market.history.filters_deposit'), icon: filterDeposit },
-  { value: 'WITHDRAW', label: t('market.history.filters_withdraw'), icon: filterWithdraw },
-  { value: 'SWAP', label: t('market.history.filters_swap'), icon: filterSwap },
+  { value: 'NONE', label: t('market.history_filters_all'), icon: filterAll },
+  { value: 'REPLENISHMENT', label: t('market.history_filters_deposit'), icon: filterDeposit },
+  { value: 'WITHDRAW', label: t('market.history_filters_withdraw'), icon: filterWithdraw },
+  { value: 'SWAP', label: t('market.history_filters_swap'), icon: filterSwap },
 ]
 
 const selectedFilter = ref('NONE')

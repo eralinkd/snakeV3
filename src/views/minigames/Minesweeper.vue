@@ -47,7 +47,7 @@
 
     <!-- Информация о ставке -->
     <div class="info">
-      <h2 class="betText">{{ t('minigames.minesweeper_game.bet_title') }}</h2>
+      <h2 class="betText">{{ t('minigames.minesweeper_game_bet_title') }}</h2>
       <div class="infoImg" @click="showInfo = true">
         <img :src="infoImg" alt="info" />
       </div>
@@ -85,7 +85,7 @@
               />
               <div class="swap-card__select-trigger-text">
                 <p>{{ selected.label }}</p>
-                <span>{{ t('minigames.minesweeper_game.bet') }}</span>
+                <span>{{ t('minigames.minesweeper_game_bet') }}</span>
               </div>
               <div
                 :class="[
@@ -115,7 +115,7 @@
 
       <!-- Количество мин -->
       <div class="minesAmountContainer">
-        <label>{{ t('minigames.minesweeper_game.bet_bomb') }}</label>
+        <label>{{ t('minigames.minesweeper_game_bet_bomb') }}</label>
         <div class="minesSelector">
           <div
             v-for="option in minesAmountOptions"
@@ -133,21 +133,21 @@
       </div>
 
       <BaseButton :disabled="gameStarted" @click="handlePlay" v-if="!gameStarted">{{
-        t('minigames.minesweeper_game.bet_start')
+        t('minigames.minesweeper_game_bet_start')
       }}</BaseButton>
       <BaseButton :disabled="!gameStarted || !currentWin" @click="handleWin" v-else
-        >{{ t('minigames.minesweeper_game.bet_win') }} {{ currentWin }}</BaseButton
+        >{{ t('minigames.minesweeper_game_bet_win') }} {{ currentWin }}</BaseButton
       >
     </div>
 
     <!-- Добавляем шторку с информацией -->
     <BaseBottomSheet :is-open="showInfo" @update:is-open="showInfo = false">
       <div class="info-sheet">
-        <h3 class="info-sheet__title">{{ t('minigames.minesweeper_game.info_title') }}</h3>
-        <p class="info-sheet__text">{{ t('minigames.minesweeper_game.info_subtitle') }}</p>
+        <h3 class="info-sheet__title">{{ t('minigames.minesweeper_game_info_title') }}</h3>
+        <p class="info-sheet__text">{{ t('minigames.minesweeper_game_info_subtitle') }}</p>
         <div class="info-sheet__content">
           <p class="info-sheet__text">
-            {{ t('minigames.minesweeper_game.info_text') }}
+            {{ t('minigames.minesweeper_game_info_text') }}
           </p>
         </div>
         <img :src="snake" alt="snake" class="info-sheet__image" />

@@ -70,12 +70,12 @@ const handleWithdraw = async () => {
   isLoading.value = true
 
   if (!amount.value || parseFloat(amount.value) <= 0) {
-    amountError.value = t('market.wallet.withdraw.form_amount_error')
+    amountError.value = t('market.wallet_withdraw_form_amount_error')
     isLoading.value = false
     return
   }
   if (!address.value) {
-    addressError.value = t('market.wallet.withdraw.form_address_error')
+    addressError.value = t('market.wallet_withdraw_form_address_error')
     isLoading.value = false
     return
   }
@@ -88,7 +88,7 @@ const handleWithdraw = async () => {
     })
 
     if (!validationResponse?.result) {
-      addressError.value = t('market.wallet.withdraw.form_address_invalid')
+      addressError.value = t('market.wallet_withdraw_form_address_invalid')
       isLoading.value = false
       return
     }
@@ -120,16 +120,16 @@ const handleWithdraw = async () => {
         <BaseInput
           v-model="amount"
           type="number"
-          :placeholder="t('market.wallet.withdraw.form_amount_placeholder')"
-          :label="t('market.wallet.withdraw.form_amount_label')"
+          :placeholder="t('market.wallet_withdraw_form_amount_placeholder')"
+          :label="t('market.wallet_withdraw_form_amount_label')"
           :has-error="!!amountError"
           :error-message="amountError"
         />
 
         <BaseTextarea
           v-model="address"
-          :placeholder="t('market.wallet.withdraw.form_address_placeholder')"
-          :label="t('market.wallet.withdraw.form_address_label')"
+          :placeholder="t('market.wallet_withdraw_form_address_placeholder')"
+          :label="t('market.wallet_withdraw_form_address_label')"
           :has-error="!!addressError"
           :error-message="addressError"
         />
@@ -140,7 +140,7 @@ const handleWithdraw = async () => {
           class="withdraw__button"
           @click="handleWithdraw"
         >
-          {{ t('market.wallet.withdraw.form_button') }}
+          {{ t('market.wallet_withdraw.form_button') }}
         </BaseButton>
       </div>
     </div>

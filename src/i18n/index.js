@@ -1,18 +1,32 @@
+import { getLanguageData, getLanguages } from '@/api/lang'
 import { createI18n } from 'vue-i18n'
-import ru from '@/locales/ru.json'
-import en from '@/locales/en.json'
-import ua from '@/locales/ua.json'
-import zh from '@/locales/zh.json'
-
 
 export const i18n = createI18n({
 	legacy: false,
 	locale: 'ru',
 	fallbackLocale: 'ru',
-	messages: {
-		ru,
-		en,
-		ua,
-		zh
+	messages: {}
+})
+
+export const loadLanguages = async (userLang = null) => {
+	try {
+		const languages = await getLanguages()
+
+		for (const lang of languages) {
+			const langData = await getLanguageData(lang.code)
+			i18n.global.setLocaleMessage(lang.code, langData.messages)
+		}
+
+		if (userLang) {
+			const isLanguageAvailable = languages.some(lang => lang.code === userLang)
+			if (isLanguageAvailable) {
+				i18n.global.locale.value = userLang
+			}
+		}
+
+		return languages
+	} catch (error) {
+		console.error('Failed to load languages:', error)
+		return []
 	}
-}) 
+}

@@ -79,7 +79,7 @@
           @click="handleQuestClick(quest)"
         >
           <div class="quest-item__info">
-            <p class="quest-item__description">{{ t(`profile.${quest.description}`) }}</p>
+            <p class="quest-item__description">{{ t(`${quest.description}`) }}</p>
             <div class="quest-item__reward">
               <span>+{{ quest.reward }}</span>
               <img :src="scoinSrc" alt="scoin" />
@@ -107,8 +107,7 @@ import { getUser, getUserQuests, postCompleteQuest, updateLanguage } from '@/api
 import { useQuery } from '@tanstack/vue-query'
 import BaseTabs from '@/components/BaseTabs.vue'
 import { useI18n } from 'vue-i18n'
-
-const { t, locale } = useI18n()
+import { getLanguageData, getLanguages } from '@/api/lang'
 
 const headerBgSrc = bg
 const heartSrc = heart
@@ -180,17 +179,17 @@ watch(
   { immediate: true },
 )
 
-const selectedQuestType = ref('profile.quests.tabs_daily')
+const selectedQuestType = ref('quests.tabs_daily')
 const questTabs = [
-  { name: 'profile.quests.tabs_daily', component: 'everyDay' },
-  { name: 'profile.quests.tabs_oneTime', component: 'oneTime' },
+  { name: 'quests.tabs_daily', component: 'everyDay' },
+  { name: 'quests.tabs_oneTime', component: 'oneTime' },
 ]
 
 const filteredQuests = computed(() => {
   if (!userQuests.value) return []
   const typeMap = {
-    'profile.quests.tabs_daily': 'everyDay',
-    'profile.quests.tabs_oneTime': 'oneTime',
+    'quests.tabs_daily': 'everyDay',
+    'quests.tabs_oneTime': 'oneTime',
   }
   return userQuests.value[typeMap[selectedQuestType.value]] || []
 })
@@ -242,39 +241,43 @@ onMounted(async () => {
   }
 })
 
-const languages = [
-  { value: 'en', label: 'English' },
-  { value: 'ru', label: 'Русский' },
-  { value: 'ua', label: 'Українська' },
-  { value: 'zh', label: '中文' },
-]
+const { t, locale } = useI18n()
 
-const currentLanguage = computed(() => {
-  return languages.find((lang) => lang.value === locale.value)?.label || locale.value
+// const languages = [
+//   { value: 'en', label: 'English' },
+//   { value: 'ru', label: 'Русский' },
+//   { value: 'ua', label: 'Українська' },
+//   { value: 'zh', label: '中文' },
+// ]
+
+const { data: languagesData } = useQuery({
+  queryKey: ['languages'],
+  queryFn: getLanguages,
+  staleTime: Infinity,
 })
 
-const handleLanguageChange = (option) => {
-  locale.value = option.value
-  localStorage.setItem('language', option.value)
-  updateLanguage(option.value)
-}
-// const currentLanguage = computed(() => locale.value)
+const languages = computed(() => {
+  if (!languagesData.value) return []
+  return languagesData.value.map((lang) => ({
+    value: lang.code,
+    label: lang.name,
+  }))
+})
 
-// const toggleLanguage = () => {
-//   locale.value = locale.value === 'ru' ? 'en' : 'ru'
-//   // Сохраняем выбранный язык в localStorage
-//   localStorage.setItem('language', locale.value)
-//   // Обновляем язык на сервере
-//   updateLanguage(locale.value)
-// }
+const handleLanguageChange = async (option) => {
+  try {
+    // Load language data if not already loaded
+    if (!i18n.global.availableLocales.includes(option.value)) {
+      const langData = await getLanguageData(option.value)
+      i18n.global.setLocaleMessage(option.value, langData.messages)
+    }
 
-// Загружаем сохраненный язык при монтировании
-onMounted(() => {
-  const savedLanguage = localStorage.getItem('language')
-  if (savedLanguage) {
-    locale.value = savedLanguage
+    locale.value = option.value
+    updateLanguage(option.value)
+  } catch (error) {
+    console.error('Failed to load language:', error)
   }
-})
+}
 </script>
 
 <style scoped lang="scss">
