@@ -94,7 +94,11 @@
           </p>
           <p v-else><img :src="boosterPlus" alt="plus" /></p>
         </div>
-        <div class="game__main-right__inventory" @click="router.push('/inventory')">
+        <div 
+          class="game__main-right__inventory" 
+          :class="{ 'game__main-right__inventory--attention': gamedata?.shouldCheckInventory }"
+          @click="router.push('/inventory')"
+        >
           <img :src="inventory" alt="inventory" />
         </div>
       </div>
@@ -1162,6 +1166,38 @@ onUnmounted(() => {
       height: 80px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      position: relative;
+      transition: transform 0.3s ease;
+
+      // Добавляем стили для состояния attention
+      &--attention {
+        animation: pulse 2s infinite;
+        
+        &::after {
+          content: '';
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          width: 15px;
+          height: 15px;
+          background: #FF4B4B;
+          border-radius: 50%;
+          border: 2px solid #1B1829;
+          animation: blink 1s infinite;
+        }
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          border: 2px solid #AE8BFF;
+          border-radius: 8px;
+          animation: borderPulse 2s infinite;
+        }
+      }
     }
 
     .game__main-left-equipment {
@@ -1605,5 +1641,42 @@ onUnmounted(() => {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+// Добавляем анимации
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes borderPulse {
+  0% {
+    border-color: rgba(174, 139, 255, 0.4);
+  }
+  50% {
+    border-color: rgba(174, 139, 255, 1);
+  }
+  100% {
+    border-color: rgba(174, 139, 255, 0.4);
+  }
 }
 </style>
