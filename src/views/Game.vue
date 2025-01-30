@@ -449,7 +449,7 @@ const startGame = async () => {
     return
   }
 
-  if (gamedata.value.energy <= 0 && gamedata.value.health <= 0) {
+  if (gamedata.value.energy <= 0) {
     showNoResourcesModal.value = true
     return
   }
