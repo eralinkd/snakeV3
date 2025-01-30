@@ -263,6 +263,7 @@ import snakeLegue3 from '@/assets/game/snakes/snake_legue_3_default_main.png'
 import snakeHint1 from '@/assets/hints/snake_hint1.png'
 import snakeHint2 from '@/assets/hints/snake_hint2.png'
 import snakeHint3 from '@/assets/hints/snake_hint3.png'
+import api from '@/api/config'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -922,14 +923,17 @@ onMounted(async () => {
       console.log('Telegram Mini App deactivated');
       if (isGameStarted.value) {
         try {
-          // Синхронный запрос для гарантированной отправки
+          alert('deactivated start')
+          // Используем базовый URL из конфига
+          const baseUrl = import.meta.env.VITE_BASE_URL;
           const xhr = new XMLHttpRequest();
-          xhr.open('POST', `/api/game/game-end/${gameId.value}`, false);
+          xhr.open('POST', `${baseUrl}/api/game/game-end/${gameId.value}`, false);
           xhr.setRequestHeader('Content-Type', 'application/json');
           xhr.send(JSON.stringify({ gameId: gameId.value }));
         } catch (e) {
           console.error('Error during deactivation:', e);
         } finally {
+          alert('deactivated')
           forceStopGame();
         }
       }
