@@ -241,7 +241,6 @@ import helmet from '@/assets/game/helmet.png'
 import armor from '@/assets/game/armor.png'
 import shield from '@/assets/game/shield.png'
 import sword from '@/assets/game/sword.png'
-import snake from '@/assets/game/snake.png'
 import scoinGame from '@/assets/game/scoin-game.png'
 import boosterPlus from '@/assets/game/booster-plus.png'
 import {
@@ -263,7 +262,6 @@ import snakeLegue3 from '@/assets/game/snakes/snake_legue_3_default_main.png'
 import snakeHint1 from '@/assets/hints/snake_hint1.png'
 import snakeHint2 from '@/assets/hints/snake_hint2.png'
 import snakeHint3 from '@/assets/hints/snake_hint3.png'
-import api from '@/api/config'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -501,8 +499,21 @@ const startGame = async () => {
       if (energyTickCounter >= decrementDelay) {
         energyTickCounter = 0
         currentEnergy.value--
+
+        // Отправляем запрос на проверку состояния игры
+        try {
+          postGameCurrentContent(gameId.value, { content: 'check' })
+            .catch(error => {
+              console.error('Error checking game state:', error)
+              // При ошибке останавливаем игру
+              forceStopGame()
+            })
+        } catch (e) {
+          console.error('Error sending check request:', e)
+          forceStopGame()
+        }
+
         if (currentEnergy.value <= 0) {
-          // Сначала отправляем запрос time_out, потом заканчиваем игру
           try {
             await postGameCurrentContent(gameId.value, { content: 'time_out' })
           } catch (error) {
