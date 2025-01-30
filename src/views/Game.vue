@@ -884,6 +884,7 @@ onMounted(async () => {
 
   // Add Telegram WebApp close event listener
   if (window.Telegram?.WebApp) {
+    console.log('Telegram WebApp is available')
     window.Telegram.WebApp.onEvent('close', handleAppClose)
   }
   
