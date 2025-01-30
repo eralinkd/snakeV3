@@ -1,5 +1,32 @@
 <template>
   <div class="game" :class="{ 'game--playing': isGameStarted }" v-if="gamedata">
+    <!-- Упрощенный экран загрузки -->
+    <div class="game-loader" v-if="isLoading">
+      <div class="game-loader__spinner"></div>
+    </div>
+    <!-- Добавляем тестовую панель -->
+    <div class="test-panel" v-if="isDev">
+      <div class="test-panel__group">
+        <button 
+          v-for="progress in [0, 25, 50, 75]" 
+          :key="progress"
+          @click="testSnakeProgress(progress)"
+          :class="{ active: currentTestProgress === progress }"
+        >
+          Progress {{ progress }}%
+        </button>
+      </div>
+      <div class="test-panel__group">
+        <button 
+          v-for="league in [1, 2, 3]" 
+          :key="league"
+          @click="testSnakeLeague(league)"
+          :class="{ active: currentTestLeague === league }"
+        >
+          League {{ league }}
+        </button>
+      </div>
+    </div>
     <div class="game__top-bar" v-if="!isGameStarted">
       <div class="game__top-bar-balance">
         <img :src="Scoin" alt="balance" />
@@ -52,7 +79,7 @@
         </div>
       </div>
       <div class="game__main-snake" @click="startGame">
-        <img :src="snake" alt="snake" />
+        <img :src="currentSnakeImage" alt="snake" />
       </div>
       <div class="game__main-right">
         <div @click="router.push('/shop')">
@@ -67,7 +94,11 @@
           </p>
           <p v-else><img :src="boosterPlus" alt="plus" /></p>
         </div>
-        <div class="game__main-right__inventory" @click="router.push('/inventory')">
+        <div 
+          class="game__main-right__inventory" 
+          :class="{ 'game__main-right__inventory--attention': gamedata?.shouldCheckInventory }"
+          @click="router.push('/inventory')"
+        >
           <img :src="inventory" alt="inventory" />
         </div>
       </div>
@@ -124,11 +155,13 @@
         <p class="info-sheet__text">{{ t('game.info_subtitle') }}</p>
         <p class="info-sheet__text">{{ t('game.info_text') }}</p>
         <div class="info-sheet__content">
-          <img :src="snake" alt="snake" class="info-sheet__image" />
+          <img :src="snakeHint1" alt="hint" class="info-sheet__image" />
+          <img :src="snakeHint2" alt="hint" class="info-sheet__image" />
+          <img :src="snakeHint3" alt="hint" class="info-sheet__image" />
         </div>
       </div>
     </BaseBottomSheet>
-    <div class="game__armor" v-if="isGameStarted && hasActiveArmor">
+    <!-- <div class="game__armor" v-if="isGameStarted && hasActiveArmor">
       <div v-if="gamedata.inventory?.armor.HELMET.activated" class="game__armor-item">
         <img class="helmet" :src="helmet" alt="helmet" />
       </div>
@@ -141,7 +174,7 @@
       <div v-if="gamedata.inventory?.armor.SWORD.activated" class="game__armor-item">
         <img class="sword" :src="sword" alt="sword" />
       </div>
-    </div>
+    </div> -->
     <BaseModal
       :isOpen="showGameEndModal"
       @update:isOpen="handleGameEndModalClose"
@@ -212,7 +245,6 @@ import helmet from '@/assets/game/helmet.png'
 import armor from '@/assets/game/armor.png'
 import shield from '@/assets/game/shield.png'
 import sword from '@/assets/game/sword.png'
-import snake from '@/assets/game/snake.png'
 import scoinGame from '@/assets/game/scoin-game.png'
 import boosterPlus from '@/assets/game/booster-plus.png'
 import {
@@ -228,6 +260,12 @@ import fail from '@/assets/game/fail.png'
 import BaseBottomSheet from '@/components/BaseBottomSheet.vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/userStore'
+import snakeLegue1 from '@/assets/game/snakes/snake_legue_1_default_main.png'
+import snakeLegue2 from '@/assets/game/snakes/snake_legue_2_default_main.png'
+import snakeLegue3 from '@/assets/game/snakes/snake_legue_3_default_main.png'
+import snakeHint1 from '@/assets/hints/snake_hint1.png'
+import snakeHint2 from '@/assets/hints/snake_hint2.png'
+import snakeHint3 from '@/assets/hints/snake_hint3.png'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -246,6 +284,31 @@ const energyBoostTimeLeft = ref(0)
 const showGameEndModal = ref(false)
 let energyInterval = null
 let energyTickCounter = 0
+const isLoading = ref(false)
+
+// Добавляем определение режима разработки
+const isDev = process.env.NODE_ENV === 'development'
+
+// Добавляем состояние для тестовой панели
+const currentTestProgress = ref(0)
+const currentTestLeague = ref(1)
+
+// Функция для тестирования прогресса змеи
+const testSnakeProgress = (progress) => {
+  currentTestProgress.value = progress
+  if (snakeScene) {
+    // Используем фиксированное значение needProgress для тестов
+    const testNeedProgress = 100
+    snakeScene.updateSnakeSprite(progress, testNeedProgress)
+  }
+}
+
+const testSnakeLeague = (league) => {
+  currentTestLeague.value = league
+  if (snakeScene) {
+    snakeScene.setLeague(league)
+  }
+}
 
 // Вычисляемое свойство для проверки авторизации
 const isAuthorized = computed(() => {
@@ -292,49 +355,120 @@ const handleModalClose = () => {
   showNoResourcesModal.value = false
 }
 
+// Функция для создания игры
+const createGame = () => {
+  if (game) {
+    console.log('Game already exists, destroying...')
+    game.destroy(true)
+    game = null
+    snakeScene = null
+  }
+
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  )
+
+  const config = {
+    type: Phaser.AUTO,
+    parent: 'game-container',
+    width: window.innerWidth,
+    height: window.innerHeight,
+    backgroundColor: '#000000',
+    scene: SnakeScene,
+    scale: {
+      mode: Phaser.Scale.RESIZE,
+      autoCenter: Phaser.Scale.CENTER_BOTH
+    },
+    render: {
+      pixelArt: false,
+      antialias: true,
+      powerPreference: 'high-performance',
+      clearBeforeRender: true,
+      preserveDrawingBuffer: true
+    },
+    // Специальные настройки для мобильных устройств
+    ...(isMobile && {
+      type: Phaser.CANVAS,
+      roundPixels: true,
+      transparent: false,
+      clearBeforeRender: true,
+      desynchronized: true,
+      banner: false,
+      antialiasGL: false,
+      maxLights: 0,
+      maxTextures: 1,
+      mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
+      failIfMajorPerformanceCaveat: true
+    })
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      game = new Phaser.Game(config)
+      
+      const checkSceneReady = () => {
+        if (!game || !game.scene) {
+          setTimeout(checkSceneReady, 100)
+          return
+        }
+
+        snakeScene = game.scene.getScene('SnakeScene')
+        if (snakeScene) {
+          // Устанавливаем лигу после создания сцены
+          snakeScene.setLeague(gamedata.value?.stage?.level || 1)
+          
+          if (snakeScene.isSceneReady) {
+            snakeScene.setFinishCallback(handleGameEnd)
+            snakeScene.setCollectCallback(handleCoinCollect)
+            snakeScene.setObstacleCallback(handleObstacleHit)
+            console.log('Game scene initialized successfully')
+            resolve()
+          } else {
+            setTimeout(checkSceneReady, 100)
+          }
+        } else {
+          setTimeout(checkSceneReady, 100)
+        }
+      }
+
+      game.events.once('ready', checkSceneReady)
+
+      setTimeout(() => {
+        if (!snakeScene?.isSceneReady) {
+          reject(new Error('Scene initialization timeout'))
+        }
+      }, 5000)
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+
+// Обновляем функцию startGame
 const startGame = async () => {
   if (!gamedata.value) {
     console.log('Game data not loaded yet')
     return
   }
 
-  if (gamedata.value.energy <= 0 && gamedata.value.health <= 0) {
+  if (gamedata.value.energy <= 0) {
     showNoResourcesModal.value = true
     return
   }
 
-  isGameStarted.value = true
-  sessionCoins.value = 0
-  finalGameCoins.value = 0
-  currentEnergy.value = gamedata.value.energy
-  document.documentElement.setAttribute('data-playing', 'true')
-
-  // Запускаем интервал, внутри которого будем проверять состояние буста
-  energyInterval = setInterval(async () => {
-    if (!isGameStarted.value) return
-
-    // Если остался буст (energyBoostTimeLeft > 0), то уменьшаем энергию в 2 раза медленнее:
-    // При boostTimeLeft > 0: уменьшаем энергию каждые 2 "тики" (2 секунды).
-    // Если буста нет, уменьшаем энергию каждый тик (1 секунда).
-    const decrementDelay = energyBoostTimeLeft.value > 0 ? 2 : 1
-    energyTickCounter++
-
-    if (energyTickCounter >= decrementDelay) {
-      energyTickCounter = 0
-      currentEnergy.value--
-      if (currentEnergy.value <= 0) {
-        // Сначала отправляем запрос time_out, потом заканчиваем игру
-        try {
-          await postGameCurrentContent(gameId.value, { content: 'time_out' })
-        } catch (error) {
-          console.error('Error sending time_out:', error)
-        }
-        handleGameEnd()
-      }
-    }
-  }, 1000)
-
   try {
+    // Показываем экран загрузки только когда пользователь начал игру
+    isLoading.value = true
+    
+    // Создаем игру и ждем инициализации сцены
+    await createGame()
+    
+    isGameStarted.value = true
+    sessionCoins.value = 0
+    finalGameCoins.value = 0
+    currentEnergy.value = gamedata.value.energy
+    document.documentElement.setAttribute('data-playing', 'true')
+
     const response = await postGameSnakeCreate()
     if (!response?.id) {
       showNoResourcesModal.value = true
@@ -344,49 +478,90 @@ const startGame = async () => {
     gameId.value = response.id
     energyBoostTimeLeft.value = gamedata.value.energyBoostTimeLeft
 
-    setTimeout(() => {
-      if (snakeScene) {
-        snakeScene.startGame()
+    // Теперь мы точно знаем, что сцена готова
+    const activeArmor = Object.entries(gamedata.value.inventory.armor)
+      .filter(([_, value]) => value.activated)
+      .map(([key]) => key.toUpperCase())
+    
+    console.log('Setting initial armor:', activeArmor)
+    snakeScene.setActiveArmor(activeArmor)
+    snakeScene.startGame()
+
+    // Скрываем экран загрузки после полной инициализации
+    isLoading.value = false
+
+    // Запускаем интервал для энергии
+    energyInterval = setInterval(async () => {
+      if (!isGameStarted.value) return
+
+      // Если остался буст (energyBoostTimeLeft > 0), то уменьшаем энергию в 2 раза медленнее:
+      // При boostTimeLeft > 0: уменьшаем энергию каждые 2 "тики" (2 секунды).
+      // Если буста нет, уменьшаем энергию каждый тик (1 секунда).
+      const decrementDelay = energyBoostTimeLeft.value > 0 ? 2 : 1
+      energyTickCounter++
+
+      if (energyTickCounter >= decrementDelay) {
+        energyTickCounter = 0
+        currentEnergy.value--
+
+        // Отправляем запрос на проверку состояния игры
+        try {
+          postGameCurrentContent(gameId.value, { content: 'check' })
+            .catch(error => {
+              console.error('Error checking game state:', error)
+              // При ошибке останавливаем игру
+              forceStopGame()
+            })
+        } catch (e) {
+          console.error('Error sending check request:', e)
+          forceStopGame()
+        }
+
+        if (currentEnergy.value <= 0) {
+          try {
+            await postGameCurrentContent(gameId.value, { content: 'time_out' })
+          } catch (error) {
+            console.error('Error sending time_out:', error)
+          }
+          handleGameEnd()
+        }
       }
-    }, 100)
+    }, 1000)
   } catch (error) {
-    console.error('Error creating game:', error)
+    console.error('Error starting game:', error)
+    if (game) {
+      game.destroy(true)
+      game = null
+      snakeScene = null
+    }
+    isLoading.value = false // Скрываем загрузку в случае ошибки
     showNoResourcesModal.value = true
   }
 }
 
 const handleGameEnd = async () => {
   console.log('Game ending, current coins:', sessionCoins.value)
-
-  // Сохраняем финальный результат перед обнулением
   finalGameCoins.value = sessionCoins.value
-  console.log('Saved final coins:', finalGameCoins.value)
 
-  // Очищаем интервал
   if (energyInterval) {
     clearInterval(energyInterval)
     energyInterval = null
   }
 
-  // Сброс счетчика
   energyTickCounter = 0
-
   isGameStarted.value = false
   document.documentElement.setAttribute('data-playing', 'false')
 
-  if (game?.value) {
-    game.value.destroy(true)
-    game.value = null
+  // Полностью удаляем сцену
+  if (game && snakeScene) {
+    game.scene.remove('SnakeScene')
+    snakeScene = null
   }
 
-  // Отправляем результаты на сервер и показываем модалку
   try {
     await postGameGameEnd(gameId.value)
-
-    // Обновляем данные игры
     const newGameData = await getGameData()
     gamedata.value = newGameData
-
     showGameEndModal.value = true
   } catch (error) {
     console.error('Failed to end game:', error)
@@ -403,7 +578,6 @@ const handleCoinCollect = async () => {
     const response = await postGameCurrentContent(gameId.value, { content: 'coin' })
     console.log('Coin collect response:', response)
 
-    // Если сервер вернул ошибку "game_not_found", полностью очищаем сцену и данные
     if (response.error === 'game_not_found') {
       forciblyClearGame('game_not_found')
       return
@@ -420,6 +594,10 @@ const handleCoinCollect = async () => {
     }
     if (response.energy) {
       currentEnergy.value = response.energy
+    }
+    // Добавляем обновление спрайта змеи
+    if (response.progressBarProgress !== undefined && response.stage?.needProgress) {
+      snakeScene.updateSnakeSprite(response.progressBarProgress, response.stage.needProgress)
     }
     if (response.content === 'game_end') {
       snakeScene.forceGameEnd()
@@ -454,29 +632,17 @@ const handleObstacleHit = async () => {
       currentEnergy.value = response.energy
     }
 
+    // Добавляем обновление спрайта змеи
+    if (response.progressBarProgress !== undefined && response.stage?.needProgress) {
+      snakeScene.updateSnakeSprite(response.progressBarProgress, response.stage.needProgress)
+    }
+
     if (response.content === 'game_end') {
       snakeScene.forceGameEnd()
     } else {
-      // Обновляем данные игры и брони
-      const updatedArmor = { ...gamedata.value.inventory.armor }
-      Object.keys(updatedArmor).forEach((key) => {
-        updatedArmor[key] = { ...updatedArmor[key], activated: false }
-      })
-      response.activatedArmor.forEach((item) => {
-        if (updatedArmor[item]) {
-          updatedArmor[item].activated = true
-        }
-      })
-      gamedata.value = {
-        ...gamedata.value,
-        inventory: {
-          ...gamedata.value.inventory,
-          armor: updatedArmor,
-        },
-      }
-
-      if (snakeScene && typeof snakeScene.handleCollision === 'function') {
-        snakeScene.handleCollision()
+      // Обновляем броню в сцене
+      if (snakeScene) {
+        snakeScene.setActiveArmor(response.activatedArmor)
       }
     }
   } catch (error) {
@@ -528,6 +694,7 @@ const handleGameEndModalClose = () => {
 
 // Добавим вычисляемое свойство для проверки наличия активной брони
 const hasActiveArmor = computed(() => {
+  console.log('dsadasd----------------', gamedata.value)
   return (
     gamedata.value?.inventory?.armor &&
     Object.values(gamedata.value.inventory.armor).some((item) => item.activated)
@@ -585,6 +752,150 @@ const forciblyClearGame = (reason) => {
   document.documentElement.setAttribute('data-playing', 'false')
 }
 
+// Функция для немедленной остановки игры
+const forceStopGame = () => {
+  if (isGameStarted.value) {
+    console.log('Force stopping game')
+    
+    // Останавливаем все таймеры
+    if (energyInterval) {
+      clearInterval(energyInterval)
+      energyInterval = null
+    }
+    energyTickCounter = 0
+    
+    // Останавливаем игровые процессы
+    if (game && snakeScene) {
+      try {
+        // Синхронно останавливаем все процессы игры
+        snakeScene.isGameActive = false
+        snakeScene.isBackgroundMoving = false
+        if (snakeScene.coinSpawnTimer) {
+          snakeScene.coinSpawnTimer.remove()
+          snakeScene.coinSpawnTimer = null
+        }
+        if (snakeScene.obstacleSpawnTimer) {
+          snakeScene.obstacleSpawnTimer.remove()
+          snakeScene.obstacleSpawnTimer = null
+        }
+        snakeScene.tweens?.killAll()
+        snakeScene.anims?.pauseAll()
+        snakeScene.clearGameObjects()
+      } catch (e) {
+        console.error('Error during force stop:', e)
+      }
+    }
+    
+    // Сбрасываем состояние
+    isGameStarted.value = false
+    document.documentElement.setAttribute('data-playing', 'false')
+    
+    // Используем sendBeacon для отправки данных при закрытии страницы
+    if (gameId.value) {
+      const data = new Blob([JSON.stringify({ gameId: gameId.value })], { type: 'application/json' })
+      const success = navigator.sendBeacon(`/api/game/game-end/${gameId.value}`, data)
+      console.log('Game end request sent:', {
+        success,
+        gameId: gameId.value,
+        timestamp: new Date().toISOString()
+      })
+
+      // Добавляем обработчик для проверки статуса запроса
+      if (success) {
+        const checkResponse = async () => {
+          try {
+            const response = await fetch(`/api/game/status/${gameId.value}`)
+            const result = await response.json()
+            console.log('Game end response:', result)
+          } catch (e) {
+            console.error('Error checking game end status:', e)
+          }
+        }
+        checkResponse()
+      }
+    }
+  }
+}
+
+// Обработчик закрытия страницы
+const handleBeforeUnload = (event) => {
+  if (isGameStarted.value) {
+    forceStopGame()
+    // Показываем предупреждение пользователю
+    event.preventDefault()
+    event.returnValue = ''
+  }
+}
+
+// Обработчик видимости страницы
+const handleVisibilityChange = async () => {
+  if (document.hidden && isGameStarted.value) {
+    try {
+      // Используем обычный асинхронный запрос для visibilitychange
+      await postGameGameEnd(gameId.value)
+    } catch (e) {
+      console.error('Error sending game end request:', e)
+    } finally {
+      forceStopGame()
+    }
+  }
+}
+
+// Добавляем вычисляемое свойство для определения изображения змеи
+const currentSnakeImage = computed(() => {
+  if (!gamedata.value?.stage?.level) return snakeLegue1
+  
+  const league = gamedata.value.stage.level
+  
+  if (league > 3) return snakeLegue1
+  
+  switch (league) {
+    case 1:
+      return snakeLegue1
+    case 2:
+      return snakeLegue2
+    case 3:
+      return snakeLegue3
+    default:
+      return snakeLegue1
+  }
+})
+
+const handleAppClose = () => {
+  console.log("Telegram Mini App is closing...");
+  if (isGameStarted.value) {
+    // Используем комбинацию методов для максимальной надежности
+    try {
+      // 1. Пробуем синхронный XMLHttpRequest
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `/api/game/game-end/${gameId.value}`, false); // false для синхронного запроса
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify({ gameId: gameId.value }));
+      
+      // 2. Дублируем через sendBeacon для надежности
+      const beaconData = new Blob([JSON.stringify({ gameId: gameId.value })], { 
+        type: 'application/json' 
+      });
+      navigator.sendBeacon(`/api/game/game-end/${gameId.value}`, beaconData);
+      
+    } catch (e) {
+      console.error('Error during force close:', e);
+      
+      // 3. Если предыдущие методы не сработали, пробуем fetch с keepalive
+      fetch(`/api/game/game-end/${gameId.value}`, {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gameId: gameId.value }),
+      }).catch(console.error);
+    } finally {
+      forceStopGame();
+    }
+  }
+}
+
 onMounted(async () => {
   // Загрузка данных игры
   gamedata.value = await getGameData()
@@ -621,6 +932,42 @@ onMounted(async () => {
     snakeScene.setCollectCallback(handleCoinCollect)
     snakeScene.setObstacleCallback(handleObstacleHit)
   })
+
+  // Добавляем слушатели событий
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  window.addEventListener('unload', forceStopGame)
+
+  // Добавляем слушатель для Telegram WebApp
+  if (window.Telegram?.WebApp) {
+    console.log('Telegram WebApp is available')
+    window.Telegram.WebApp.onEvent('close', handleAppClose);
+    window.Telegram.WebApp.onEvent('mainButton:click', handleAppClose);
+    window.Telegram.WebApp.onEvent('backButton:click', handleAppClose);
+    
+    // Добавляем обработчик deactivated
+    window.Telegram.WebApp.onEvent('deactivated', () => {
+      console.log('Telegram Mini App deactivated');
+      if (isGameStarted.value) {
+        try {
+          // Используем базовый URL из конфига
+          const baseUrl = import.meta.env.VITE_BASE_URL;
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', `${baseUrl}/api/game/game-end/${gameId.value}`, false);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(JSON.stringify({ gameId: gameId.value }));
+        } catch (e) {
+          console.error('Error during deactivation:', e);
+        } finally {
+          forceStopGame();
+        }
+      }
+    });
+  }
+  
+  // Добавляем слушатель для мобильных событий
+  window.addEventListener('pagehide', handleAppClose);
+  window.addEventListener('beforeunload', handleAppClose);
 })
 
 onUnmounted(() => {
@@ -632,6 +979,22 @@ onUnmounted(() => {
     clearInterval(energyInterval)
     energyInterval = null
   }
+
+  // Удаляем все слушатели
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+  window.removeEventListener('unload', forceStopGame)
+
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.offEvent('close', handleAppClose);
+    window.Telegram.WebApp.offEvent('mainButton:click', handleAppClose);
+    window.Telegram.WebApp.offEvent('backButton:click', handleAppClose);
+    // Удаляем обработчик deactivated
+    window.Telegram.WebApp.offEvent('deactivated', handleAppClose);
+  }
+  
+  window.removeEventListener('pagehide', handleAppClose);
+  window.removeEventListener('beforeunload', handleAppClose);
 })
 </script>
 
@@ -803,6 +1166,38 @@ onUnmounted(() => {
       height: 80px;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      position: relative;
+      transition: transform 0.3s ease;
+
+      // Добавляем стили для состояния attention
+      &--attention {
+        animation: pulse 2s infinite;
+        
+        &::after {
+          content: '';
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          width: 15px;
+          height: 15px;
+          background: #FF4B4B;
+          border-radius: 50%;
+          border: 2px solid #1B1829;
+          animation: blink 1s infinite;
+        }
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          border: 2px solid #AE8BFF;
+          border-radius: 8px;
+          animation: borderPulse 2s infinite;
+        }
+      }
     }
 
     .game__main-left-equipment {
@@ -952,19 +1347,15 @@ onUnmounted(() => {
   }
 
   &__content {
-    font-family: Montserrat;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 24px;
-    text-align: left;
-    text-underline-position: from-font;
-    text-decoration-skip-ink: none;
-    color: #ffffff80;
-    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   &__image {
     width: 100%;
+    height: auto;
+    object-fit: contain;
   }
 }
 
@@ -1182,6 +1573,110 @@ onUnmounted(() => {
     &-right {
       right: 0;
     }
+  }
+}
+
+.test-panel {
+  display: none !important;
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 0 0 8px 8px;
+
+  &__group {
+    display: flex;
+    gap: 8px;
+  }
+
+  button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background: #333;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #444;
+    }
+
+    &.active {
+      background: #ae8bff;
+    }
+  }
+}
+
+.game-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &__spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #ffffff3d;
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Добавляем анимации
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes borderPulse {
+  0% {
+    border-color: rgba(174, 139, 255, 0.4);
+  }
+  50% {
+    border-color: rgba(174, 139, 255, 1);
+  }
+  100% {
+    border-color: rgba(174, 139, 255, 0.4);
   }
 }
 </style>

@@ -150,7 +150,7 @@
             {{ t('minigames.minesweeper_game_info_text') }}
           </p>
         </div>
-        <img :src="snake" alt="snake" class="info-sheet__image" />
+        <img :src="hint" alt="snake" class="info-sheet__image" />
       </div>
     </BaseBottomSheet>
   </div>
@@ -169,7 +169,7 @@ import scoinImg from '@/assets/games/minigames/miner/scoin.png'
 import bombImg from '@/assets/games/minigames/miner/bomb.png'
 import usdtImg from '@/assets/currency-images/usdt.png'
 import infoImg from '@/assets/games/minigames/miner/info.png'
-import snake from '@/assets/game/snake.png'
+import hint from '@/assets/hints/minesweeper.png'
 import bitcoinIcon from '@/assets/currency-images/bitcoin.png'
 import ethIcon from '@/assets/currency-images/eth.png'
 import { useI18n } from 'vue-i18n'

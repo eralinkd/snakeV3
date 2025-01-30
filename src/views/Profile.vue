@@ -32,9 +32,9 @@
       </div>
 
       <div class="info">
-        <img class="avatar" :src="userData?.photo_url || avatarSrc" alt="avatar" />
+        <img class="avatar" :src="user?.profilePhotoBase64 || avatarSrc" alt="avatar" />
         <div class="info-text">
-          <p class="username">{{ userData?.first_name || 'Username' }}</p>
+          <p class="username">{{ user?.name || 'Username' }}</p>
           <p class="scoin"><img :src="scoinSrc" alt="scoin" />{{ user?.balances?.SCOIN || '0' }}</p>
         </div>
       </div>
