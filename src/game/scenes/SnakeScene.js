@@ -75,6 +75,13 @@ export default class SnakeScene extends Phaser.Scene {
     this.isSceneReady = false
   }
 
+  init(data) {
+    console.log('Scene init data:', data)
+    // Получаем лигу из данных сцены
+    this.currentLeague = data?.league > 3 ? 1 : (data?.league || 1)
+    console.log('Set league to:', this.currentLeague)
+  }
+
   preload() {
     this.load.on('filecomplete', (key, type, data) => {
       const texture = this.textures.get(key)

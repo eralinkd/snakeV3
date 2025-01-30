@@ -405,13 +405,25 @@ const createGame = () => {
       game = new Phaser.Game(config)
       
       const checkSceneReady = () => {
+        if (!game || !game.scene) {
+          setTimeout(checkSceneReady, 100)
+          return
+        }
+
         snakeScene = game.scene.getScene('SnakeScene')
-        if (snakeScene?.isSceneReady) {
-          snakeScene.setFinishCallback(handleGameEnd)
-          snakeScene.setCollectCallback(handleCoinCollect)
-          snakeScene.setObstacleCallback(handleObstacleHit)
-          console.log('Game scene initialized successfully')
-          resolve()
+        if (snakeScene) {
+          // Устанавливаем лигу после создания сцены
+          snakeScene.setLeague(gamedata.value?.stage?.level || 1)
+          
+          if (snakeScene.isSceneReady) {
+            snakeScene.setFinishCallback(handleGameEnd)
+            snakeScene.setCollectCallback(handleCoinCollect)
+            snakeScene.setObstacleCallback(handleObstacleHit)
+            console.log('Game scene initialized successfully')
+            resolve()
+          } else {
+            setTimeout(checkSceneReady, 100)
+          }
         } else {
           setTimeout(checkSceneReady, 100)
         }
@@ -816,9 +828,9 @@ const handleVisibilityChange = async () => {
 
 // Добавляем вычисляемое свойство для определения изображения змеи
 const currentSnakeImage = computed(() => {
-  if (!gamedata.value?.stage?.league) return snakeLegue1
+  if (!gamedata.value?.stage?.level) return snakeLegue1
   
-  const league = gamedata.value.stage.league
+  const league = gamedata.value.stage.level
   
   if (league > 3) return snakeLegue1
   
@@ -1518,6 +1530,7 @@ onUnmounted(() => {
 }
 
 .test-panel {
+  display: none !important;
   position: fixed;
   top: 50px;
   left: 50%;
