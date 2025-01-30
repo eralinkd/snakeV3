@@ -833,6 +833,13 @@ const currentSnakeImage = computed(() => {
   }
 })
 
+const handleAppClose = () => {
+  console.log("Telegram Mini App is closing...");
+  if (isGameStarted.value) {
+    forceStopGame()
+  }
+}
+
 onMounted(async () => {
   // Загрузка данных игры
   gamedata.value = await getGameData()
@@ -874,6 +881,14 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.addEventListener('beforeunload', handleBeforeUnload)
   window.addEventListener('unload', forceStopGame)
+
+  // Add Telegram WebApp close event listener
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.onEvent('close', handleAppClose)
+  }
+  
+  // Add browser close event listener
+  window.addEventListener('beforeunload', handleAppClose)
 })
 
 onUnmounted(() => {
@@ -890,6 +905,14 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.removeEventListener('beforeunload', handleBeforeUnload)
   window.removeEventListener('unload', forceStopGame)
+
+  // Remove Telegram WebApp close event listener
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.offEvent('close', handleAppClose)
+  }
+
+  // Remove browser close event listener
+  window.removeEventListener('beforeunload', handleAppClose)
 })
 </script>
 
