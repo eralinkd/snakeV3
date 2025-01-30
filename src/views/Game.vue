@@ -836,7 +836,35 @@ const currentSnakeImage = computed(() => {
 const handleAppClose = () => {
   console.log("Telegram Mini App is closing...");
   if (isGameStarted.value) {
-    forceStopGame()
+    // Используем комбинацию методов для максимальной надежности
+    try {
+      // 1. Пробуем синхронный XMLHttpRequest
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `/api/game/game-end/${gameId.value}`, false); // false для синхронного запроса
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify({ gameId: gameId.value }));
+      
+      // 2. Дублируем через sendBeacon для надежности
+      const beaconData = new Blob([JSON.stringify({ gameId: gameId.value })], { 
+        type: 'application/json' 
+      });
+      navigator.sendBeacon(`/api/game/game-end/${gameId.value}`, beaconData);
+      
+    } catch (e) {
+      console.error('Error during force close:', e);
+      
+      // 3. Если предыдущие методы не сработали, пробуем fetch с keepalive
+      fetch(`/api/game/game-end/${gameId.value}`, {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gameId: gameId.value }),
+      }).catch(console.error);
+    } finally {
+      forceStopGame();
+    }
   }
 }
 
@@ -882,14 +910,21 @@ onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload)
   window.addEventListener('unload', forceStopGame)
 
-  // Add Telegram WebApp close event listener
+  // Добавляем слушатель для Telegram WebApp
   if (window.Telegram?.WebApp) {
     console.log('Telegram WebApp is available')
-    window.Telegram.WebApp.onEvent('close', handleAppClose)
+    window.Telegram.WebApp.onEvent('close', handleAppClose);
+    
+    // Добавляем слушатель для MainButton (если он используется)
+    window.Telegram.WebApp.onEvent('mainButton:click', handleAppClose);
+    
+    // Добавляем слушатель для backButton (если он используется)
+    window.Telegram.WebApp.onEvent('backButton:click', handleAppClose);
   }
   
-  // Add browser close event listener
-  window.addEventListener('beforeunload', handleAppClose)
+  // Добавляем слушатель для мобильных событий
+  window.addEventListener('pagehide', handleAppClose);
+  window.addEventListener('beforeunload', handleAppClose);
 })
 
 onUnmounted(() => {
@@ -907,13 +942,14 @@ onUnmounted(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
   window.removeEventListener('unload', forceStopGame)
 
-  // Remove Telegram WebApp close event listener
   if (window.Telegram?.WebApp) {
-    window.Telegram.WebApp.offEvent('close', handleAppClose)
+    window.Telegram.WebApp.offEvent('close', handleAppClose);
+    window.Telegram.WebApp.offEvent('mainButton:click', handleAppClose);
+    window.Telegram.WebApp.offEvent('backButton:click', handleAppClose);
   }
-
-  // Remove browser close event listener
-  window.removeEventListener('beforeunload', handleAppClose)
+  
+  window.removeEventListener('pagehide', handleAppClose);
+  window.removeEventListener('beforeunload', handleAppClose);
 })
 </script>
 
