@@ -78,7 +78,7 @@
           <img class="sword" :src="sword" alt="sword" />
         </div>
       </div>
-      <div class="game__main-snake" @click="handleSnakeClick">
+      <div class="game__main-snake" >
         <img :src="currentSnakeImage" alt="snake" />
       </div>
       <div class="game__main-right">
@@ -224,6 +224,9 @@
         </div>
       </div>
     </BaseModal>
+
+    <div class="start_game_button" @click="handleSnakeClick">
+    </div>
   </div>
 </template>
 
@@ -1671,6 +1674,17 @@ onUnmounted(() => {
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
+}
+
+.start_game_button {
+  position: fixed;
+  width: 100px;
+  height: 100px;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  border-radius: 50%;
 }
 
 @keyframes spin {
