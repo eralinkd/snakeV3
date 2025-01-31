@@ -199,9 +199,9 @@ watch(
   (newValue) => {
     if (!isError.value) {
       user.value = newValue
-      if (newValue?.langCode) {
-        locale.value = newValue.langCode
-      }
+      // if (newValue?.langCode) {
+      //   locale.value = newValue.langCode
+      // }
     }
   },
   { immediate: true },

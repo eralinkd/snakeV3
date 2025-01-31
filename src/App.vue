@@ -15,7 +15,8 @@ import Navigation from '@/components/Navigation.vue'
 import LoaderScreen from '@/components/LoaderScreen.vue'
 import { postAddRef } from '@/api/referralApi'
 import { postAuth } from '@/api/auth'
-import { loadLanguages } from './i18n'
+import { loadLanguages, setCurrentLanguage } from './i18n'
+import { getUser } from './api/userApi'
 
 const userStore = useUserStore()
 const isLoading = ref(true)
@@ -41,7 +42,7 @@ onMounted(async () => {
 
       console.log('savedLang', savedLang)
       if (savedLang) {
-        await loadLanguages(savedLang)
+        setCurrentLanguage(savedLang)
       }
 
       if (savedToken) {
@@ -56,7 +57,7 @@ onMounted(async () => {
       console.log('telegramInitData.user.language_code', telegramInitData.user.language_code)
 
       if (telegramInitData.user.language_code) {
-        document.cookie = `lang=${telegramInitData.user.language_code}; max-age=86400; path=/`
+        document.cookie = `lang=${telegramInitData.user.language_code === 'uk' ? 'ua' : telegramInitData.user.language_code}; max-age=86400; path=/`
       }
 
       if (telegramInitData && env === 'prod') {
@@ -117,6 +118,13 @@ onMounted(async () => {
 
     // Ждем завершения обоих Promise
     await Promise.all([minLoadingTime, authProcess])
+
+    const resp = await getUser()
+    console.log('resp', resp)
+
+    if (resp?.langCode) {
+      setCurrentLanguage(resp.langCode)
+    }
 
     console.log('=== onMounted end ===')
   } catch (error) {

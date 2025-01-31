@@ -8,7 +8,13 @@ export const i18n = createI18n({
 	messages: {}
 })
 
-export const loadLanguages = async (userLang = null) => {
+let loadedLanguages = null
+
+export const loadLanguages = async () => {
+	if (loadedLanguages) {
+		return loadedLanguages
+	}
+
 	try {
 		const languages = await getLanguages()
 
@@ -17,16 +23,24 @@ export const loadLanguages = async (userLang = null) => {
 			i18n.global.setLocaleMessage(lang.code, langData.messages)
 		}
 
-		if (userLang) {
-			const isLanguageAvailable = languages.some(lang => lang.code === userLang)
-			if (isLanguageAvailable) {
-				i18n.global.locale.value = userLang
-			}
-		}
-
+		loadedLanguages = languages
 		return languages
 	} catch (error) {
 		console.error('Failed to load languages:', error)
 		return []
 	}
+}
+
+export const setCurrentLanguage = (langCode) => {
+	if (!loadedLanguages) {
+		console.warn('Languages not loaded yet. Call loadLanguages first')
+		return false
+	}
+
+	const isLanguageAvailable = loadedLanguages.some(lang => lang.code === langCode)
+	if (isLanguageAvailable) {
+		i18n.global.locale.value = langCode
+		return true
+	}
+	return false
 }
