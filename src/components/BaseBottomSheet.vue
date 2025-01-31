@@ -108,15 +108,19 @@ const handleMouseUp = () => {
             ref="sheet"
             class="bottom-sheet__content"
             :style="{ maxHeight }"
-            @touchstart="handleTouchStart"
-            @touchmove="handleTouchMove"
-            @touchend="handleTouchEnd"
-            @mousedown="handleMouseDown"
-            @mousemove="handleMouseMove"
-            @mouseup="handleMouseUp"
-            @mouseleave="handleMouseUp"
           >
-            <div class="bottom-sheet__drag-handle" />
+            <div 
+              class="bottom-sheet__header"
+              @touchstart="handleTouchStart"
+              @touchmove="handleTouchMove"
+              @touchend="handleTouchEnd"
+              @mousedown="handleMouseDown"
+              @mousemove="handleMouseMove"
+              @mouseup="handleMouseUp"
+              @mouseleave="handleMouseUp"
+            >
+              <div class="bottom-sheet__drag-handle" />
+            </div>
             <div class="bottom-sheet__inner">
               <slot />
             </div>
@@ -154,14 +158,19 @@ const handleMouseUp = () => {
   &__content {
     position: relative;
     z-index: 101;
-    touch-action: none;
-    transform: translateY(0);
     border-radius: 16px 16px 0px 0px;
     background: $plateBg;
     box-shadow: 0px 7px 30px 0px rgba(0, 0, 0, 0.27);
     backdrop-filter: blur(15px);
-    padding: 40px 24px 100px 24px;
-    overflow-y: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__header {
+    position: relative;
+    padding: 16px 0;
+    touch-action: none;
   }
 
   &__drag-handle {
@@ -176,9 +185,11 @@ const handleMouseUp = () => {
   }
 
   &__inner {
-    margin-top: 12px;
+    padding: 0 24px 100px 24px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    height: 100%;
   }
 }
 
