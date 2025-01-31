@@ -25,7 +25,7 @@ onMounted(async () => {
   console.log('=== onMounted start ===')
 
   try {
-    const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 300))
+    const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 3000))
 
     const authProcess = (async () => {
       // Проверяем наличие токена в куках
