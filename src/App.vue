@@ -15,6 +15,7 @@ import Navigation from '@/components/Navigation.vue'
 import LoaderScreen from '@/components/LoaderScreen.vue'
 import { postAddRef } from '@/api/referralApi'
 import { postAuth } from '@/api/auth'
+import { loadLanguages } from './i18n'
 
 const userStore = useUserStore()
 const isLoading = ref(true)

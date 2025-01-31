@@ -126,6 +126,40 @@ const copyLink = `https://t.me/snake_runner_dev_bot/snake_runner_dev?startapp=${
 const isCopied = ref(false)
 let timeoutId = null
 
+// lang start
+
+const { t, locale } = useI18n()
+
+const { data: languagesData } = useQuery({
+  queryKey: ['languages'],
+  queryFn: getLanguages,
+  staleTime: Infinity,
+})
+
+const languages = computed(() => {
+  if (!languagesData.value) return []
+  return languagesData.value.map((lang) => ({
+    value: lang.code,
+    label: lang.name,
+  }))
+})
+
+const handleLanguageChange = async (option) => {
+  try {
+    // Load language data if not already loaded
+    if (!i18n.global.availableLocales.includes(option.value)) {
+      const langData = await getLanguageData(option.value)
+      i18n.global.setLocaleMessage(option.value, langData.messages)
+    }
+
+    locale.value = option.value
+    updateLanguage(option.value)
+  } catch (error) {
+    console.error('Failed to load language:', error)
+  }
+}
+// lang end
+
 const handleCopy = () => {
   navigator.clipboard.writeText(copyLink)
   isCopied.value = true
@@ -165,6 +199,9 @@ watch(
   (newValue) => {
     if (!isError.value) {
       user.value = newValue
+      if (newValue?.langCode) {
+        locale.value = newValue.langCode
+      }
     }
   },
   { immediate: true },
@@ -241,44 +278,6 @@ onMounted(async () => {
     console.error('Error completing daily quest:', error)
   }
 })
-
-const { t, locale } = useI18n()
-
-// const languages = [
-//   { value: 'en', label: 'English' },
-//   { value: 'ru', label: 'Русский' },
-//   { value: 'ua', label: 'Українська' },
-//   { value: 'zh', label: '中文' },
-// ]
-
-const { data: languagesData } = useQuery({
-  queryKey: ['languages'],
-  queryFn: getLanguages,
-  staleTime: Infinity,
-})
-
-const languages = computed(() => {
-  if (!languagesData.value) return []
-  return languagesData.value.map((lang) => ({
-    value: lang.code,
-    label: lang.name,
-  }))
-})
-
-const handleLanguageChange = async (option) => {
-  try {
-    // Load language data if not already loaded
-    if (!i18n.global.availableLocales.includes(option.value)) {
-      const langData = await getLanguageData(option.value)
-      i18n.global.setLocaleMessage(option.value, langData.messages)
-    }
-
-    locale.value = option.value
-    updateLanguage(option.value)
-  } catch (error) {
-    console.error('Failed to load language:', error)
-  }
-}
 </script>
 
 <style scoped lang="scss">

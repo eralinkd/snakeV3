@@ -8,22 +8,6 @@ export const i18n = createI18n({
 	messages: {}
 })
 
-const telegramStorage = {
-	get: (key) => {
-		if (window.Telegram?.WebApp?.CloudStorage) {
-			return window.Telegram.WebApp.CloudStorage.getItem(key)
-		}
-		return localStorage.getItem(key)
-	},
-	set: async (key, value) => {
-		if (window.Telegram?.WebApp?.CloudStorage) {
-			await window.Telegram.WebApp.CloudStorage.setItem(key, value)
-		} else {
-			localStorage.setItem(key, value)
-		}
-	}
-}
-
 export const loadLanguages = async (userLang = null) => {
 	try {
 		const languages = await getLanguages()
