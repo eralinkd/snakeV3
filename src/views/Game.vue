@@ -547,90 +547,86 @@ const startGame = async () => {
 const handleGameEnd = async () => {
   console.log('Game ending, current coins:', sessionCoins.value)
   
+  // Добавляем проверку, что игра еще не завершена
+  if (!isGameStarted.value) {
+    console.log('Game already ended, skipping...')
+    return
+  }
+  
   try {
-    if (isGameStarted.value) {
-      console.log('Game was active, cleaning up...')
-      
-      // Сначала сохраним все важные данные
-      const finalCoins = sessionCoins.value
-      const currentGameId = gameId.value
-      
-      // Очищаем состояние игры
-      isGameStarted.value = false
-      document.documentElement.removeAttribute('data-playing')
-      
-      if (energyInterval) {
-        clearInterval(energyInterval)
-        energyInterval = null
-      }
+    console.log('Game was active, cleaning up...')
+    
+    // Сначала сохраним все важные данные
+    const finalCoins = sessionCoins.value
+    
+    // Очищаем состояние игры
+    isGameStarted.value = false
+    document.documentElement.removeAttribute('data-playing')
+    
+    if (energyInterval) {
+      clearInterval(energyInterval)
+      energyInterval = null
+    }
 
-      // Принудительно останавливаем игру перед показом модального окна
-      if (game) {
-        try {
-          game.destroy(true)
-          game = null
-          snakeScene = null
-        } catch (e) {
-          console.error('Error destroying game:', e)
-        }
+    // Принудительно останавливаем игру перед показом модального окна
+    if (game) {
+      try {
+        game.destroy(true)
+        game = null
+        snakeScene = null
+      } catch (e) {
+        console.error('Error destroying game:', e)
       }
+    }
 
-      // Показываем модальное окно только если были собраны монеты
-      if (finalCoins > 0) {
-        finalGameCoins.value = finalCoins
-        displayCoins.value = 0
+    // Показываем модальное окно только если были собраны монеты
+    // и оно еще не показано
+    if (finalCoins > 0 && !showGameEndModal.value) {
+      finalGameCoins.value = finalCoins
+      displayCoins.value = 0
+      
+      // Форсируем обновление DOM перед показом модального окна
+      await new Promise(resolve => setTimeout(resolve, 0))
+      
+      console.log('Showing end game modal immediately')
+      showGameEndModal.value = true
+      
+      // Добавляем проверку видимости модального окна
+      const checkModalVisibility = () => {
+        const modalElement = document.querySelector('.modal')
+        console.log('Modal element exists:', !!modalElement)
+        console.log('Modal element visible:', modalElement?.style.display !== 'none')
         
-        // Форсируем обновление DOM перед показом модального окна
-        await new Promise(resolve => setTimeout(resolve, 0))
-        
-        console.log('Showing end game modal immediately')
-        showGameEndModal.value = true
-        
-        // Добавляем проверку видимости модального окна
-        const checkModalVisibility = () => {
-          const modalElement = document.querySelector('.modal')
-          console.log('Modal element exists:', !!modalElement)
-          console.log('Modal element visible:', modalElement?.style.display !== 'none')
-          
-          if (!modalElement || modalElement.style.display === 'none') {
-            console.log('Modal not visible, retrying...')
+        if (!modalElement || modalElement.style.display === 'none') {
+          console.log('Modal not visible, retrying...')
+          // Проверяем, что модальное окно все еще должно быть показано
+          if (showGameEndModal.value) {
             showGameEndModal.value = false
             
             // Форсируем перерисовку
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
-                console.log('Retrying to show modal')
-                showGameEndModal.value = true
-                
-                // Проверяем еще раз через небольшую задержку
-                setTimeout(checkModalVisibility, 300)
+                if (!showGameEndModal.value) {
+                  console.log('Retrying to show modal')
+                  showGameEndModal.value = true
+                }
               })
             })
           }
         }
-
-        // Запускаем первую проверку
-        setTimeout(checkModalVisibility, 100)
-        
-        // Запускаем резервную проверку через 2 секунды
-        setTimeout(() => {
-          if (!document.querySelector('.modal')) {
-            console.log('Backup check: Modal still not visible')
-            
-            // Последняя попытка показать модальное окно
-            showGameEndModal.value = true
-          }
-        }, 2000)
       }
 
-      // Обновляем данные игры после показа модального окна
-      try {
-        console.log('Getting new game data...')
-        const newGameData = await getGameData()
-        gamedata.value = newGameData
-      } catch (e) {
-        console.error('Error updating game data:', e)
-      }
+      // Запускаем первую проверку
+      setTimeout(checkModalVisibility, 100)
+    }
+
+    // Обновляем данные игры после показа модального окна
+    try {
+      console.log('Getting new game data...')
+      const newGameData = await getGameData()
+      gamedata.value = newGameData
+    } catch (e) {
+      console.error('Error updating game data:', e)
     }
   } catch (error) {
     console.error('Error in game end:', error)
@@ -1112,6 +1108,10 @@ onUnmounted(() => {
   if (clickTimer.value) {
     clearTimeout(clickTimer.value)
   }
+  
+  showGameEndModal.value = false
+  finalGameCoins.value = 0
+  displayCoins.value = 0
 })
 
 // В watch для showGameEndModal добавим отслеживание
