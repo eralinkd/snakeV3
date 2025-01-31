@@ -1,7 +1,8 @@
 <template>
   <div class="loader-screen">
     <div class="loader-screen__spinner"></div>
-    <div class="loader-screen__loading-text">{{ t('loader.loading') }}</div>
+    <div class="loader-screen__loading-text">Loading...</div>
+    <!-- <div class="loader-screen__loading-text">{{ t('loader.loading') }}</div> -->
     <!-- <p class="loader-screen__text">{{ t('loader.running') }}</p>
     <p class="loader-screen__text">{{ t('loader.snake') }}</p> -->
     <img src="@/assets/loader-text.png" alt="Logo" class="loader-screen__logo" />
