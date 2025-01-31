@@ -52,6 +52,7 @@ onMounted(async () => {
         let dataCheckString = items.join('&')
         console.log('Auth data string:', dataCheckString)
 
+        console.log('Telegram user data:', telegramInitData.user)
         userStore.setUserData({
           first_name: telegramInitData.user?.first_name,
           last_name: telegramInitData.user?.last_name,
