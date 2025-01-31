@@ -33,33 +33,16 @@ export const loadLanguages = async (userLang = null) => {
 			i18n.global.setLocaleMessage(lang.code, langData.messages)
 		}
 
-		let selectedLang = await telegramStorage.get('user_language')
-
-		if (!selectedLang && userLang) {
+		if (userLang) {
 			const isLanguageAvailable = languages.some(lang => lang.code === userLang)
 			if (isLanguageAvailable) {
-				selectedLang = userLang
-				// Save the user's language preference
-				await telegramStorage.set('user_language', userLang)
+				i18n.global.locale.value = userLang
 			}
-		}
-
-		if (selectedLang) {
-			i18n.global.locale.value = selectedLang
 		}
 
 		return languages
 	} catch (error) {
 		console.error('Failed to load languages:', error)
 		return []
-	}
-}
-
-export const changeLanguage = async (langCode) => {
-	try {
-		await telegramStorage.set('user_language', langCode)
-		i18n.global.locale.value = langCode
-	} catch (error) {
-		console.error('Failed to change language:', error)
 	}
 }
