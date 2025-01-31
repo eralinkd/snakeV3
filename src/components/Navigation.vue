@@ -254,11 +254,6 @@
       -webkit-filter: drop-shadow(0px 0px 10px $accent);
       filter: drop-shadow(0px 0px 10px $accent);
     }
-    & > img,
-    svg {
-      -webkit-filter: drop-shadow(0px 0px 10px $accent);
-      filter: drop-shadow(0px 0px 10px $accent);
-    }
   }
 }
 </style>
