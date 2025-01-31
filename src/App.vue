@@ -15,7 +15,6 @@ import Navigation from '@/components/Navigation.vue'
 import LoaderScreen from '@/components/LoaderScreen.vue'
 import { postAddRef } from '@/api/referralApi'
 import { postAuth } from '@/api/auth'
-import { loadLanguages } from './i18n'
 
 const userStore = useUserStore()
 const isLoading = ref(true)
@@ -43,6 +42,10 @@ onMounted(async () => {
 
       const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
       let startParam = telegramInitData.start_param
+      console.log('telegramInitData', telegramInitData)
+      console.log('telegramInitData.user', telegramInitData.user)
+      console.log('telegramInitData.user.language_code', telegramInitData.user.language_code)
+
       if (telegramInitData && env === 'prod') {
         console.log('Production mode with Telegram data')
         const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
@@ -56,9 +59,7 @@ onMounted(async () => {
           last_name: telegramInitData.user?.last_name,
           username: telegramInitData.user?.username,
           photo_url: telegramInitData.user?.photo_url,
-          language_code: telegramInitData.user?.language_code.toLowerCase(),
         })
-
         console.log('Set user data:', telegramInitData.user)
 
         if (telegramInitData.user?.id) {
@@ -103,16 +104,6 @@ onMounted(async () => {
 
     // Ждем завершения обоих Promise
     await Promise.all([minLoadingTime, authProcess])
-
-    // test
-    console.log('User data:', userStore.userData)
-    if (!userStore.userData?.language_code) {
-      const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
-      console.log('Telegram init data:', telegramInitData)
-      await loadLanguages(telegramInitData.user?.language_code.toLowerCase() || 'en')
-    } else {
-      await loadLanguages(userStore.userData?.language_code || 'en')
-    }
 
     console.log('=== onMounted end ===')
   } catch (error) {
