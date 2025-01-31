@@ -549,31 +549,54 @@ const startGame = async () => {
 const handleGameEnd = async () => {
   alert('Game ending...')
   console.log('Game ending, current coins:', sessionCoins.value)
-  finalGameCoins.value = sessionCoins.value
-
-  if (energyInterval) {
-    clearInterval(energyInterval)
-    energyInterval = null
-  }
-
-  energyTickCounter = 0
-  isGameStarted.value = false
-  document.documentElement.setAttribute('data-playing', 'false')
-
-  // Полностью удаляем сцену
-  if (game && snakeScene) {
-    game.scene.remove('SnakeScene')
-    snakeScene = null
-  }
-
+  
   try {
-    await postGameGameEnd(gameId.value)
-    const newGameData = await getGameData()
-    gamedata.value = newGameData
-    setTimeout(() => {
-      alert('Showing end game modal...')
-      showGameEndModal.value = true
-    }, 500)
+    if (isGameStarted.value) {
+      console.log('Game was active, cleaning up...')
+      isGameStarted.value = false
+      document.documentElement.removeAttribute('data-playing')
+      
+      if (energyInterval) {
+        clearInterval(energyInterval)
+        energyInterval = null
+      }
+
+      finalGameCoins.value = sessionCoins.value
+      displayCoins.value = 0
+      
+      console.log('Getting new game data...')
+      const newGameData = await getGameData()
+      gamedata.value = newGameData
+      
+      console.log('Preparing to show modal...')
+      // Добавляем несколько попыток показать модальное окно
+      let attempts = 0
+      const maxAttempts = 3
+      
+      const tryShowModal = () => {
+        attempts++
+        console.log(`Attempt ${attempts} to show modal`)
+        
+        if (!showGameEndModal.value) {
+          showGameEndModal.value = true
+          console.log('Modal show command sent')
+          
+          // Проверяем, действительно ли модальное окно открылось
+          setTimeout(() => {
+            if (!showGameEndModal.value && attempts < maxAttempts) {
+              console.log(`Modal didn't open, trying again... (attempt ${attempts})`)
+              tryShowModal()
+            } else if (!showGameEndModal.value) {
+              console.error('Failed to show modal after all attempts')
+              alert('Failed to show end game modal. Please restart the game.')
+            }
+          }, 300)
+        }
+      }
+      
+      // Даем небольшую задержку перед первой попыткой
+      setTimeout(tryShowModal, 500)
+    }
   } catch (error) {
     alert('Error in game end: ' + error.message)
     console.error('Error in game end:', error)

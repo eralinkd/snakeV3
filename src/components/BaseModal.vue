@@ -39,22 +39,63 @@ const handleContentClick = (e) => {
   e.stopPropagation()
 }
 
+// Добавим новые refs для отслеживания состояния
+const isVisible = ref(false)
+const mountAttempts = ref(0)
+const MAX_MOUNT_ATTEMPTS = 3
+
+// Модифицируем watch
 watch(
   () => props.isOpen,
-  (newValue) => {
+  async (newValue) => {
+    console.log('Modal isOpen changed:', newValue)
     if (newValue) {
       alert('BaseModal received open command')
+      mountAttempts.value = 0
+      await tryMount()
+    } else {
+      console.log('Modal closing')
+      isVisible.value = false
     }
   }
 )
+
+// Добавим функцию для попыток монтирования
+const tryMount = async () => {
+  mountAttempts.value++
+  console.log(`Mount attempt ${mountAttempts.value}`)
+  
+  // Даем время на монтирование
+  await new Promise(resolve => setTimeout(resolve, 100))
+  
+  if (!isVisible.value && mountAttempts.value < MAX_MOUNT_ATTEMPTS) {
+    console.log('Modal not visible, retrying...')
+    isVisible.value = true
+    await tryMount()
+  } else if (!isVisible.value) {
+    console.error('Failed to mount modal after all attempts')
+    alert('Modal mount failed')
+  } else {
+    console.log('Modal mounted successfully')
+  }
+}
 </script>
 
 <template>
   <Teleport to="#app">
     <Transition name="fade">
-      <div v-show="isOpen" ref="modalRef" class="modal" @click="handleClose">
+      <div 
+        v-show="isOpen" 
+        ref="modalRef" 
+        class="modal" 
+        @click="handleClose"
+        v-if="isVisible || isOpen"
+      >
         <div :class="['modal__container', className]">
-          <div class="modal__content" @click="handleContentClick">
+          <div 
+            class="modal__content" 
+            @click="handleContentClick"
+          >
             <slot />
           </div>
         </div>
