@@ -48,13 +48,13 @@ const MAX_MOUNT_ATTEMPTS = 3
 watch(
   () => props.isOpen,
   async (newValue) => {
-    console.log('Modal isOpen changed:', newValue)
+    alert('Modal isOpen changed:', newValue)
     if (newValue) {
       alert('BaseModal received open command')
       mountAttempts.value = 0
       await tryMount()
     } else {
-      console.log('Modal closing')
+      alert('Modal closing')
       isVisible.value = false
     }
   }
@@ -63,20 +63,20 @@ watch(
 // Добавим функцию для попыток монтирования
 const tryMount = async () => {
   mountAttempts.value++
-  console.log(`Mount attempt ${mountAttempts.value}`)
+  alert(`Mount attempt ${mountAttempts.value}`)
   
   // Даем время на монтирование
   await new Promise(resolve => setTimeout(resolve, 100))
   
   if (!isVisible.value && mountAttempts.value < MAX_MOUNT_ATTEMPTS) {
-    console.log('Modal not visible, retrying...')
+    alert('Modal not visible, retrying...')
     isVisible.value = true
     await tryMount()
   } else if (!isVisible.value) {
-    console.error('Failed to mount modal after all attempts')
+    alert('Failed to mount modal after all attempts')
     alert('Modal mount failed')
   } else {
-    console.log('Modal mounted successfully')
+    alert('Modal mounted successfully')
   }
 }
 </script>
