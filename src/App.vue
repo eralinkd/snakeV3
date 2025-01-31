@@ -34,8 +34,14 @@ onMounted(async () => {
         .find((row) => row.startsWith('auth_token='))
         ?.split('=')[1]
 
+      const savedLang = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('lang='))
+        ?.split('=')[1]
+
       if (savedToken) {
         console.log('Found saved token, skipping auth')
+        console.log('savedLang', savedLang)
         userStore.setToken(savedToken)
         return
       }
@@ -45,6 +51,10 @@ onMounted(async () => {
       console.log('telegramInitData', telegramInitData)
       console.log('telegramInitData.user', telegramInitData.user)
       console.log('telegramInitData.user.language_code', telegramInitData.user.language_code)
+
+      if (telegramInitData.user.language_code) {
+        document.cookie = `lang=${telegramInitData.user.language_code}; max-age=86400; path=/`
+      }
 
       if (telegramInitData && env === 'prod') {
         console.log('Production mode with Telegram data')
