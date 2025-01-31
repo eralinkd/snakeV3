@@ -43,7 +43,6 @@ onMounted(async () => {
 
       const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
       let startParam = telegramInitData.start_param
-      console.log('Telegram init data: ASDWDASDWDSDWDASD', telegramInitData)
       if (telegramInitData && env === 'prod') {
         console.log('Production mode with Telegram data')
         const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
@@ -52,7 +51,6 @@ onMounted(async () => {
         let dataCheckString = items.join('&')
         console.log('Auth data string:', dataCheckString)
 
-        console.log('Telegram user data:', telegramInitData.user)
         userStore.setUserData({
           first_name: telegramInitData.user?.first_name,
           last_name: telegramInitData.user?.last_name,
@@ -106,10 +104,15 @@ onMounted(async () => {
     // Ждем завершения обоих Promise
     await Promise.all([minLoadingTime, authProcess])
 
-    const { userData } = userStore
-    console.log('User data:', userData)
     // test
-    await loadLanguages(userData?.language_code || 'ru')
+    console.log('User data:', userStore.userData)
+    if (!userStore.userData?.language_code) {
+      const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
+      console.log('Telegram init data:', telegramInitData)
+      await loadLanguages(telegramInitData.user?.language_code.toLowerCase() || 'en')
+    } else {
+      await loadLanguages(userStore.userData?.language_code || 'en')
+    }
 
     console.log('=== onMounted end ===')
   } catch (error) {
