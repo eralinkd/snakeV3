@@ -15,6 +15,7 @@ import Navigation from '@/components/Navigation.vue'
 import LoaderScreen from '@/components/LoaderScreen.vue'
 import { postAddRef } from '@/api/referralApi'
 import { postAuth } from '@/api/auth'
+import { loadLanguages } from './i18n'
 
 const userStore = useUserStore()
 const isLoading = ref(true)
@@ -104,9 +105,9 @@ onMounted(async () => {
     // Ждем завершения обоих Promise
     await Promise.all([minLoadingTime, authProcess])
 
-    const { userData } = userStore()
-    // test
+    const { userData } = userStore
     console.log('User data:', userData)
+    // test
     await loadLanguages(userData?.language_code || 'ru')
 
     console.log('=== onMounted end ===')
