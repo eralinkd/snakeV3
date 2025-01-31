@@ -2,9 +2,9 @@
   <div class="loader-screen">
     <div class="loader-screen__spinner"></div>
     <div class="loader-screen__loading-text">{{ t('loader.loading') }}</div>
-    <p class="loader-screen__text">{{ t('loader.running') }}</p>
-    <p class="loader-screen__text">{{ t('loader.snake') }}</p>
-    <!-- <img src="@/assets/loader-text.png" alt="Logo" class="loader-screen__logo" /> -->
+    <!-- <p class="loader-screen__text">{{ t('loader.running') }}</p>
+    <p class="loader-screen__text">{{ t('loader.snake') }}</p> -->
+    <img src="@/assets/loader-text.png" alt="Logo" class="loader-screen__logo" />
     <div class="loader-screen__socials">
       <a href="https://t.me/" target="_blank" class="loader-screen__social-link">
         <img src="@/assets/social/telegram.svg" alt="Telegram" />
@@ -52,15 +52,9 @@ const { t } = useI18n()
     animation: rotation 1s linear infinite;
   }
 
-  &__loading-text {
-    font-family: Montserrat;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 24px;
-    text-align: center;
-    text-underline-position: from-font;
-    text-decoration-skip-ink: none;
-
+  &__logo {
+    width: 90%;
+    // max-width: 334px;
     margin-bottom: 14px;
     animation: fadeIn 0.5s ease-in;
   }
