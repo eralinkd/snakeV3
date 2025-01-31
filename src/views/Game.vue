@@ -466,7 +466,6 @@ const startGame = async () => {
   }
 
   try {
-    alert('Starting game...')
     isLoading.value = true
     await createGame()
     isGameStarted.value = true
@@ -534,7 +533,6 @@ const startGame = async () => {
       }
     }, 1000)
   } catch (error) {
-    alert('Error starting game: ' + error.message)
     console.error('Error starting game:', error)
     if (game) {
       game.destroy(true)
@@ -547,7 +545,6 @@ const startGame = async () => {
 }
 
 const handleGameEnd = async () => {
-  alert('Game ending...')
   console.log('Game ending, current coins:', sessionCoins.value)
   
   try {
@@ -617,7 +614,6 @@ const handleGameEnd = async () => {
       setTimeout(() => {
         if (!document.querySelector('.modal')) {
           console.log('Backup check: Modal still not visible')
-          alert('Game ended with ' + finalCoins + ' coins')
           
           // Последняя попытка показать модальное окно
           showGameEndModal.value = true
@@ -634,11 +630,7 @@ const handleGameEnd = async () => {
       }
     }
   } catch (error) {
-    alert('Error in game end: ' + error.message)
     console.error('Error in game end:', error)
-    
-    // В случае ошибки тоже показываем результат
-    alert('Game ended with ' + sessionCoins.value + ' coins')
   }
 }
 
@@ -682,7 +674,6 @@ const handleCoinCollect = async () => {
 }
 
 const handleObstacleHit = async (armorType) => {
-  alert('Hit obstacle!')
   if (!isGameStarted.value) {
     console.log('Game ended, skipping obstacle request.')
     return
@@ -724,7 +715,6 @@ const handleObstacleHit = async (armorType) => {
     await postGameGameEnd(gameId.value)
     forceStopGame()
   } catch (error) {
-    alert('Error in obstacle hit: ' + error.message)
     console.error('Error in obstacle hit:', error)
   }
 }
@@ -1124,7 +1114,6 @@ onUnmounted(() => {
 // В watch для showGameEndModal добавим отслеживание
 watch(showGameEndModal, (newValue) => {
   if (newValue) {
-    alert('Modal is now visible')
   }
 })
 </script>
