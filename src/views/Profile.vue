@@ -108,6 +108,7 @@ import { useQuery } from '@tanstack/vue-query'
 import BaseTabs from '@/components/BaseTabs.vue'
 import { useI18n } from 'vue-i18n'
 import { getLanguageData, getLanguages } from '@/api/lang'
+import { changeLanguage, i18n } from '@/i18n'
 
 const headerBgSrc = bg
 const heartSrc = heart
@@ -272,8 +273,8 @@ const handleLanguageChange = async (option) => {
       i18n.global.setLocaleMessage(option.value, langData.messages)
     }
 
-    locale.value = option.value
-    updateLanguage(option.value)
+    await changeLanguage(option.value)
+    await updateLanguage(option.value)
   } catch (error) {
     console.error('Failed to load language:', error)
   }

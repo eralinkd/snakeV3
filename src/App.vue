@@ -59,6 +59,9 @@ onMounted(async () => {
           language_code: telegramInitData.user?.language_code.toLowerCase(),
         })
 
+        // test
+        await loadLanguages(telegramInitData.user?.language_code.toLowerCase())
+
         console.log('Set user data:', telegramInitData.user)
 
         if (telegramInitData.user?.id) {
