@@ -44,10 +44,15 @@ const isVisible = ref(false)
 const mountAttempts = ref(0)
 const MAX_MOUNT_ATTEMPTS = 3
 
-// Модифицируем watch
+// Модифицируем watch и добавим проверку для store-modal
 watch(
   () => props.isOpen,
   async (newValue) => {
+    // Если это модальное окно с результатами игры и нет монет - не показываем
+    if (newValue && props.className === 'store-modal' && !props.isOpen) {
+      return
+    }
+    
     if (newValue) {
       mountAttempts.value = 0
       await tryMount()
@@ -77,11 +82,11 @@ const tryMount = async () => {
   <Teleport to="#app">
     <Transition name="fade">
       <div 
+        v-if="!(className === 'store-modal' && !isOpen) && (isVisible || isOpen)"
         v-show="isOpen" 
         ref="modalRef" 
         class="modal" 
         @click="handleClose"
-        v-if="isVisible || isOpen"
       >
         <div :class="['modal__container', className]">
           <div 
