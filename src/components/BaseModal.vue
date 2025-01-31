@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useBodyLock } from '@/composables/useBodyLock'
 
 const props = defineProps({
@@ -38,6 +38,15 @@ onBeforeUnmount(() => {
 const handleContentClick = (e) => {
   e.stopPropagation()
 }
+
+watch(
+  () => props.isOpen,
+  (newValue) => {
+    if (newValue) {
+      alert('BaseModal received open command')
+    }
+  }
+)
 </script>
 
 <template>

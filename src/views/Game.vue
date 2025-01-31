@@ -466,12 +466,9 @@ const startGame = async () => {
   }
 
   try {
-    // Показываем экран загрузки только когда пользователь начал игру
+    alert('Starting game...')
     isLoading.value = true
-    
-    // Создаем игру и ждем инициализации сцены
     await createGame()
-    
     isGameStarted.value = true
     sessionCoins.value = 0
     finalGameCoins.value = 0
@@ -537,6 +534,7 @@ const startGame = async () => {
       }
     }, 1000)
   } catch (error) {
+    alert('Error starting game: ' + error.message)
     console.error('Error starting game:', error)
     if (game) {
       game.destroy(true)
@@ -549,6 +547,7 @@ const startGame = async () => {
 }
 
 const handleGameEnd = async () => {
+  alert('Game ending...')
   console.log('Game ending, current coins:', sessionCoins.value)
   finalGameCoins.value = sessionCoins.value
 
@@ -571,9 +570,13 @@ const handleGameEnd = async () => {
     await postGameGameEnd(gameId.value)
     const newGameData = await getGameData()
     gamedata.value = newGameData
-    showGameEndModal.value = true
+    setTimeout(() => {
+      alert('Showing end game modal...')
+      showGameEndModal.value = true
+    }, 500)
   } catch (error) {
-    console.error('Failed to end game:', error)
+    alert('Error in game end: ' + error.message)
+    console.error('Error in game end:', error)
   }
 }
 
@@ -616,7 +619,8 @@ const handleCoinCollect = async () => {
   }
 }
 
-const handleObstacleHit = async () => {
+const handleObstacleHit = async (armorType) => {
+  alert('Hit obstacle!')
   if (!isGameStarted.value) {
     console.log('Game ended, skipping obstacle request.')
     return
@@ -654,8 +658,12 @@ const handleObstacleHit = async () => {
         snakeScene.setActiveArmor(response.activatedArmor)
       }
     }
+
+    await postGameGameEnd(gameId.value)
+    forceStopGame()
   } catch (error) {
-    console.error('Error getting current content:', error)
+    alert('Error in obstacle hit: ' + error.message)
+    console.error('Error in obstacle hit:', error)
   }
 }
 
@@ -1032,6 +1040,13 @@ onUnmounted(() => {
   
   if (clickTimer.value) {
     clearTimeout(clickTimer.value)
+  }
+})
+
+// В watch для showGameEndModal добавим отслеживание
+watch(showGameEndModal, (newValue) => {
+  if (newValue) {
+    alert('Modal is now visible')
   }
 })
 </script>
