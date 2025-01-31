@@ -575,50 +575,53 @@ const handleGameEnd = async () => {
         }
       }
 
-      finalGameCoins.value = finalCoins
-      displayCoins.value = 0
-      
-      // Форсируем обновление DOM перед показом модального окна
-      await new Promise(resolve => setTimeout(resolve, 0))
-      
-      console.log('Showing end game modal immediately')
-      showGameEndModal.value = true
-      
-      // Добавляем проверку видимости модального окна
-      const checkModalVisibility = () => {
-        const modalElement = document.querySelector('.modal')
-        console.log('Modal element exists:', !!modalElement)
-        console.log('Modal element visible:', modalElement?.style.display !== 'none')
+      // Показываем модальное окно только если были собраны монеты
+      if (finalCoins > 0) {
+        finalGameCoins.value = finalCoins
+        displayCoins.value = 0
         
-        if (!modalElement || modalElement.style.display === 'none') {
-          console.log('Modal not visible, retrying...')
-          showGameEndModal.value = false
+        // Форсируем обновление DOM перед показом модального окна
+        await new Promise(resolve => setTimeout(resolve, 0))
+        
+        console.log('Showing end game modal immediately')
+        showGameEndModal.value = true
+        
+        // Добавляем проверку видимости модального окна
+        const checkModalVisibility = () => {
+          const modalElement = document.querySelector('.modal')
+          console.log('Modal element exists:', !!modalElement)
+          console.log('Modal element visible:', modalElement?.style.display !== 'none')
           
-          // Форсируем перерисовку
-          requestAnimationFrame(() => {
+          if (!modalElement || modalElement.style.display === 'none') {
+            console.log('Modal not visible, retrying...')
+            showGameEndModal.value = false
+            
+            // Форсируем перерисовку
             requestAnimationFrame(() => {
-              console.log('Retrying to show modal')
-              showGameEndModal.value = true
-              
-              // Проверяем еще раз через небольшую задержку
-              setTimeout(checkModalVisibility, 300)
+              requestAnimationFrame(() => {
+                console.log('Retrying to show modal')
+                showGameEndModal.value = true
+                
+                // Проверяем еще раз через небольшую задержку
+                setTimeout(checkModalVisibility, 300)
+              })
             })
-          })
+          }
         }
-      }
 
-      // Запускаем первую проверку
-      setTimeout(checkModalVisibility, 100)
-      
-      // Запускаем резервную проверку через 2 секунды
-      setTimeout(() => {
-        if (!document.querySelector('.modal')) {
-          console.log('Backup check: Modal still not visible')
-          
-          // Последняя попытка показать модальное окно
-          showGameEndModal.value = true
-        }
-      }, 2000)
+        // Запускаем первую проверку
+        setTimeout(checkModalVisibility, 100)
+        
+        // Запускаем резервную проверку через 2 секунды
+        setTimeout(() => {
+          if (!document.querySelector('.modal')) {
+            console.log('Backup check: Modal still not visible')
+            
+            // Последняя попытка показать модальное окно
+            showGameEndModal.value = true
+          }
+        }, 2000)
+      }
 
       // Обновляем данные игры после показа модального окна
       try {
