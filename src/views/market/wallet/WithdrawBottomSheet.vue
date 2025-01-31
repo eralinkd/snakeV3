@@ -140,7 +140,7 @@ const handleWithdraw = async () => {
           class="withdraw__button"
           @click="handleWithdraw"
         >
-          {{ t('market.wallet_withdraw.form_button') }}
+          {{ t('market.wallet_withdraw_form_button') }}
         </BaseButton>
       </div>
     </div>
