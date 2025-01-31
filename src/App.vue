@@ -106,6 +106,7 @@ onMounted(async () => {
 
     const { userData } = userStore()
     // test
+    console.log('User data:', userData)
     await loadLanguages(userData?.language_code || 'ru')
 
     console.log('=== onMounted end ===')
