@@ -38,11 +38,12 @@ onMounted(async () => {
         .find((row) => row.startsWith('lang='))
         ?.split('=')[1]
 
-      if (savedToken) {
-        if (savedLang) {
-          await loadLanguages(savedLang)
-        }
+      console.log('savedLang', savedLang)
+      if (savedLang) {
+        await loadLanguages(savedLang)
+      }
 
+      if (savedToken) {
         userStore.setToken(savedToken)
         return
       }
