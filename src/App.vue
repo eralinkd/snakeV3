@@ -59,13 +59,6 @@ onMounted(async () => {
           language_code: telegramInitData.user?.language_code.toLowerCase(),
         })
 
-        // test
-        console.log(
-          'Telegram user language SWSWSWSWSWSW:',
-          telegramInitData.user?.language_code.toLowerCase(),
-        )
-        await loadLanguages(telegramInitData.user?.language_code.toLowerCase())
-
         console.log('Set user data:', telegramInitData.user)
 
         if (telegramInitData.user?.id) {
@@ -110,6 +103,10 @@ onMounted(async () => {
 
     // Ждем завершения обоих Promise
     await Promise.all([minLoadingTime, authProcess])
+
+    const { userData } = userStore()
+    // test
+    await loadLanguages(userData?.language_code || 'ru')
 
     console.log('=== onMounted end ===')
   } catch (error) {
