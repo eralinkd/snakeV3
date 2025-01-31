@@ -85,7 +85,7 @@ const copyToClipboard = async () => {
           <CurrencyInfo :img-src="imageSrc" :title="currency.simpleName" :text="currency.type" />
           <div class="deposit__balance">
             <h4>{{ balance }}</h4>
-            <span>{{ t('market.wallet_balance') }}</span>
+            <span>{{ t('market.balance') }}</span>
           </div>
         </div>
 
