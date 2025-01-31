@@ -39,12 +39,8 @@ onMounted(async () => {
         ?.split('=')[1]
 
       if (savedToken) {
-        console.log('Found saved token, skipping auth')
-        console.log('savedLang', savedLang)
-
         if (savedLang) {
-          console.log('БОГДАН ТЫ ТУТ')
-          // HERE
+          await loadLanguages(savedLang)
         }
 
         userStore.setToken(savedToken)
