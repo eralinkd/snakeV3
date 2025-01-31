@@ -42,7 +42,7 @@ onMounted(async () => {
 
       const telegramInitData = window.Telegram?.WebApp?.initDataUnsafe
       let startParam = telegramInitData.start_param
-
+      console.log('Telegram init data: ASDWDASDWDSDWDASD', telegramInitData)
       if (telegramInitData && env === 'prod') {
         console.log('Production mode with Telegram data')
         const authHeader = Telegram.Utils.urlParseQueryString(window.Telegram.WebApp.initData)
