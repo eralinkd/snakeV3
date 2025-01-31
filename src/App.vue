@@ -27,7 +27,7 @@ onMounted(async () => {
   console.log('=== onMounted start ===')
 
   try {
-    const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 3000))
+    const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 300))
 
     const authProcess = (async () => {
       const savedToken = document.cookie

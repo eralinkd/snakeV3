@@ -78,7 +78,7 @@
           <img class="sword" :src="sword" alt="sword" />
         </div>
       </div>
-      <div class="game__main-snake" @click="startGame">
+      <div class="game__main-snake" @click="handleSnakeClick">
         <img :src="currentSnakeImage" alt="snake" />
       </div>
       <div class="game__main-right">
@@ -292,6 +292,12 @@ const isDev = process.env.NODE_ENV === 'development'
 // Добавляем состояние для тестовой панели
 const currentTestProgress = ref(0)
 const currentTestLeague = ref(1)
+
+// Добавим новые переменные в setup
+const clickCount = ref(0)
+const clickTimer = ref(null)
+const CLICK_TIMEOUT = 500 // время в мс для сброса счетчика кликов
+const REQUIRED_CLICKS = 3 // количество требуемых кликов
 
 // Функция для тестирования прогресса змеи
 const testSnakeProgress = (progress) => {
@@ -896,6 +902,31 @@ const handleAppClose = () => {
   }
 }
 
+// Добавим новую функцию для обработки кликов
+const handleSnakeClick = () => {
+  clickCount.value++
+  
+  // Очищаем предыдущий таймер если он был
+  if (clickTimer.value) {
+    clearTimeout(clickTimer.value)
+  }
+  
+  // Если достигли нужного количества кликов - запускаем игру
+  if (clickCount.value === REQUIRED_CLICKS) {
+    clickCount.value = 0
+    if (clickTimer.value) {
+      clearTimeout(clickTimer.value)
+    }
+    startGame()
+    return
+  }
+  
+  // Устанавливаем таймер для сброса счетчика
+  clickTimer.value = setTimeout(() => {
+    clickCount.value = 0
+  }, CLICK_TIMEOUT)
+}
+
 onMounted(async () => {
   // Загрузка данных игры
   gamedata.value = await getGameData()
@@ -995,6 +1026,10 @@ onUnmounted(() => {
   
   window.removeEventListener('pagehide', handleAppClose);
   window.removeEventListener('beforeunload', handleAppClose);
+  
+  if (clickTimer.value) {
+    clearTimeout(clickTimer.value)
+  }
 })
 </script>
 

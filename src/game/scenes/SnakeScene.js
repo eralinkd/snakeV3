@@ -638,6 +638,7 @@ export default class SnakeScene extends Phaser.Scene {
         this.obstacleSpawnTimer = null
     }
     
+    // Очищаем монеты и препятствия
     this.coins.forEach(coin => {
         if (coin && !coin.destroyed) {
             coin.setActive(false)
@@ -654,8 +655,13 @@ export default class SnakeScene extends Phaser.Scene {
     this.coins = []
     this.obstacles = []
 
-    if (this.snake && !this.snake.destroyed) {
-        this.snake.stop()
+    // Добавляем проверку на существование и валидность спрайта змеи
+    if (this.snake && !this.snake.destroyed && typeof this.snake.stop === 'function') {
+        try {
+            this.snake.stop()
+        } catch (e) {
+            console.warn('Could not stop snake animation:', e)
+        }
         this.snake.y = window.innerHeight/2
         this.currentLane = 1
         this.snake.x = this.lanePositions[this.currentLane]
@@ -769,6 +775,11 @@ export default class SnakeScene extends Phaser.Scene {
   }
 
   forceGameEnd() {
+    if (!this.scene?.systems?.isActive) {
+        console.log('Scene is not active, skipping force game end')
+        return
+    }
+
     if (this.coinSpawnTimer) {
         this.coinSpawnTimer.remove()
         this.coinSpawnTimer = null
@@ -779,8 +790,12 @@ export default class SnakeScene extends Phaser.Scene {
     }
 
     // Останавливаем все анимации и твины
-    this.tweens.killAll()
-    this.anims.pauseAll()
+    if (this.tweens) {
+        this.tweens.killAll()
+    }
+    if (this.anims) {
+        this.anims.pauseAll()
+    }
 
     // Очищаем все игровые объекты, кроме змеи
     this.clearGameObjectsExceptSnake()
@@ -793,7 +808,12 @@ export default class SnakeScene extends Phaser.Scene {
         this.finishCallback()
     }
 
-    this.resetScene()
+    // Безопасно вызываем resetScene
+    try {
+        this.resetScene()
+    } catch (e) {
+        console.warn('Error during scene reset:', e)
+    }
   }
 
   handleCollision() {
