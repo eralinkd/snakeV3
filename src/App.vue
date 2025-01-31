@@ -28,7 +28,6 @@ onMounted(async () => {
     const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 3000))
 
     const authProcess = (async () => {
-      // Проверяем наличие токена в куках
       const savedToken = document.cookie
         .split('; ')
         .find((row) => row.startsWith('auth_token='))
@@ -42,6 +41,12 @@ onMounted(async () => {
       if (savedToken) {
         console.log('Found saved token, skipping auth')
         console.log('savedLang', savedLang)
+
+        if (savedLang) {
+          console.log('БОГДАН ТЫ ТУТ')
+          // HERE
+        }
+
         userStore.setToken(savedToken)
         return
       }
